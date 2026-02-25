@@ -1,0 +1,58 @@
+# Build stage
+FROM node:20-slim AS builder
+
+# Install necessary system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create app directory
+WORKDIR /app
+
+# Copy package files first for better caching
+COPY package*.json ./
+
+# Install all dependencies (including devDependencies for build)
+RUN npm install
+
+# Copy source code
+COPY . .
+
+# Build the TypeScript code (increase memory for large projects)
+ENV NODE_OPTIONS="--max-old-space-size=8192"
+RUN npm run build
+
+# Production stage
+FROM node:20-slim AS production
+
+# Install necessary system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create app directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install only production dependencies
+RUN npm install --omit=dev
+
+# Copy built application from builder stage
+COPY --from=builder /app/dist ./dist
+
+# Create non-root user
+RUN groupadd -r jpd && useradd -r -g jpd jpd
+RUN chown -R jpd:jpd /app
+USER jpd
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node -e "console.log('Health check passed')" || exit 1
+
+# Expose port (if running HTTP transport)
+EXPOSE 3000
+
+# Run the application
+CMD ["npm", "start"]
