@@ -265,7 +265,7 @@ describe('Notification Screen Tools', () => {
     });
   });
 
-  describe('get_screens', () => {
+  describe('get_notification_screens', () => {
     it('should retrieve all screens successfully', async () => {
       const mockScreens = [
         {
@@ -310,7 +310,7 @@ describe('Notification Screen Tools', () => {
         },
       });
 
-      const tool = registeredTools.get('get_screens');
+      const tool = registeredTools.get('get_notification_screens');
       expect(tool).toBeDefined();
 
       const result = await tool.handler({
@@ -341,7 +341,7 @@ describe('Notification Screen Tools', () => {
         },
       });
 
-      const tool = registeredTools.get('get_screens');
+      const tool = registeredTools.get('get_notification_screens');
       const result = await tool.handler({
         expand: 'tabs',
       });
@@ -365,7 +365,7 @@ describe('Notification Screen Tools', () => {
         },
       });
 
-      const tool = registeredTools.get('get_screens');
+      const tool = registeredTools.get('get_notification_screens');
       const result = await tool.handler({});
 
       expect(result.isError).toBe(true);
@@ -374,7 +374,7 @@ describe('Notification Screen Tools', () => {
     });
   });
 
-  describe('create_screen', () => {
+  describe('create_notification_screen', () => {
     it('should create a screen successfully', async () => {
       const mockCreatedScreen = {
         id: '10002',
@@ -396,7 +396,7 @@ describe('Notification Screen Tools', () => {
         data: mockCreatedScreen,
       });
 
-      const tool = registeredTools.get('create_screen');
+      const tool = registeredTools.get('create_notification_screen');
       expect(tool).toBeDefined();
 
       const result = await tool.handler({
@@ -446,7 +446,7 @@ describe('Notification Screen Tools', () => {
         data: mockCreatedScreen,
       });
 
-      const tool = registeredTools.get('create_screen');
+      const tool = registeredTools.get('create_notification_screen');
       const result = await tool.handler({
         name: 'Minimal Screen',
       });
@@ -471,7 +471,7 @@ describe('Notification Screen Tools', () => {
         },
       });
 
-      const tool = registeredTools.get('create_screen');
+      const tool = registeredTools.get('create_notification_screen');
       const result = await tool.handler({
         name: 'Invalid Screen',
       });
@@ -482,14 +482,14 @@ describe('Notification Screen Tools', () => {
     });
   });
 
-  describe('add_field_to_screen', () => {
+  describe('add_field_to_notification_screen', () => {
     it('should add field to screen successfully', async () => {
       mockApiClient.makeRequest.mockResolvedValue({
         success: true,
-        data: undefined,
+        data: { id: 'customfield_10000', name: 'Custom Field' },
       });
 
-      const tool = registeredTools.get('add_field_to_screen');
+      const tool = registeredTools.get('add_field_to_notification_screen');
       expect(tool).toBeDefined();
 
       const result = await tool.handler({
@@ -499,8 +499,11 @@ describe('Notification Screen Tools', () => {
       });
 
       expect(mockApiClient.makeRequest).toHaveBeenCalledWith({
-        method: 'PUT',
-        path: '/screens/10000/tabs/10001/fields/customfield_10000',
+        method: 'POST',
+        path: '/screens/10000/tabs/10001/fields',
+        data: {
+          fieldId: 'customfield_10000',
+        },
       });
 
       expect(result.content[0].text).toContain('"success": true');
@@ -516,7 +519,7 @@ describe('Notification Screen Tools', () => {
         },
       });
 
-      const tool = registeredTools.get('add_field_to_screen');
+      const tool = registeredTools.get('add_field_to_notification_screen');
       const result = await tool.handler({
         screenId: 'invalid',
         tabId: 'invalid',
@@ -529,7 +532,7 @@ describe('Notification Screen Tools', () => {
     });
 
     it('should validate required parameters', async () => {
-      const tool = registeredTools.get('add_field_to_screen');
+      const tool = registeredTools.get('add_field_to_notification_screen');
       const result = await tool.handler({
         screenId: '',
         tabId: '',
@@ -544,9 +547,9 @@ describe('Notification Screen Tools', () => {
   it('should register all expected tools', () => {
     expect(registeredTools.has('get_notification_schemes')).toBe(true);
     expect(registeredTools.has('create_notification_scheme')).toBe(true);
-    expect(registeredTools.has('get_screens')).toBe(true);
-    expect(registeredTools.has('create_screen')).toBe(true);
-    expect(registeredTools.has('add_field_to_screen')).toBe(true);
+    expect(registeredTools.has('get_notification_screens')).toBe(true);
+    expect(registeredTools.has('create_notification_screen')).toBe(true);
+    expect(registeredTools.has('add_field_to_notification_screen')).toBe(true);
     expect(registeredTools.size).toBe(5);
   });
 });

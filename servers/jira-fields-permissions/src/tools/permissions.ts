@@ -3,7 +3,6 @@ import { JiraApiClient } from '../api/client.js';
 import {
   getPermissionSchemesSchema,
   createPermissionSchemeSchema,
-  assignPermissionSchemeToProjectSchema,
   updatePermissionSchemeSchema,
   deletePermissionSchemeSchema,
   getPermissionGrantsSchema,
@@ -19,7 +18,6 @@ import {
 import {
   getPermissionSchemesInputSchema,
   createPermissionSchemeInputSchema,
-  assignPermissionSchemeToProjectInputSchema,
   updatePermissionSchemeInputSchema,
   deletePermissionSchemeInputSchema,
   getPermissionGrantsInputSchema,
@@ -379,6 +377,7 @@ export async function registerPermissionTools(server: McpServer, apiClient: Jira
         readOnlyHint: false,
         destructiveHint: false,
       },
+      // @ts-expect-error MCP spec supports examples but SDK types lag behind
       examples: toolExamples['create_permission_grant'],
     },
     async (params) => {

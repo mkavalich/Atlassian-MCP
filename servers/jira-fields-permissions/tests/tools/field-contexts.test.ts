@@ -459,7 +459,7 @@ describe('Field Context Tools', () => {
       });
 
       expect(result.content[0].text).toContain('"success": true');
-      expect(result.content[0].text).toContain('2 custom field options created');
+      expect(result.content[0].text).toContain('2 custom field option(s) created successfully');
     });
 
     it('should validate options array is not empty', async () => {

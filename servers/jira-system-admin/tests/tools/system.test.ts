@@ -29,139 +29,6 @@ describe('System Tools', () => {
     registerSystemTools(server, mockApiClient);
   });
 
-  describe('search_jql', () => {
-    it('should search issues with JQL query successfully', async () => {
-      const mockSearchResults = {
-        issues: [
-          {
-            id: '10001',
-            key: 'TEST-1',
-            fields: {
-              summary: 'Test issue 1',
-              status: { name: 'Open' },
-            },
-          },
-          {
-            id: '10002',
-            key: 'TEST-2',
-            fields: {
-              summary: 'Test issue 2',
-              status: { name: 'In Progress' },
-            },
-          },
-        ],
-        total: 2,
-        startAt: 0,
-        maxResults: 50,
-      };
-
-      mockApiClient.makeRequest.mockResolvedValue({
-        success: true,
-        data: mockSearchResults,
-      });
-
-      const tool = registeredTools.get('search_jql');
-      const result = await tool.handler({
-        jql: 'project = TEST',
-      });
-
-      // Updated to use new /search/jql endpoint (old /search deprecated Aug 2025)
-      expect(mockApiClient.makeRequest).toHaveBeenCalledWith({
-        method: 'POST',
-        path: '/search/jql',
-        data: {
-          jql: 'project = TEST',
-          maxResults: 50,
-          fields: undefined,
-          expand: undefined,
-        },
-      });
-
-      expect(result.isError).toBeUndefined();
-      const response = JSON.parse(result.content[0].text);
-      expect(response.success).toBe(true);
-      expect(response.issues).toEqual(mockSearchResults.issues);
-      expect(response.total).toBe(2);
-      expect(response.isLast).toBe(true);
-    });
-
-    it('should search with custom parameters', async () => {
-      const mockSearchResults = {
-        issues: [
-          {
-            id: '10001',
-            key: 'TEST-1',
-            fields: {
-              summary: 'Test issue 1',
-              assignee: { displayName: 'John Doe' },
-            },
-          },
-        ],
-        total: 10,
-        startAt: 5,
-        maxResults: 1,
-      };
-
-      mockApiClient.makeRequest.mockResolvedValue({
-        success: true,
-        data: mockSearchResults,
-      });
-
-      const tool = registeredTools.get('search_jql');
-      const result = await tool.handler({
-        jql: 'project = TEST AND assignee is not EMPTY',
-        startAt: 5,
-        maxResults: 1,
-        fields: ['summary', 'assignee'],
-        expand: 'names',
-        validateQuery: 'warn',
-      });
-
-      // Updated to use new /search/jql endpoint (old /search deprecated Aug 2025)
-      expect(mockApiClient.makeRequest).toHaveBeenCalledWith({
-        method: 'POST',
-        path: '/search/jql',
-        data: {
-          jql: 'project = TEST AND assignee is not EMPTY',
-          maxResults: 1,
-          fields: ['summary', 'assignee'],
-          expand: 'names',
-        },
-      });
-
-      const response = JSON.parse(result.content[0].text);
-      expect(response.success).toBe(true);
-      expect(response.isLast).toBe(false); // 5 + 1 < 10
-    });
-
-    it('should handle JQL search errors', async () => {
-      mockApiClient.makeRequest.mockRejectedValue(new Error('Invalid JQL syntax'));
-
-      const tool = registeredTools.get('search_jql');
-      const result = await tool.handler({
-        jql: 'invalid jql syntax',
-      });
-
-      expect(result.isError).toBe(true);
-      const response = JSON.parse(result.content[0].text);
-      expect(response.success).toBe(false);
-      expect(response.error.code).toBe('JQL_SEARCH_ERROR');
-      expect(response.error.suggestion).toContain('Check your JQL syntax and permissions');
-    });
-
-    it('should validate maxResults limit', async () => {
-      const tool = registeredTools.get('search_jql');
-      const result = await tool.handler({
-        jql: 'project = TEST',
-        maxResults: 200, // Exceeds limit of 100
-      });
-
-      expect(result.isError).toBe(true);
-      const response = JSON.parse(result.content[0].text);
-      expect(response.success).toBe(false);
-    });
-  });
-
   describe('get_audit_records', () => {
     it('should retrieve audit records successfully', async () => {
       const mockAuditRecords = {
@@ -726,37 +593,6 @@ describe('System Tools', () => {
   });
 
   describe('input validation', () => {
-    it('should validate JQL string for search_jql', async () => {
-      const tool = registeredTools.get('search_jql');
-      const result = await tool.handler({
-        jql: '', // Empty JQL should fail
-      });
-
-      expect(result.isError).toBe(true);
-      const response = JSON.parse(result.content[0].text);
-      expect(response.success).toBe(false);
-    });
-
-    it('should validate maxResults bounds for search_jql', async () => {
-      const tool = registeredTools.get('search_jql');
-      const result = await tool.handler({
-        jql: 'project = TEST',
-        maxResults: 101, // Exceeds maximum
-      });
-
-      expect(result.isError).toBe(true);
-    });
-
-    it('should validate validateQuery enum for search_jql', async () => {
-      const tool = registeredTools.get('search_jql');
-      const result = await tool.handler({
-        jql: 'project = TEST',
-        validateQuery: 'invalid' as any,
-      });
-
-      expect(result.isError).toBe(true);
-    });
-
     it('should validate audit records limit', async () => {
       const tool = registeredTools.get('get_audit_records');
       const result = await tool.handler({
@@ -777,29 +613,6 @@ describe('System Tools', () => {
   });
 
   describe('edge cases', () => {
-    it('should handle empty search results', async () => {
-      mockApiClient.makeRequest.mockResolvedValue({
-        success: true,
-        data: {
-          issues: [],
-          total: 0,
-          startAt: 0,
-          maxResults: 50,
-        },
-      });
-
-      const tool = registeredTools.get('search_jql');
-      const result = await tool.handler({
-        jql: 'project = NONEXISTENT',
-      });
-
-      const response = JSON.parse(result.content[0].text);
-      expect(response.success).toBe(true);
-      expect(response.issues).toEqual([]);
-      expect(response.total).toBe(0);
-      expect(response.isLast).toBe(true);
-    });
-
     it('should handle empty audit records', async () => {
       mockApiClient.makeRequest.mockResolvedValue({
         success: true,
@@ -818,28 +631,6 @@ describe('System Tools', () => {
       expect(response.success).toBe(true);
       expect(response.records).toEqual([]);
       expect(response.total).toBe(0);
-    });
-
-    it('should calculate isLast correctly for pagination', async () => {
-      mockApiClient.makeRequest.mockResolvedValue({
-        success: true,
-        data: {
-          issues: [{ id: '1', key: 'TEST-1' }],
-          total: 100,
-          startAt: 50,
-          maxResults: 25,
-        },
-      });
-
-      const tool = registeredTools.get('search_jql');
-      const result = await tool.handler({
-        jql: 'project = TEST',
-        startAt: 50,
-        maxResults: 25,
-      });
-
-      const response = JSON.parse(result.content[0].text);
-      expect(response.isLast).toBe(false); // 50 + 25 = 75 < 100
     });
 
     it('should handle filter creation with empty sharePermissions array', async () => {

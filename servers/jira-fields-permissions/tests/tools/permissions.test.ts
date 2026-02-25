@@ -208,50 +208,14 @@ describe('Permission Tools', () => {
     });
   });
 
-  describe('assign_permission_scheme_to_project', () => {
-    it('should assign permission scheme to project successfully', async () => {
-      mockApiClient.makeRequest.mockResolvedValue({
-        success: true,
-      });
-
-      const tool = registeredTools.get('assign_permission_scheme_to_project');
-      const result = await tool.handler({
-        projectIdOrKey: 'TEST',
-        schemeId: 10001,
-      });
-
-      expect(mockApiClient.makeRequest).toHaveBeenCalledWith({
-        method: 'PUT',
-        path: '/project/TEST/permissionscheme',
-        data: {
-          id: 10001,
-        },
-      });
-
-      expect(result.isError).toBeUndefined();
-      const response = JSON.parse(result.content[0].text);
-      expect(response.success).toBe(true);
-      expect(response.message).toContain('Permission scheme 10001 assigned to project TEST');
-    });
-
-    it('should handle assignment errors', async () => {
-      mockApiClient.makeRequest.mockRejectedValue(new Error('Project not found'));
-
-      const tool = registeredTools.get('assign_permission_scheme_to_project');
-      const result = await tool.handler({
-        projectIdOrKey: 'NONEXISTENT',
-        schemeId: 10001,
-      });
-
-      expect(result.isError).toBe(true);
-      const response = JSON.parse(result.content[0].text);
-      expect(response.success).toBe(false);
-      expect(response.error.suggestion).toContain('Verify both the project and permission scheme exist');
-    });
-  });
-
   describe('update_permission_scheme', () => {
     it('should update permission scheme name and description', async () => {
+      const mockCurrentScheme = {
+        id: 10001,
+        name: 'Old Name',
+        description: 'Old description',
+        permissions: [],
+      };
       const mockUpdatedScheme = {
         id: 10001,
         name: 'Updated Scheme Name',
@@ -259,10 +223,9 @@ describe('Permission Tools', () => {
         permissions: [],
       };
 
-      mockApiClient.makeRequest.mockResolvedValue({
-        success: true,
-        data: mockUpdatedScheme,
-      });
+      mockApiClient.makeRequest
+        .mockResolvedValueOnce({ success: true, data: mockCurrentScheme })
+        .mockResolvedValueOnce({ success: true, data: mockUpdatedScheme });
 
       const tool = registeredTools.get('update_permission_scheme');
       const result = await tool.handler({
@@ -271,7 +234,7 @@ describe('Permission Tools', () => {
         description: 'Updated description',
       });
 
-      expect(mockApiClient.makeRequest).toHaveBeenCalledWith({
+      expect(mockApiClient.makeRequest).toHaveBeenNthCalledWith(2, {
         method: 'PUT',
         path: '/permissionscheme/10001',
         data: {
@@ -288,6 +251,12 @@ describe('Permission Tools', () => {
     });
 
     it('should update only the name', async () => {
+      const mockCurrentScheme = {
+        id: 10001,
+        name: 'Original Name',
+        description: 'Original description',
+        permissions: [],
+      };
       const mockUpdatedScheme = {
         id: 10001,
         name: 'New Name Only',
@@ -295,10 +264,10 @@ describe('Permission Tools', () => {
         permissions: [],
       };
 
-      mockApiClient.makeRequest.mockResolvedValue({
-        success: true,
-        data: mockUpdatedScheme,
-      });
+      // First call: GET current scheme, second call: PUT update
+      mockApiClient.makeRequest
+        .mockResolvedValueOnce({ success: true, data: mockCurrentScheme })
+        .mockResolvedValueOnce({ success: true, data: mockUpdatedScheme });
 
       const tool = registeredTools.get('update_permission_scheme');
       const result = await tool.handler({
@@ -306,11 +275,16 @@ describe('Permission Tools', () => {
         name: 'New Name Only',
       });
 
-      expect(mockApiClient.makeRequest).toHaveBeenCalledWith({
+      expect(mockApiClient.makeRequest).toHaveBeenNthCalledWith(1, {
+        method: 'GET',
+        path: '/permissionscheme/10001',
+      });
+      expect(mockApiClient.makeRequest).toHaveBeenNthCalledWith(2, {
         method: 'PUT',
         path: '/permissionscheme/10001',
         data: {
           name: 'New Name Only',
+          description: 'Original description',
         },
       });
 
@@ -319,6 +293,12 @@ describe('Permission Tools', () => {
     });
 
     it('should clear description when set to empty string', async () => {
+      const mockCurrentScheme = {
+        id: 10001,
+        name: 'Scheme Name',
+        description: 'Old description',
+        permissions: [],
+      };
       const mockUpdatedScheme = {
         id: 10001,
         name: 'Scheme Name',
@@ -326,10 +306,9 @@ describe('Permission Tools', () => {
         permissions: [],
       };
 
-      mockApiClient.makeRequest.mockResolvedValue({
-        success: true,
-        data: mockUpdatedScheme,
-      });
+      mockApiClient.makeRequest
+        .mockResolvedValueOnce({ success: true, data: mockCurrentScheme })
+        .mockResolvedValueOnce({ success: true, data: mockUpdatedScheme });
 
       const tool = registeredTools.get('update_permission_scheme');
       const result = await tool.handler({
@@ -337,10 +316,11 @@ describe('Permission Tools', () => {
         description: '',
       });
 
-      expect(mockApiClient.makeRequest).toHaveBeenCalledWith({
+      expect(mockApiClient.makeRequest).toHaveBeenNthCalledWith(2, {
         method: 'PUT',
         path: '/permissionscheme/10001',
         data: {
+          name: 'Scheme Name',
           description: '',
         },
       });

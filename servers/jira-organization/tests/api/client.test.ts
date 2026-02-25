@@ -82,9 +82,13 @@ describe('JiraApiClient', () => {
       expect(mockAxiosInstance.request).toHaveBeenCalledWith({
         method: 'GET',
         url: '/project/TEST',
+        baseURL: 'https://test.atlassian.net/rest/api/3',
         params: undefined,
         data: undefined,
-        headers: undefined,
+        headers: expect.objectContaining({
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        }),
         metadata: expect.any(Object),
       });
     });

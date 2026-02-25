@@ -12,7 +12,6 @@ import {
   setApplicationPropertySchema,
   getSystemAvatarsSchema,
   updateTimeTrackingSettingsSchema,
-  getSystemWebhooksSchema,
 } from '../validation/schemas.js';
 import {
   getAuditRecordsInputSchema,
@@ -28,8 +27,6 @@ import {
   getSystemAvatarsInputSchema,
   getTimeTrackingSettingsInputSchema,
   updateTimeTrackingSettingsInputSchema,
-  getJiraLicenseInputSchema,
-  getSystemWebhooksInputSchema,
 } from '../validation/input-schemas.js';
 import { logger } from '../utils/logger.js';
 
