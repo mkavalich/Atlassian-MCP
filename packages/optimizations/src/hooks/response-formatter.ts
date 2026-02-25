@@ -1,15 +1,13 @@
 /**
  * Response Formatter Hook
  *
- * Transforms tool responses to token-efficient formats (TOON, TSV).
- * This is an feature providing ~50-60% token reduction.
+ * Transforms tool responses to token-efficient TOON format.
+ * Uses data-driven auto-detection — no entity type mapping required.
+ * Works with any tool response that contains an array of objects.
  */
 
-import {
-  CompactSerializer,
-  type ResponseFormat,
-  type EntityType,
-} from '@atlassian-mcp/shared';
+import { toTOON } from '@atlassian-mcp/shared';
+import type { ResponseFormat } from '@atlassian-mcp/shared';
 
 /**
  * Response formatter configuration.
@@ -21,250 +19,258 @@ export interface ResponseFormatterConfig {
   debug?: boolean;
 }
 
-/**
- * Maps tool names to entity types for proper formatting.
- */
-const TOOL_ENTITY_MAP: Record<string, EntityType> = {
-  // Jira Projects
-  search_projects: 'project',
-  get_project: 'project',
-  create_project: 'project',
-  update_project: 'project',
-  search_jql: 'issue',
-  get_issue: 'issue',
-  create_issue: 'issue',
-  update_issue: 'issue',
-  get_comments: 'comment',
-  add_comment: 'comment',
-  get_dashboards: 'dashboard',
-  get_dashboard: 'dashboard',
-  create_dashboard: 'dashboard',
+// ============================================================================
+// Field Detection
+// ============================================================================
 
-  // Jira Workflows
-  get_workflows: 'workflow',
-  get_screens: 'screen',
-  get_screen_schemes: 'screenScheme',
-  get_workflow_schemes: 'workflowScheme',
+/** Field priority tiers for auto-detection. Higher priority = shown first. */
+const FIELD_PRIORITY: string[][] = [
+  // Tier 1: Identifiers
+  ['id', 'key'],
+  // Tier 2: Human-readable names
+  ['name', 'title', 'displayName', 'summary', 'label'],
+  // Tier 3: Classification
+  ['type', 'status', 'state', 'category'],
+  // Tier 4: Common descriptors
+  ['description', 'active', 'enabled', 'default', 'subtask'],
+];
 
-  // Jira Fields & Permissions
-  get_fields: 'field',
-  get_fields_paginated: 'field',
-  get_permission_schemes: 'permission',
-  get_permission_grants: 'permission',
-
-  // Jira Organization
-  get_organization_users: 'user',
-  search_organization_users: 'user',
-  get_directory_users: 'user',
-  search_site_users: 'user',
-
-  // Confluence
-  search_spaces: 'space',
-  get_space: 'space',
-  search_pages: 'page',
-  get_page: 'page',
-  get_page_children: 'page',
-  get_attachments: 'attachment',
-  get_blog_posts: 'blogPost',
-  get_page_comments: 'comment',
-  get_footer_comments: 'comment',
-  get_inline_comments: 'comment',
-
-  // Jira Product Discovery
-  get_ideas: 'idea',
-  search_ideas: 'idea',
-  get_insights: 'insight',
-  get_jpd_projects: 'project',
-};
+/** Keys that are response metadata, not entity data */
+const METADATA_KEYS = new Set([
+  'success', 'pagination', 'total', 'count', 'message',
+  'usage_guidance', 'suggested_next_steps', 'fieldsMode',
+  'executionTime', 'queryParameters', 'apiInfo', 'resultCount',
+  'totalResults', 'currentPage', 'pageSize', 'healthInsights',
+  'organizationSummary', 'analysisOptions', 'orgId',
+]);
 
 /**
- * Detect entity type from tool name.
+ * Auto-detect the best fields to display from actual data.
+ * Inspects the first few items to find common scalar fields,
+ * then ranks them by usefulness.
  */
-function detectEntityType(toolName: string): EntityType | null {
-  // Direct mapping
-  if (TOOL_ENTITY_MAP[toolName]) {
-    return TOOL_ENTITY_MAP[toolName];
-  }
+function autoDetectFields(
+  items: Record<string, unknown>[],
+  maxFields: number
+): string[] {
+  // Sample first 3 items to find consistent fields
+  const sample = items.slice(0, 3);
+  const fieldCounts = new Map<string, number>();
 
-  // Pattern-based detection
-  const patterns: Array<[RegExp, EntityType]> = [
-    [/project/i, 'project'],
-    [/issue/i, 'issue'],
-    [/comment/i, 'comment'],
-    [/dashboard/i, 'dashboard'],
-    [/workflow/i, 'workflow'],
-    [/screen/i, 'screen'],
-    [/field/i, 'field'],
-    [/permission/i, 'permission'],
-    [/user/i, 'user'],
-    [/space/i, 'space'],
-    [/page/i, 'page'],
-    [/attachment/i, 'attachment'],
-    [/blog/i, 'blogPost'],
-    [/idea/i, 'idea'],
-  ];
-
-  for (const [pattern, entityType] of patterns) {
-    if (pattern.test(toolName)) {
-      return entityType;
+  for (const item of sample) {
+    for (const [key, value] of Object.entries(item)) {
+      if (value === null || value === undefined) continue;
+      // Only include scalar fields or simple nested objects with a .name
+      if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+        fieldCounts.set(key, (fieldCounts.get(key) || 0) + 1);
+      } else if (typeof value === 'object' && !Array.isArray(value)) {
+        // Check for nested .name, .key, .value patterns
+        const nested = value as Record<string, unknown>;
+        if (typeof nested.name === 'string') {
+          fieldCounts.set(`${key}.name`, (fieldCounts.get(`${key}.name`) || 0) + 1);
+        }
+        if (typeof nested.key === 'string') {
+          fieldCounts.set(`${key}.key`, (fieldCounts.get(`${key}.key`) || 0) + 1);
+        }
+      }
     }
   }
 
-  return null;
+  // Only keep fields present in all sampled items
+  const threshold = sample.length;
+  const consistentFields = new Set<string>();
+  for (const [field, count] of fieldCounts) {
+    if (count >= threshold) {
+      consistentFields.add(field);
+    }
+  }
+
+  // Sort by priority tiers
+  const sorted: string[] = [];
+  for (const tier of FIELD_PRIORITY) {
+    for (const field of tier) {
+      if (consistentFields.has(field)) {
+        sorted.push(field);
+        consistentFields.delete(field);
+      }
+    }
+  }
+  // Append remaining fields alphabetically
+  const remaining = [...consistentFields].sort();
+  sorted.push(...remaining);
+
+  return sorted.slice(0, maxFields);
+}
+
+// ============================================================================
+// Data Extraction
+// ============================================================================
+
+interface ExtractedData {
+  /** The data array */
+  items: Record<string, unknown>[];
+  /** The response key name (e.g., 'issueTypes', 'permissionSchemes') */
+  label: string;
 }
 
 /**
- * Extract data array from tool response for formatting.
+ * Extract the primary data array from a parsed tool response.
+ * Finds the largest array of objects, skipping metadata keys.
+ * Returns both the array and its key name for use as the TOON label.
  */
-function extractDataArray(result: unknown): Record<string, unknown>[] | null {
+function extractDataArray(result: unknown): ExtractedData | null {
   if (!result || typeof result !== 'object') {
     return null;
   }
 
+  if (Array.isArray(result) && result.length > 0 && typeof result[0] === 'object') {
+    return { items: result as Record<string, unknown>[], label: 'items' };
+  }
+
   const obj = result as Record<string, unknown>;
+  let bestKey: string | null = null;
+  let bestArray: Record<string, unknown>[] | null = null;
+  let bestLength = 0;
 
-  // Common patterns for data arrays in responses
-  const arrayFields = [
-    'projects', 'issues', 'comments', 'dashboards', 'workflows',
-    'screens', 'screenSchemes', 'fields', 'users', 'spaces', 'pages',
-    'attachments', 'blogPosts', 'ideas', 'insights', 'results', 'values',
-    'records', 'permissions', 'permissionSchemes', 'fieldConfigurations',
-    'notificationSchemes', 'workflowSchemes', 'schemes', 'groups',
-    'organizations', 'serviceDesks', 'requestTypes',
-  ];
-
-  for (const field of arrayFields) {
-    if (Array.isArray(obj[field]) && obj[field].length > 0) {
-      return obj[field] as Record<string, unknown>[];
+  for (const [key, value] of Object.entries(obj)) {
+    if (METADATA_KEYS.has(key)) continue;
+    if (
+      Array.isArray(value) &&
+      value.length > 0 &&
+      typeof value[0] === 'object' &&
+      value[0] !== null
+    ) {
+      if (value.length > bestLength) {
+        bestKey = key;
+        bestArray = value as Record<string, unknown>[];
+        bestLength = value.length;
+      }
     }
   }
 
-  // Check if the result itself is an array
-  if (Array.isArray(result) && result.length > 0) {
-    return result as Record<string, unknown>[];
+  if (bestArray && bestKey) {
+    return { items: bestArray, label: bestKey };
   }
 
   return null;
 }
 
+// ============================================================================
+// Metadata Extraction
+// ============================================================================
+
 /**
- * Creates a response formatter hook .
- *
- * @example
- * ```typescript
- * import { createResponseFormatterHook } from './hooks/response-formatter.js';
- *
- * const formatter = createResponseFormatterHook({
- *   defaultFormat: 'concise',
- *   debug: true,
- * });
- *
- * // Use in hooks
- * const hooks = {
- *   transformResponse: formatter.transformResponse,
- * };
- * ```
+ * Extract metadata fields from the parsed response to preserve in output.
  */
+function extractMetadata(parsed: unknown): Record<string, unknown> {
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    return {};
+  }
+
+  const obj = parsed as Record<string, unknown>;
+  const metadata: Record<string, unknown> = {};
+
+  for (const key of ['success', 'pagination', 'total', 'count', 'message', 'usage_guidance']) {
+    if (key in obj) {
+      metadata[key] = obj[key];
+    }
+  }
+
+  return metadata;
+}
+
+// ============================================================================
+// Response Formatter Hook
+// ============================================================================
+
+/** Max fields per format level */
+const FIELD_LIMITS: Record<string, number> = {
+  concise: 4,
+  standard: 8,
+  detailed: 999,
+};
+
 export function createResponseFormatterHook(config: ResponseFormatterConfig = {}) {
   const {
     defaultFormat = 'concise',
     debug = false,
   } = config;
 
-  /**
-   * Transform response to token-efficient format.
-   *
-   * @param toolName - Name of the tool that produced the result
-   * @param result - Original tool result (typically has content array with text)
-   * @param params - Original tool parameters (may include responseFormat)
-   * @returns Transformed result with formatted text
-   */
   async function transformResponse(
     toolName: string,
     result: unknown,
     params?: Record<string, unknown>
   ): Promise<unknown> {
-    // Extract response format from params, default to config
     const format = (params?.responseFormat as ResponseFormat) || defaultFormat;
 
-    // Skip formatting for detailed format (return full JSON)
+    // Detailed = full JSON, no transformation
     if (format === 'detailed') {
       if (debug) {
-        console.log(`[ResponseFormatter] ${toolName}: detailed format, skipping transformation`);
+        console.log(`[ResponseFormatter] ${toolName}: detailed format, passthrough`);
       }
       return result;
     }
 
-    // Detect entity type
-    const entityType = detectEntityType(toolName);
-    if (!entityType) {
-      if (debug) {
-        console.log(`[ResponseFormatter] ${toolName}: unknown entity type, skipping transformation`);
-      }
-      return result;
-    }
-
-    // Parse the result if it's in MCP content format
+    // Parse MCP content format
     let parsedResult: unknown = result;
 
     if (result && typeof result === 'object') {
       const obj = result as Record<string, unknown>;
-
-      // MCP tool results have content array with text
       if (Array.isArray(obj.content) && obj.content.length > 0) {
         const firstContent = obj.content[0] as Record<string, unknown>;
         if (firstContent?.type === 'text' && typeof firstContent.text === 'string') {
           try {
             parsedResult = JSON.parse(firstContent.text);
           } catch {
-            // Not JSON, skip transformation
-            if (debug) {
-              console.log(`[ResponseFormatter] ${toolName}: content not JSON, skipping`);
-            }
-            return result;
+            return result; // Not JSON, skip
           }
         }
       }
     }
 
-    // Extract data array for formatting
-    const dataArray = extractDataArray(parsedResult);
-    if (!dataArray || dataArray.length === 0) {
+    // Extract data array
+    const extracted = extractDataArray(parsedResult);
+    if (!extracted || extracted.items.length === 0) {
       if (debug) {
-        console.log(`[ResponseFormatter] ${toolName}: no data array found, skipping transformation`);
+        console.log(`[ResponseFormatter] ${toolName}: no data array found, passthrough`);
+      }
+      return result;
+    }
+
+    const { items, label } = extracted;
+
+    // Auto-detect fields from the actual data
+    const maxFields = FIELD_LIMITS[format] || FIELD_LIMITS.concise;
+    const fields = autoDetectFields(items, maxFields);
+
+    if (fields.length === 0) {
+      if (debug) {
+        console.log(`[ResponseFormatter] ${toolName}: no formattable fields found, passthrough`);
       }
       return result;
     }
 
     try {
-      // Create serializer and format
-      const serializer = new CompactSerializer(entityType);
-      const formatted = serializer.serializeWithFormat(dataArray, format);
+      // Format with TOON directly — no entity type mapping needed
+      const text = toTOON(items, {
+        entityType: label,
+        fields,
+        maxTextLength: format === 'concise' ? 80 : 200,
+        includeFooter: true,
+      });
 
       if (debug) {
         console.log(
-          `[ResponseFormatter] ${toolName}: ${format} format applied, ` +
-          `${dataArray.length} records, ~${formatted.estimatedTokens} tokens`
+          `[ResponseFormatter] ${toolName}: ${format} → ${fields.join(',')} ` +
+          `(${items.length} items from "${label}")`
         );
       }
 
-      // Preserve metadata from original response
-      const metadata: Record<string, unknown> = {};
-      if (parsedResult && typeof parsedResult === 'object') {
-        const obj = parsedResult as Record<string, unknown>;
-        // Copy non-data fields
-        for (const key of ['success', 'pagination', 'total', 'message', 'usage_guidance']) {
-          if (key in obj) {
-            metadata[key] = obj[key];
-          }
-        }
-      }
-
-      // Build formatted response
-      const formattedText = formatted.text +
+      // Append metadata
+      const metadata = extractMetadata(parsedResult);
+      const formattedText = text +
         (Object.keys(metadata).length > 0 ? `\n\n---\n${JSON.stringify(metadata)}` : '');
 
-      // Return in MCP content format
       return {
         content: [{
           type: 'text',
@@ -272,7 +278,6 @@ export function createResponseFormatterHook(config: ResponseFormatterConfig = {}
         }],
       };
     } catch (error) {
-      // Fall back to original on error
       if (debug) {
         console.error(`[ResponseFormatter] Error formatting ${toolName}:`, error);
       }
@@ -280,14 +285,11 @@ export function createResponseFormatterHook(config: ResponseFormatterConfig = {}
     }
   }
 
-  return {
-    transformResponse,
-    detectEntityType,
-  };
+  return { transformResponse };
 }
 
 /**
- * Default response formatter with standard configuration.
+ * Default response formatter instance.
  */
 export const defaultResponseFormatter = createResponseFormatterHook({
   defaultFormat: 'concise',
