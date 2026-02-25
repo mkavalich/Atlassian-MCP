@@ -1,0 +1,61 @@
+{
+  "$schema": "https://raw.githubusercontent.com/anthropics/claude-code/main/schemas/mcp-config.json",
+  "mcpServers": {
+    "jira-projects": {
+      "command": "npx",
+      "args": ["tsx", "servers/jira-projects/src/index.ts"],
+      "env": {
+        "TRANSPORT": "stdio"
+      }
+    },
+    "jira-workflows": {
+      "command": "npx",
+      "args": ["tsx", "servers/jira-workflows/src/index.ts"],
+      "env": {
+        "TRANSPORT": "stdio"
+      }
+    },
+    "jira-fields-permissions": {
+      "command": "npx",
+      "args": ["tsx", "servers/jira-fields-permissions/src/index.ts"],
+      "env": {
+        "TRANSPORT": "stdio"
+      }
+    },
+    "jira-service-desk": {
+      "command": "npx",
+      "args": ["tsx", "servers/jira-service-desk/src/index.ts"],
+      "env": {
+        "TRANSPORT": "stdio"
+      }
+    },
+    "jira-organization": {
+      "command": "npx",
+      "args": ["tsx", "servers/jira-organization/src/index.ts"],
+      "env": {
+        "TRANSPORT": "stdio"
+      }
+    },
+    "jira-system-admin": {
+      "command": "npx",
+      "args": ["tsx", "servers/jira-system-admin/src/index.ts"],
+      "env": {
+        "TRANSPORT": "stdio"
+      }
+    },
+    "jira-product-discovery": {
+      "command": "npx",
+      "args": ["tsx", "servers/jira-product-discovery/src/index.ts"],
+      "env": {
+        "TRANSPORT": "stdio"
+      }
+    },
+    "confluence": {
+      "command": "npx",
+      "args": ["tsx", "servers/confluence/src/index.ts"],
+      "env": {
+        "TRANSPORT": "stdio"
+      }
+    }
+  }
+}

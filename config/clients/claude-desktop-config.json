@@ -1,0 +1,108 @@
+{
+  "mcpServers": {
+    "jira-projects": {
+      "command": "docker",
+      "args": [
+        "exec",
+        "-i",
+        "-e",
+        "TRANSPORT=stdio",
+        "jira-projects-mcp",
+        "sh",
+        "-c",
+        "node /app/servers/jira-projects/dist/index.js"
+      ]
+    },
+    "jira-workflows": {
+      "command": "docker",
+      "args": [
+        "exec",
+        "-i",
+        "-e",
+        "TRANSPORT=stdio",
+        "jira-workflows-mcp",
+        "sh",
+        "-c",
+        "node /app/servers/jira-workflows/dist/index.js"
+      ]
+    },
+    "jira-fields-permissions": {
+      "command": "docker",
+      "args": [
+        "exec",
+        "-i",
+        "-e",
+        "TRANSPORT=stdio",
+        "jira-fields-permissions-mcp",
+        "sh",
+        "-c",
+        "node /app/servers/jira-fields-permissions/dist/index.js"
+      ]
+    },
+    "jira-service-desk": {
+      "command": "docker",
+      "args": [
+        "exec",
+        "-i",
+        "-e",
+        "TRANSPORT=stdio",
+        "jira-service-desk-mcp",
+        "sh",
+        "-c",
+        "node /app/servers/jira-service-desk/dist/index.js"
+      ]
+    },
+    "jira-organization": {
+      "command": "docker",
+      "args": [
+        "exec",
+        "-i",
+        "-e",
+        "TRANSPORT=stdio",
+        "jira-organization-mcp",
+        "sh",
+        "-c",
+        "node /app/servers/jira-organization/dist/index.js"
+      ]
+    },
+    "jira-system-admin": {
+      "command": "docker",
+      "args": [
+        "exec",
+        "-i",
+        "-e",
+        "TRANSPORT=stdio",
+        "jira-system-admin-mcp",
+        "sh",
+        "-c",
+        "node /app/servers/jira-system-admin/dist/index.js"
+      ]
+    },
+    "jira-product-discovery": {
+      "command": "docker",
+      "args": [
+        "exec",
+        "-i",
+        "-e",
+        "TRANSPORT=stdio",
+        "jira-product-discovery-mcp",
+        "sh",
+        "-c",
+        "node /app/servers/jira-product-discovery/dist/index.js"
+      ]
+    },
+    "confluence": {
+      "command": "docker",
+      "args": [
+        "exec",
+        "-i",
+        "-e",
+        "TRANSPORT=stdio",
+        "confluence-mcp",
+        "sh",
+        "-c",
+        "node /app/servers/confluence/dist/index.js"
+      ]
+    }
+  }
+}

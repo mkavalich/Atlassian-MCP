@@ -1,0 +1,236 @@
+# =============================================================================
+# Atlassian MCP - Docker Compose
+#
+# Deploys all 8 MCP servers with optimizations (caching, schema registry,
+# response formatting, telemetry).
+#
+# Usage:
+#   docker-compose up -d                    # Start all servers
+#   docker-compose up -d jira-projects      # Start specific server
+#   docker-compose logs -f jira-projects    # View logs
+#   docker-compose down                     # Stop all servers
+#
+# Environment:
+#   Copy .env.example to .env and configure your Atlassian credentials
+#
+# Ports:
+#   jira-projects ............ 4001
+#   jira-workflows ........... 4002
+#   jira-fields-permissions .. 4003
+#   jira-service-desk ........ 4004
+#   jira-organization ........ 4005
+#   jira-system-admin ........ 4006
+#   jira-product-discovery ... 4007
+#   confluence ............... 4008
+# =============================================================================
+
+services:
+  # Jira Projects MCP Server
+  jira-projects:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        SERVER: jira-projects
+    container_name: jira-projects-mcp
+    environment:
+      - TRANSPORT=http
+      - MCP_PORT=3000
+      - SERVER_NAME=jira-projects
+      - DEBUG=${DEBUG:-false}
+      - DEBUG_CACHE=${DEBUG_CACHE:-false}
+      - ATLASSIAN_SITE_URL=${ATLASSIAN_SITE_URL}
+      - ATLASSIAN_USER_EMAIL=${ATLASSIAN_USER_EMAIL}
+      - ATLASSIAN_API_TOKEN=${ATLASSIAN_API_TOKEN}
+    ports:
+      - "127.0.0.1:4001:3000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Jira Workflows MCP Server
+  jira-workflows:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        SERVER: jira-workflows
+    container_name: jira-workflows-mcp
+    environment:
+      - TRANSPORT=http
+      - MCP_PORT=3000
+      - SERVER_NAME=jira-workflows
+      - DEBUG=${DEBUG:-false}
+      - DEBUG_CACHE=${DEBUG_CACHE:-false}
+      - ATLASSIAN_SITE_URL=${ATLASSIAN_SITE_URL}
+      - ATLASSIAN_USER_EMAIL=${ATLASSIAN_USER_EMAIL}
+      - ATLASSIAN_API_TOKEN=${ATLASSIAN_API_TOKEN}
+    ports:
+      - "127.0.0.1:4002:3000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Jira Fields & Permissions MCP Server
+  jira-fields-permissions:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        SERVER: jira-fields-permissions
+    container_name: jira-fields-permissions-mcp
+    environment:
+      - TRANSPORT=http
+      - MCP_PORT=3000
+      - SERVER_NAME=jira-fields-permissions
+      - DEBUG=${DEBUG:-false}
+      - DEBUG_CACHE=${DEBUG_CACHE:-false}
+      - ATLASSIAN_SITE_URL=${ATLASSIAN_SITE_URL}
+      - ATLASSIAN_USER_EMAIL=${ATLASSIAN_USER_EMAIL}
+      - ATLASSIAN_API_TOKEN=${ATLASSIAN_API_TOKEN}
+    ports:
+      - "127.0.0.1:4003:3000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Jira Service Desk MCP Server
+  jira-service-desk:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        SERVER: jira-service-desk
+    container_name: jira-service-desk-mcp
+    environment:
+      - TRANSPORT=http
+      - MCP_PORT=3000
+      - SERVER_NAME=jira-service-desk
+      - DEBUG=${DEBUG:-false}
+      - DEBUG_CACHE=${DEBUG_CACHE:-false}
+      - ATLASSIAN_SITE_URL=${ATLASSIAN_SITE_URL}
+      - ATLASSIAN_USER_EMAIL=${ATLASSIAN_USER_EMAIL}
+      - ATLASSIAN_API_TOKEN=${ATLASSIAN_API_TOKEN}
+    ports:
+      - "127.0.0.1:4004:3000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Jira Organization MCP Server
+  jira-organization:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        SERVER: jira-organization
+    container_name: jira-organization-mcp
+    environment:
+      - TRANSPORT=http
+      - MCP_PORT=3000
+      - SERVER_NAME=jira-organization
+      - DEBUG=${DEBUG:-false}
+      - DEBUG_CACHE=${DEBUG_CACHE:-false}
+      - ATLASSIAN_SITE_URL=${ATLASSIAN_SITE_URL}
+      - ATLASSIAN_USER_EMAIL=${ATLASSIAN_USER_EMAIL}
+      - ATLASSIAN_API_TOKEN=${ATLASSIAN_API_TOKEN}
+      - ATLASSIAN_ORG_ID=${ATLASSIAN_ORG_ID}
+    ports:
+      - "127.0.0.1:4005:3000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Jira System Admin MCP Server
+  jira-system-admin:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        SERVER: jira-system-admin
+    container_name: jira-system-admin-mcp
+    environment:
+      - TRANSPORT=http
+      - MCP_PORT=3000
+      - SERVER_NAME=jira-system-admin
+      - DEBUG=${DEBUG:-false}
+      - DEBUG_CACHE=${DEBUG_CACHE:-false}
+      - ATLASSIAN_SITE_URL=${ATLASSIAN_SITE_URL}
+      - ATLASSIAN_USER_EMAIL=${ATLASSIAN_USER_EMAIL}
+      - ATLASSIAN_API_TOKEN=${ATLASSIAN_API_TOKEN}
+      - ATLASSIAN_ORG_ID=${ATLASSIAN_ORG_ID}
+    ports:
+      - "127.0.0.1:4006:3000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Jira Product Discovery MCP Server
+  jira-product-discovery:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        SERVER: jira-product-discovery
+    container_name: jira-product-discovery-mcp
+    environment:
+      - TRANSPORT=http
+      - MCP_PORT=3000
+      - SERVER_NAME=jira-product-discovery
+      - DEBUG=${DEBUG:-false}
+      - DEBUG_CACHE=${DEBUG_CACHE:-false}
+      - ATLASSIAN_SITE_URL=${ATLASSIAN_SITE_URL}
+      - ATLASSIAN_USER_EMAIL=${ATLASSIAN_USER_EMAIL}
+      - ATLASSIAN_API_TOKEN=${ATLASSIAN_API_TOKEN}
+    ports:
+      - "127.0.0.1:4007:3000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Confluence MCP Server
+  confluence:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        SERVER: confluence
+    container_name: confluence-mcp
+    environment:
+      - TRANSPORT=http
+      - MCP_PORT=3000
+      - SERVER_NAME=confluence
+      - DEBUG=${DEBUG:-false}
+      - DEBUG_CACHE=${DEBUG_CACHE:-false}
+      - ATLASSIAN_SITE_URL=${ATLASSIAN_SITE_URL}
+      - ATLASSIAN_USER_EMAIL=${ATLASSIAN_USER_EMAIL}
+      - ATLASSIAN_API_TOKEN=${ATLASSIAN_API_TOKEN}
+    ports:
+      - "127.0.0.1:4008:3000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
