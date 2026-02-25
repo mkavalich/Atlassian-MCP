@@ -1,0 +1,34 @@
+{
+  "name": "@atlassian-mcp/optimizations",
+  "version": "2.0.0",
+  "description": "Server optimizations: caching, schema registry, response formatting, telemetry",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": { "import": "./dist/index.js", "types": "./dist/index.d.ts" },
+    "./hooks": { "import": "./dist/hooks/index.js", "types": "./dist/hooks/index.d.ts" },
+    "./server": { "import": "./dist/server/index.js", "types": "./dist/server/index.d.ts" },
+    "./cache": { "import": "./dist/cache/index.js", "types": "./dist/cache/index.d.ts" },
+    "./telemetry": { "import": "./dist/telemetry/index.js", "types": "./dist/telemetry/index.d.ts" },
+    "./tools": { "import": "./dist/tools/index.js", "types": "./dist/tools/index.d.ts" }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rimraf dist",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@atlassian-mcp/shared": "*",
+    "@modelcontextprotocol/sdk": "^1.25.1",
+    "lru-cache": "^10.0.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "rimraf": "^5.0.0",
+    "typescript": "^5.8.3"
+  },
+  "author": "Mike Kavalich",
+  "license": "MIT"
+}
