@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  # Confluence MCP Server
+  confluence:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: confluence-mcp
+    environment:
+      - TRANSPORT=http
+      - MCP_PORT=3000
+      - CONFLUENCE_BASE_URL=${CONFLUENCE_BASE_URL}
+      - CONFLUENCE_EMAIL=${CONFLUENCE_EMAIL}
+      - CONFLUENCE_API_TOKEN=${CONFLUENCE_API_TOKEN}
+      # Fallback to ATLASSIAN_* if CONFLUENCE_* not set
+      - ATLASSIAN_BASE_URL=${ATLASSIAN_BASE_URL}
+      - ATLASSIAN_EMAIL=${ATLASSIAN_EMAIL}
+      - ATLASSIAN_API_TOKEN=${ATLASSIAN_API_TOKEN}
+    ports:
+      - "127.0.0.1:3008:3000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  default:
+    name: confluence-mcp-network
