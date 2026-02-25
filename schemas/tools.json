@@ -1,0 +1,4904 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Atlassian MCP Tools Schema",
+  "description": "Auto-generated schema of all available MCP tools for skill validation",
+  "generated": "2026-02-23T13:43:43.077Z",
+  "servers": {
+    "jira-projects": {
+      "description": "Projects, issues, dashboards, reporting",
+      "toolCount": 60,
+      "tools": {
+        "search_tools": {
+          "description": "Discover available tools by category or type. Use this first to find the right tool for your task.",
+          "type": "discovery",
+          "parameters": [
+            "category",
+            "type"
+          ],
+          "annotations": {
+            "title": "Search Tools",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "search_projects": {
+          "description": "🔍 DISCOVERY TOOL: Primary discovery method for project operations. Use this first to find available project IDs and key",
+          "type": "discovery",
+          "parameters": [
+            "query",
+            "typeKey",
+            "categoryId",
+            "action",
+            "expand",
+            "orderBy",
+            "startAt",
+            "maxResults",
+            "fields"
+          ],
+          "annotations": {
+            "title": "Search Projects",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": true
+          }
+        },
+        "create_project": {
+          "description": "🆕 CREATE: Creates a new company-managed project (Scrum, Kanban, or Service Desk) with specified configuration. After cr",
+          "type": "create",
+          "parameters": [
+            "name",
+            "key",
+            "projectTypeKey",
+            "description",
+            "leadAccountId",
+            "assigneeType",
+            "url",
+            "avatarId",
+            "projectTemplateKey",
+            "categoryId",
+            "notificationScheme",
+            "permissionScheme",
+            "issueSecurityScheme"
+          ],
+          "annotations": {
+            "title": "Create Project",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": false,
+            "openWorldHint": true
+          }
+        },
+        "get_project": {
+          "description": "⚠️ PREREQUISITE: Use \"search_projects\" first to find valid project IDs or keys. Get details for a specific project by ID",
+          "type": "read",
+          "parameters": [
+            "projectIdOrKey",
+            "expand",
+            "fields"
+          ],
+          "annotations": {
+            "title": "Get Project",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": true
+          }
+        },
+        "update_project": {
+          "description": "⚠️ PREREQUISITE: Use \"search_projects\" first to find valid project IDs or keys. Update an existing project's details, co",
+          "type": "update",
+          "parameters": [
+            "projectIdOrKey",
+            "name",
+            "key",
+            "description",
+            "leadAccountId",
+            "assigneeType",
+            "url",
+            "avatarId",
+            "categoryId",
+            "notificationScheme",
+            "permissionScheme",
+            "issueSecurityScheme"
+          ],
+          "annotations": {
+            "title": "Update Project",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": true
+          }
+        },
+        "delete_project": {
+          "description": "⚠️ PREREQUISITE: Use \"search_projects\" first to find valid project IDs or keys. Delete a project permanently (use with c",
+          "type": "delete",
+          "parameters": [
+            "projectIdOrKey",
+            "enableUndo"
+          ],
+          "annotations": {
+            "title": "Delete Project",
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "idempotentHint": true,
+            "openWorldHint": true
+          }
+        },
+        "create_issue": {
+          "description": "⚠️ MULTIPLE PREREQUISITES: Use \"search_projects\" first to find valid project keys AND \"get_issue_types\" to find valid is",
+          "type": "create",
+          "parameters": [
+            "projectKey",
+            "issueType",
+            "summary",
+            "description",
+            "assignee",
+            "reporter",
+            "priority",
+            "labels",
+            "components",
+            "fixVersions",
+            "affectsVersions",
+            "parentKey",
+            "dueDate",
+            "customFields"
+          ],
+          "annotations": {
+            "title": "Create Issue",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": false,
+            "openWorldHint": false
+          },
+          "examples": [
+            {
+              "name": "Create a bug with priority and labels",
+              "input": {
+                "projectKey": "PROJ",
+                "issueType": "Bug",
+                "summary": "Login page returns 500 error on mobile Safari",
+                "description": "Users on iOS Safari see a 500 error when submitting the login form.",
+                "priority": "High",
+                "labels": [
+                  "mobile",
+                  "login"
+                ],
+                "dueDate": "2026-03-15"
+              }
+            },
+            {
+              "name": "Create a story with custom fields (select, number, user picker)",
+              "input": {
+                "projectKey": "PROJ",
+                "issueType": "Story",
+                "summary": "Add dark mode toggle to settings page",
+                "assignee": "557058:abcdef01-2345-6789-abcd-ef0123456789",
+                "customFields": {
+                  "customfield_10001": {
+                    "value": "Frontend"
+                  },
+                  "customfield_10002": [
+                    {
+                      "id": "10500"
+                    },
+                    {
+                      "id": "10501"
+                    }
+                  ],
+                  "customfield_10003": {
+                    "accountId": "557058:abcdef01-2345-6789-abcd-ef0123456789"
+                  },
+                  "customfield_10005": 3
+                }
+              }
+            },
+            {
+              "name": "Create a subtask under an existing issue",
+              "input": {
+                "projectKey": "PROJ",
+                "issueType": "Sub-task",
+                "summary": "Implement API endpoint for dark mode preference",
+                "parentKey": "PROJ-100",
+                "priority": "Medium"
+              }
+            }
+          ]
+        },
+        "get_issue": {
+          "description": "📖 READ: Retrieve detailed information about a specific issue by its key or ID. Use expand parameter to include addition",
+          "type": "read",
+          "parameters": [
+            "issueIdOrKey",
+            "fields",
+            "expand",
+            "properties"
+          ],
+          "annotations": {
+            "title": "Get Issue",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "update_issue": {
+          "description": "✏️ UPDATE: Update fields on an existing issue. Only specified fields will be modified; omitted fields remain unchanged. ",
+          "type": "update",
+          "parameters": [
+            "issueIdOrKey",
+            "summary",
+            "description",
+            "assignee",
+            "priority",
+            "labels",
+            "components",
+            "fixVersions",
+            "dueDate",
+            "customFields",
+            "notifyUsers"
+          ],
+          "annotations": {
+            "title": "Update Issue",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          },
+          "examples": [
+            {
+              "name": "Update summary, priority, and add labels",
+              "input": {
+                "issueIdOrKey": "PROJ-123",
+                "summary": "Updated: Login page returns 500 error on all mobile browsers",
+                "priority": "Highest",
+                "labels": [
+                  "mobile",
+                  "login",
+                  "critical"
+                ]
+              }
+            },
+            {
+              "name": "Set custom fields and due date",
+              "input": {
+                "issueIdOrKey": "PROJ-456",
+                "assignee": "557058:abcdef01-2345-6789-abcd-ef0123456789",
+                "dueDate": "2026-03-15",
+                "customFields": {
+                  "customfield_10001": {
+                    "value": "Backend"
+                  },
+                  "customfield_10005": 5
+                }
+              }
+            }
+          ]
+        },
+        "delete_issue": {
+          "description": "🗑️ DELETE: Permanently delete an issue. This action cannot be undone. Use deleteSubtasks=true to also delete subtasks, ",
+          "type": "delete",
+          "parameters": [
+            "issueIdOrKey",
+            "deleteSubtasks"
+          ],
+          "annotations": {
+            "title": "Delete Issue",
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "idempotentHint": false,
+            "openWorldHint": false
+          }
+        },
+        "bulk_create_issues": {
+          "description": "📦 BATCH CREATE: Create multiple issues in a single request (up to 50). More efficient than multiple create_issue calls.",
+          "type": "other",
+          "parameters": [
+            "issues"
+          ],
+          "annotations": {
+            "title": "Bulk Create Issues",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": false,
+            "openWorldHint": false
+          },
+          "examples": [
+            {
+              "name": "Create three tasks for a sprint",
+              "input": {
+                "issues": [
+                  {
+                    "projectKey": "PROJ",
+                    "issueType": "Task",
+                    "summary": "Set up CI pipeline",
+                    "priority": "High"
+                  },
+                  {
+                    "projectKey": "PROJ",
+                    "issueType": "Task",
+                    "summary": "Write unit tests for auth module",
+                    "labels": [
+                      "testing"
+                    ]
+                  },
+                  {
+                    "projectKey": "PROJ",
+                    "issueType": "Bug",
+                    "summary": "Fix header alignment on mobile",
+                    "priority": "Medium"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "get_transitions": {
+          "description": "🔍 DISCOVERY: Get available workflow transitions for an issue. Use this to find valid transition IDs before using \"trans",
+          "type": "read",
+          "parameters": [
+            "issueIdOrKey",
+            "expand"
+          ],
+          "annotations": {
+            "title": "Get Transitions",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "transition_issue": {
+          "description": "🔄 UPDATE: Move an issue to a new status via workflow transition. Use \"get_transitions\" first to find available transiti",
+          "type": "update",
+          "parameters": [
+            "issueIdOrKey",
+            "transitionId",
+            "transitionName",
+            "comment",
+            "resolution",
+            "fields"
+          ],
+          "annotations": {
+            "title": "Transition Issue",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": false,
+            "openWorldHint": false
+          },
+          "examples": [
+            {
+              "name": "Move issue to Done with resolution",
+              "input": {
+                "issueIdOrKey": "PROJ-123",
+                "transitionName": "Done",
+                "resolution": "Done",
+                "comment": "Verified fix in staging environment."
+              }
+            },
+            {
+              "name": "Start progress on an issue by transition name",
+              "input": {
+                "issueIdOrKey": "PROJ-456",
+                "transitionName": "Start Progress"
+              }
+            }
+          ]
+        },
+        "assign_issue": {
+          "description": "👤 UPDATE: Assign an issue to a user or unassign it. Use \"search_site_users\" to find valid account IDs. Set accountId to",
+          "type": "update",
+          "parameters": [
+            "issueIdOrKey",
+            "accountId"
+          ],
+          "annotations": {
+            "title": "Assign Issue",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "add_comment": {
+          "description": "💬 CREATE: Add a comment to an issue. Supports plain text or Atlassian Document Format. Use visibility to restrict who c",
+          "type": "create",
+          "parameters": [
+            "issueIdOrKey",
+            "body",
+            "visibility",
+            "internal"
+          ],
+          "annotations": {
+            "title": "Add Comment",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": false,
+            "openWorldHint": false
+          },
+          "examples": [
+            {
+              "name": "Add a public comment",
+              "input": {
+                "issueIdOrKey": "PROJ-123",
+                "body": "Deployment completed successfully to staging. Ready for QA review."
+              }
+            },
+            {
+              "name": "Add a comment restricted to Developers role",
+              "input": {
+                "issueIdOrKey": "PROJ-123",
+                "body": "Root cause was a null pointer in the auth middleware. Fixed in commit abc123.",
+                "visibility": {
+                  "type": "role",
+                  "value": "Developers"
+                }
+              }
+            }
+          ]
+        },
+        "get_comments": {
+          "description": "📖 READ: Retrieve comments on an issue with pagination support. Use expand=\"renderedBody\" to get HTML-rendered content.",
+          "type": "read",
+          "parameters": [
+            "issueIdOrKey",
+            "startAt",
+            "maxResults",
+            "orderBy",
+            "expand"
+          ],
+          "annotations": {
+            "title": "Get Comments",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "update_comment": {
+          "description": "✏️ UPDATE: Edit an existing comment. Use \"get_comments\" first to find the comment ID. You can only edit comments you aut",
+          "type": "update",
+          "parameters": [
+            "issueIdOrKey",
+            "commentId",
+            "body",
+            "visibility",
+            "internal"
+          ],
+          "annotations": {
+            "title": "Update Comment",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "delete_comment": {
+          "description": "🗑️ DELETE: Permanently delete a comment. Use \"get_comments\" first to find the comment ID. You can only delete comments ",
+          "type": "delete",
+          "parameters": [
+            "issueIdOrKey",
+            "commentId"
+          ],
+          "annotations": {
+            "title": "Delete Comment",
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "idempotentHint": false,
+            "openWorldHint": false
+          }
+        },
+        "get_issue_editmeta_fields": {
+          "description": "🔍 DISCOVERY: Get all editable fields for an existing issue. Shows which fields can be modified and their allowed values",
+          "type": "read",
+          "parameters": [
+            "issueIdOrKey"
+          ],
+          "annotations": {
+            "title": "Get Issue Edit Meta Fields",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_issue_types": {
+          "description": "🔍 DISCOVERY TOOL: Primary discovery method for issue type operations. Use this first to find available issue type IDs b",
+          "type": "read",
+          "parameters": [
+            "expand",
+            "fields"
+          ],
+          "annotations": {
+            "title": "Get Issue Types",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": true
+          }
+        },
+        "create_issue_type": {
+          "description": "🆕 CREATE: Creates a new issue type with specified configuration. After creation, use the returned ID with other issue t",
+          "type": "create",
+          "parameters": [
+            "name",
+            "description",
+            "type",
+            "avatarId"
+          ],
+          "annotations": {
+            "title": "Create Issue Type",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": false,
+            "openWorldHint": true
+          }
+        },
+        "update_issue_type": {
+          "description": "⚠️ PREREQUISITE: Use \"get_issue_types\" first to find valid issue type IDs. Update an existing issue type configuration. ",
+          "type": "update",
+          "parameters": [
+            "issueTypeId",
+            "name",
+            "description",
+            "avatarId"
+          ],
+          "annotations": {
+            "title": "Update Issue Type",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": true
+          }
+        },
+        "delete_issue_type": {
+          "description": "⚠️ PREREQUISITE: Use \"get_issue_types\" first to find valid issue type IDs. Delete an issue type (with optional alternati",
+          "type": "delete",
+          "parameters": [
+            "issueTypeId",
+            "alternativeIssueTypeId"
+          ],
+          "annotations": {
+            "title": "Delete Issue Type",
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "idempotentHint": true,
+            "openWorldHint": true
+          }
+        },
+        "get_issue_type_schemes": {
+          "description": "🔍 DISCOVERY TOOL: Primary discovery method for issue type scheme operations. Use this first to find available scheme ID",
+          "type": "read",
+          "parameters": [
+            "startAt",
+            "maxResults",
+            "expand",
+            "fields"
+          ],
+          "annotations": {
+            "title": "Get Issue Type Schemes",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": true
+          }
+        },
+        "create_issue_type_scheme": {
+          "description": "🆕 CREATE: Creates a new issue type scheme with specified configuration. After creation, use the returned ID with other ",
+          "type": "create",
+          "parameters": [
+            "name",
+            "description",
+            "issueTypeIds",
+            "defaultIssueTypeId"
+          ],
+          "annotations": {
+            "title": "Create Issue Type Scheme",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": false,
+            "openWorldHint": true
+          },
+          "examples": [
+            {
+              "name": "Create a scheme for software development projects",
+              "input": {
+                "name": "Software Project Scheme",
+                "issueTypeIds": [
+                  "10001",
+                  "10002",
+                  "10003",
+                  "10004"
+                ],
+                "defaultIssueTypeId": "10001",
+                "description": "Standard issue types: Bug, Story, Task, Epic"
+              }
+            }
+          ]
+        },
+        "update_issue_type_scheme": {
+          "description": "⚠️ PREREQUISITE: Use \"get_issue_type_schemes\" first to find valid scheme IDs. Update an existing issue type scheme confi",
+          "type": "update",
+          "parameters": [
+            "schemeId",
+            "name",
+            "description"
+          ],
+          "annotations": {
+            "title": "Update Issue Type Scheme",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": true
+          }
+        },
+        "delete_issue_type_scheme": {
+          "description": "⚠️ PREREQUISITE: Use \"get_issue_type_schemes\" first to find valid scheme IDs. Delete an issue type scheme (ensure no pro",
+          "type": "delete",
+          "parameters": [
+            "schemeId"
+          ],
+          "annotations": {
+            "title": "Delete Issue Type Scheme",
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "idempotentHint": true,
+            "openWorldHint": true
+          }
+        },
+        "get_issue_type_scheme_mappings": {
+          "description": "🔍 DISCOVERY TOOL: Get mappings between issue type schemes and projects. Use this to discover which projects use which i",
+          "type": "read",
+          "parameters": [
+            "startAt",
+            "maxResults",
+            "projectId"
+          ],
+          "annotations": {
+            "title": "Get Issue Type Scheme Mappings",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": true
+          }
+        },
+        "add_issue_types_to_scheme": {
+          "description": "⚙️ ACTION: Add issue types to an existing issue type scheme.",
+          "type": "create",
+          "parameters": [
+            "schemeId",
+            "issueTypeIds"
+          ],
+          "annotations": {
+            "title": "Add Issue Types to Scheme",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": true
+          }
+        },
+        "assign_issue_type_scheme_to_project": {
+          "description": "⚙️ ACTION: Assign an issue type scheme to a project. This determines which issue types are available for creating issues",
+          "type": "update",
+          "parameters": [
+            "projectId",
+            "issueTypeSchemeId"
+          ],
+          "annotations": {
+            "title": "Assign Issue Type Scheme to Project",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": true
+          }
+        },
+        "get_issue_createmeta_issuetypes": {
+          "description": "🔍 DISCOVERY: Get available issue types that the current user can create in a specific project. Unlike \"get_issue_types\"",
+          "type": "read",
+          "parameters": [
+            "projectIdOrKey",
+            "startAt",
+            "maxResults"
+          ],
+          "annotations": {
+            "title": "Get Issue Createmeta Issue Types",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_issue_createmeta_fields": {
+          "description": "🔍 DISCOVERY: Get all fields (with options inline) for creating an issue in a specific project with a specific issue typ",
+          "type": "read",
+          "parameters": [
+            "projectIdOrKey",
+            "issueTypeId",
+            "startAt",
+            "maxResults"
+          ],
+          "annotations": {
+            "title": "Get Issue Createmeta Fields",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_dashboards": {
+          "description": "🔍 DISCOVERY TOOL: Use this first to find available dashboard IDs before using other dashboard management tools. Returns",
+          "type": "read",
+          "parameters": [
+            "startAt",
+            "maxResults",
+            "filter",
+            "fields"
+          ],
+          "annotations": {
+            "title": "Get Dashboards",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": true
+          }
+        },
+        "create_dashboard": {
+          "description": "✅ Create a new dashboard with share permissions. Creates a dashboard that can be discovered with \"get_dashboards\" and ma",
+          "type": "create",
+          "parameters": [
+            "name",
+            "description",
+            "sharePermissions"
+          ],
+          "annotations": {
+            "title": "Create Dashboard",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": false,
+            "openWorldHint": true
+          }
+        },
+        "get_dashboard": {
+          "description": "⚠️ PREREQUISITE: Use \"get_dashboards\" first to discover valid dashboard IDs. Retrieves detailed information for a specif",
+          "type": "read",
+          "parameters": [
+            "dashboardId"
+          ],
+          "annotations": {
+            "title": "Get Dashboard",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": true
+          }
+        },
+        "update_dashboard": {
+          "description": "⚠️ PREREQUISITE: Use \"get_dashboards\" first to discover valid dashboard IDs. Updates dashboard details and share permiss",
+          "type": "update",
+          "parameters": [
+            "dashboardId",
+            "name",
+            "description",
+            "sharePermissions"
+          ],
+          "annotations": {
+            "title": "Update Dashboard",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": true
+          }
+        },
+        "delete_dashboard": {
+          "description": "⚠️ PREREQUISITE: Use \"get_dashboards\" first to discover valid dashboard IDs. Permanently deletes a dashboard. If you get",
+          "type": "delete",
+          "parameters": [
+            "dashboardId"
+          ],
+          "annotations": {
+            "title": "Delete Dashboard",
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "idempotentHint": true,
+            "openWorldHint": true
+          }
+        },
+        "search_jql": {
+          "description": "🔍 Execute JQL queries to search for issues and generate reports. Provides powerful searching capabilities with JQL (Jir",
+          "type": "discovery",
+          "parameters": [
+            "jql",
+            "startAt",
+            "maxResults",
+            "fields",
+            "expand",
+            "validateQuery"
+          ],
+          "annotations": {
+            "title": "Search with JQL",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": true
+          },
+          "examples": [
+            {
+              "name": "Find high-priority open bugs assigned to me",
+              "input": {
+                "jql": "project = PROJ AND issuetype = Bug AND status != Done AND priority in (High, Highest) AND assignee = currentUser() ORDER BY priority DESC",
+                "fields": [
+                  "summary",
+                  "status",
+                  "priority",
+                  "assignee"
+                ],
+                "maxResults": 20
+              }
+            },
+            {
+              "name": "Search for recently updated issues in open sprints",
+              "input": {
+                "jql": "project = PROJ AND sprint in openSprints() AND updated >= -7d ORDER BY updated DESC",
+                "maxResults": 50
+              }
+            },
+            {
+              "name": "Find unresolved issues created this quarter",
+              "input": {
+                "jql": "project = PROJ AND resolution = Unresolved AND created >= startOfMonth(-2) ORDER BY created ASC",
+                "fields": [
+                  "summary",
+                  "status",
+                  "created",
+                  "assignee"
+                ]
+              }
+            }
+          ]
+        },
+        "generate_project_report": {
+          "description": "⚠️ PREREQUISITE: Ensure the project key exists and you have access. Generates a comprehensive project report including i",
+          "type": "read",
+          "parameters": [
+            "projectKey",
+            "includeIssues",
+            "includeProgress",
+            "dateRange"
+          ],
+          "annotations": {
+            "title": "Generate Project Report",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": true
+          }
+        },
+        "get_project_analytics": {
+          "description": "⚠️ PREREQUISITE: Use \"generate_project_report\" or \"search_jql\" first to verify project access. Retrieves detailed analyt",
+          "type": "read",
+          "parameters": [
+            "projectKey",
+            "metricsType",
+            "timeFrame"
+          ],
+          "annotations": {
+            "title": "Get Project Analytics",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": true
+          }
+        },
+        "add_attachment": {
+          "description": "📎 CREATE: Add an attachment to an issue. Provide the file content as base64 encoded string. Use \"get_attachment_meta\" f",
+          "type": "create",
+          "parameters": [
+            "issueIdOrKey",
+            "filename",
+            "content",
+            "mimeType"
+          ],
+          "annotations": {
+            "title": "Add Attachment",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": false,
+            "openWorldHint": false
+          }
+        },
+        "get_attachment": {
+          "description": "📖 READ: Get metadata and download URL for a specific attachment by its ID. Returns the content URL for downloading the ",
+          "type": "read",
+          "parameters": [
+            "attachmentId"
+          ],
+          "annotations": {
+            "title": "Get Attachment",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "list_issue_attachments": {
+          "description": "📋 READ: List all attachments on an issue. Returns attachment metadata including IDs, filenames, sizes, and download URL",
+          "type": "discovery",
+          "parameters": [
+            "issueIdOrKey"
+          ],
+          "annotations": {
+            "title": "List Issue Attachments",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "delete_attachment": {
+          "description": "🗑️ DELETE: Permanently delete an attachment. This action cannot be undone. Use \"list_issue_attachments\" first to find t",
+          "type": "delete",
+          "parameters": [
+            "attachmentId"
+          ],
+          "annotations": {
+            "title": "Delete Attachment",
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "idempotentHint": false,
+            "openWorldHint": false
+          }
+        },
+        "get_attachment_meta": {
+          "description": "⚙️ READ: Get Jira attachment settings including whether attachments are enabled and the maximum upload size. Use this be",
+          "type": "read",
+          "parameters": [],
+          "annotations": {
+            "title": "Get Attachment Settings",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_boards": {
+          "description": "🔍 DISCOVERY TOOL: Primary discovery method for Agile operations. Use this first to find board IDs before working with s",
+          "type": "read",
+          "parameters": [
+            "startAt",
+            "maxResults",
+            "type",
+            "name",
+            "projectKeyOrId"
+          ],
+          "annotations": {
+            "title": "Get Boards",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_board": {
+          "description": "Get details of a specific Jira Software board by ID.",
+          "type": "read",
+          "parameters": [
+            "boardId"
+          ],
+          "annotations": {
+            "title": "Get Board",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_board_configuration": {
+          "description": "Get the configuration of a board including columns, estimation settings, and filters.",
+          "type": "read",
+          "parameters": [
+            "boardId"
+          ],
+          "annotations": {
+            "title": "Get Board Configuration",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_board_backlog": {
+          "description": "Get issues from the backlog of a Scrum board. Returns issues not yet assigned to any sprint.",
+          "type": "read",
+          "parameters": [
+            "boardId",
+            "startAt",
+            "maxResults",
+            "jql",
+            "fields"
+          ],
+          "annotations": {
+            "title": "Get Board Backlog",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "create_board": {
+          "description": "⚠️ PREREQUISITE: Use \"create_filter\" in jira-system-admin FIRST to create a JQL filter, then use the returned filter ID ",
+          "type": "create",
+          "parameters": [
+            "name",
+            "type",
+            "filterId",
+            "projectKeyOrId"
+          ],
+          "annotations": {
+            "title": "Create Board",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": false,
+            "openWorldHint": false
+          }
+        },
+        "delete_board": {
+          "description": "⚠️ DESTRUCTIVE: Permanently delete a board. This removes the board view but does NOT delete any issues - they remain in ",
+          "type": "delete",
+          "parameters": [
+            "boardId"
+          ],
+          "annotations": {
+            "title": "Delete Board",
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "idempotentHint": false,
+            "openWorldHint": false
+          }
+        },
+        "get_sprints_for_board": {
+          "description": "🔍 DISCOVERY TOOL: List all sprints for a Scrum board. Use this to discover sprint IDs before moving issues or managing ",
+          "type": "read",
+          "parameters": [
+            "boardId",
+            "startAt",
+            "maxResults",
+            "state"
+          ],
+          "annotations": {
+            "title": "Get Sprints for Board",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "create_sprint": {
+          "description": "⚠️ PREREQUISITE: Use \"get_boards\" first to find a valid Scrum board ID.",
+          "type": "create",
+          "parameters": [
+            "name",
+            "originBoardId",
+            "goal",
+            "startDate",
+            "endDate"
+          ],
+          "annotations": {
+            "title": "Create Sprint",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": false,
+            "openWorldHint": false
+          },
+          "examples": [
+            {
+              "name": "Create a two-week sprint with goal and dates",
+              "input": {
+                "name": "Sprint 14",
+                "originBoardId": 1,
+                "goal": "Complete authentication module and begin API documentation",
+                "startDate": "2026-03-01T09:00:00.000Z",
+                "endDate": "2026-03-15T17:00:00.000Z"
+              }
+            },
+            {
+              "name": "Create an unscheduled future sprint",
+              "input": {
+                "name": "Sprint 15",
+                "originBoardId": 1,
+                "goal": "Payment integration MVP"
+              }
+            }
+          ]
+        },
+        "get_sprint": {
+          "description": "Get details of a specific sprint by ID.",
+          "type": "read",
+          "parameters": [
+            "sprintId"
+          ],
+          "annotations": {
+            "title": "Get Sprint",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "update_sprint": {
+          "description": "⚠️ PREREQUISITE: Use \"get_sprints_for_board\" to find sprint ID.",
+          "type": "update",
+          "parameters": [
+            "sprintId",
+            "name",
+            "goal",
+            "startDate",
+            "endDate",
+            "state",
+            "completeDate"
+          ],
+          "annotations": {
+            "title": "Update Sprint",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "delete_sprint": {
+          "description": "Delete a sprint. Issues in the sprint will be moved to the backlog. This action cannot be undone.",
+          "type": "delete",
+          "parameters": [
+            "sprintId"
+          ],
+          "annotations": {
+            "title": "Delete Sprint",
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "idempotentHint": false,
+            "openWorldHint": false
+          }
+        },
+        "get_sprint_issues": {
+          "description": "Get all issues in a specific sprint. Useful for sprint reviews and tracking progress.",
+          "type": "read",
+          "parameters": [
+            "sprintId",
+            "startAt",
+            "maxResults",
+            "jql",
+            "fields"
+          ],
+          "annotations": {
+            "title": "Get Sprint Issues",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "move_issues_to_sprint": {
+          "description": "⚠️ MULTIPLE PREREQUISITES:",
+          "type": "update",
+          "parameters": [
+            "sprintId",
+            "issues",
+            "rankBefore",
+            "rankAfter"
+          ],
+          "annotations": {
+            "title": "Move Issues to Sprint",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "move_issues_to_backlog": {
+          "description": "Move issues from any sprint back to the backlog. Removes them from their current sprint.",
+          "type": "update",
+          "parameters": [
+            "issues"
+          ],
+          "annotations": {
+            "title": "Move Issues to Backlog",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "load_tool_schema": {
+          "description": "Get the full input schema for a specific tool. Use this before calling a tool to understand its parameters. Returns JSON",
+          "type": "read",
+          "parameters": [
+            "toolName",
+            "format"
+          ],
+          "annotations": {
+            "title": "Load Tool Schema",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        }
+      }
+    },
+    "jira-workflows": {
+      "description": "Workflows, screens, schemes, automation",
+      "toolCount": 39,
+      "tools": {
+        "search_tools": {
+          "description": "Discover available tools by category or type. Use this first to find the right tool for your task.",
+          "type": "discovery",
+          "parameters": [
+            "category",
+            "type"
+          ],
+          "annotations": {
+            "title": "Search Tools",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_statuses": {
+          "description": "🔍 DISCOVERY TOOL: Primary discovery method for workflow status operations. Use this FIRST before creating workflows to ",
+          "type": "read",
+          "parameters": [
+            "expand"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_workflows": {
+          "description": "🔍 DISCOVERY TOOL: Primary discovery method for workflow operations. Use this first to find available workflow names and",
+          "type": "read",
+          "parameters": [
+            "workflowName",
+            "expand"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "create_workflow": {
+          "description": "🆕 CREATE: Creates a new workflow with statuses and transitions.",
+          "type": "create",
+          "parameters": [
+            "name",
+            "description",
+            "transitions",
+            "statuses"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          },
+          "examples": [
+            {
+              "name": "Simple 3-status development workflow",
+              "input": {
+                "name": "Simple Dev Workflow",
+                "description": "Basic workflow with To Do, In Progress, and Done",
+                "statuses": [
+                  {
+                    "id": "todo",
+                    "name": "To Do",
+                    "statusCategory": "TODO"
+                  },
+                  {
+                    "id": "in-progress",
+                    "name": "In Progress",
+                    "statusCategory": "IN_PROGRESS"
+                  },
+                  {
+                    "id": "done",
+                    "name": "Done",
+                    "statusCategory": "DONE"
+                  }
+                ],
+                "transitions": [
+                  {
+                    "name": "Create",
+                    "from": [],
+                    "to": "todo"
+                  },
+                  {
+                    "name": "Start Work",
+                    "from": [
+                      "todo"
+                    ],
+                    "to": "in-progress"
+                  },
+                  {
+                    "name": "Complete",
+                    "from": [
+                      "in-progress"
+                    ],
+                    "to": "done"
+                  },
+                  {
+                    "name": "Reopen",
+                    "from": [
+                      "done"
+                    ],
+                    "to": "todo"
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Workflow with code review stage",
+              "input": {
+                "name": "Dev with Review",
+                "description": "Development workflow including code review",
+                "statuses": [
+                  {
+                    "id": "backlog",
+                    "name": "Backlog",
+                    "statusCategory": "TODO"
+                  },
+                  {
+                    "id": "dev",
+                    "name": "In Development",
+                    "statusCategory": "IN_PROGRESS"
+                  },
+                  {
+                    "id": "review",
+                    "name": "Code Review",
+                    "statusCategory": "IN_PROGRESS"
+                  },
+                  {
+                    "id": "done",
+                    "name": "Done",
+                    "statusCategory": "DONE"
+                  }
+                ],
+                "transitions": [
+                  {
+                    "name": "Create",
+                    "from": [],
+                    "to": "backlog"
+                  },
+                  {
+                    "name": "Start Development",
+                    "from": [
+                      "backlog"
+                    ],
+                    "to": "dev"
+                  },
+                  {
+                    "name": "Submit for Review",
+                    "from": [
+                      "dev"
+                    ],
+                    "to": "review"
+                  },
+                  {
+                    "name": "Request Changes",
+                    "from": [
+                      "review"
+                    ],
+                    "to": "dev"
+                  },
+                  {
+                    "name": "Approve",
+                    "from": [
+                      "review"
+                    ],
+                    "to": "done"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "get_workflow_schemes_basic": {
+          "description": "🔍 DISCOVERY TOOL: Primary discovery method for workflow scheme operations. Use this first to find available workflow sc",
+          "type": "read",
+          "parameters": [
+            "startAt",
+            "maxResults"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "delete_workflow": {
+          "description": "Deletes a Jira workflow by its entity ID. The workflow must not be in use by any active workflow schemes. Use get_workfl",
+          "type": "delete",
+          "parameters": [
+            "entityId"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_screen_schemes": {
+          "description": "🔍 DISCOVERY TOOL: Primary discovery method for screen scheme operations. Use this first to find available screen scheme",
+          "type": "read",
+          "parameters": [
+            "startAt",
+            "maxResults",
+            "expand"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "create_screen_scheme": {
+          "description": "🆕 CREATE: Creates a new screen scheme with screen mappings for different operations. After creation, use the returned I",
+          "type": "create",
+          "parameters": [
+            "name",
+            "description",
+            "screens"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "delete_screen_scheme": {
+          "description": "⚠️ PREREQUISITE: Use \"get_screen_schemes\" first to find valid screen scheme IDs. Deletes a screen scheme by ID. If you g",
+          "type": "delete",
+          "parameters": [
+            "screenSchemeId"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": true
+          }
+        },
+        "get_screens": {
+          "description": "🔍 DISCOVERY TOOL: Primary discovery method for screen operations. Use this first to find available screen IDs before us",
+          "type": "read",
+          "parameters": [
+            "startAt",
+            "maxResults",
+            "expand"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "create_screen": {
+          "description": "🆕 CREATE: Creates a new screen with tabs and fields. After creation, use the returned ID with other screen management t",
+          "type": "create",
+          "parameters": [
+            "name",
+            "description",
+            "tabs"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "update_screen": {
+          "description": "⚠️ PREREQUISITE: Use \"get_screens\" first to find valid screen IDs. Updates an existing screen name and/or description. I",
+          "type": "update",
+          "parameters": [
+            "screenId",
+            "name",
+            "description"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "delete_screen": {
+          "description": "⚠️ PREREQUISITE: Use \"get_screens\" first to find valid screen IDs. Deletes a screen by ID. If you get \"Screen not found\"",
+          "type": "delete",
+          "parameters": [
+            "screenId"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": true
+          }
+        },
+        "get_screen_tabs": {
+          "description": "⚠️ PREREQUISITE: Use \"get_screens\" first to find valid screen IDs. Gets all tabs for a specific screen. If you get \"Scre",
+          "type": "read",
+          "parameters": [
+            "screenId",
+            "projectKey"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "create_screen_tab": {
+          "description": "⚠️ PREREQUISITE: Use \"get_screens\" first to find valid screen IDs. Creates a new tab on a screen. If you get \"Screen not",
+          "type": "create",
+          "parameters": [
+            "screenId",
+            "name"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "update_screen_tab": {
+          "description": "⚠️ PREREQUISITE: Use \"get_screens\" first to find valid screen IDs. Updates the name of a screen tab. If you get \"Screen ",
+          "type": "update",
+          "parameters": [
+            "screenId",
+            "tabId",
+            "name"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "delete_screen_tab": {
+          "description": "⚠️ PREREQUISITE: Use \"get_screens\" first to find valid screen IDs. Deletes a tab from a screen. If you get \"Screen not f",
+          "type": "delete",
+          "parameters": [
+            "screenId",
+            "tabId"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": true
+          }
+        },
+        "get_screen_tab_fields": {
+          "description": "⚠️ PREREQUISITE: Use \"get_screens\" first to find valid screen IDs. Gets all fields for a specific screen tab. If you get",
+          "type": "read",
+          "parameters": [
+            "screenId",
+            "tabId",
+            "projectKey"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "remove_field_from_screen_tab": {
+          "description": "⚠️ PREREQUISITE: Use \"get_screens\" first to find valid screen IDs. Removes a field from a screen tab. If you get \"Screen",
+          "type": "delete",
+          "parameters": [
+            "screenId",
+            "tabId",
+            "fieldId"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": true
+          }
+        },
+        "move_screen_tab_field": {
+          "description": "⚠️ PREREQUISITE: Use \"get_screens\" first to find valid screen IDs. Moves a field within a screen tab to a different posi",
+          "type": "update",
+          "parameters": [
+            "screenId",
+            "tabId",
+            "fieldId",
+            "after",
+            "position"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "add_field_to_screen": {
+          "description": "⚠️ PREREQUISITE: Use \"get_screens\" first to find valid screen IDs. Adds a field to a specific screen tab using POST meth",
+          "type": "create",
+          "parameters": [
+            "screenId",
+            "tabId",
+            "fieldId"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "add_field_to_default_screen": {
+          "description": "⚠️ PREREQUISITES: Use \"get_screen_available_fields\" first to check if the field can be added. Adding a field that is alr",
+          "type": "create",
+          "parameters": [
+            "fieldId"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "get_screen_available_fields": {
+          "description": "⚠️ PREREQUISITE: Use \"get_screens\" first to find valid screen IDs. Gets fields that can be added to a screen. If you get",
+          "type": "read",
+          "parameters": [
+            "screenId"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "assign_issue_type_screen_scheme_to_project": {
+          "description": "⚠️ IMPORTANT: The schemeId parameter requires an Issue Type Screen Scheme ID — NOT a plain Screen Scheme ID. These are d",
+          "type": "update",
+          "parameters": [
+            "projectIdOrKey",
+            "schemeId"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "get_workflow_schemes_detailed": {
+          "description": "🔍 DISCOVERY TOOL: Use this first to find available workflow scheme IDs before using other workflow scheme management to",
+          "type": "read",
+          "parameters": [
+            "startAt",
+            "maxResults",
+            "expand"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "create_workflow_scheme": {
+          "description": "✅ Create a new workflow scheme with issue type mappings. Creates a workflow scheme that can be discovered with \"get_work",
+          "type": "create",
+          "parameters": [
+            "name",
+            "description",
+            "defaultWorkflow",
+            "issueTypeMappings"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "update_workflow_scheme": {
+          "description": "⚠️ PREREQUISITE: Use \"get_workflow_schemes_detailed\" first to discover valid scheme IDs. Updates an existing workflow sc",
+          "type": "update",
+          "parameters": [
+            "schemeId",
+            "name",
+            "description",
+            "defaultWorkflow"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "assign_workflow_scheme_to_project": {
+          "description": "⚠️ GREENFIELD PROJECTS ONLY: Assigns a workflow scheme to a classic Jira project. CRITICAL PREREQUISITE: The target proj",
+          "type": "update",
+          "parameters": [
+            "projectIdOrKey",
+            "schemeId"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "set_workflow_scheme_issue_type": {
+          "description": "⚠️ MULTIPLE PREREQUISITES AND LIMITATIONS: Use \"get_workflow_schemes_detailed\" first to find scheme IDs. CRITICAL: Activ",
+          "type": "update",
+          "parameters": [
+            "schemeId",
+            "issueType",
+            "workflow"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "delete_workflow_scheme_issue_type": {
+          "description": "⚠️ PREREQUISITE: Use \"get_workflow_schemes_detailed\" first to discover valid scheme IDs and current issue type mappings.",
+          "type": "delete",
+          "parameters": [
+            "schemeId",
+            "issueType"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": true
+          }
+        },
+        "setup_workflow_guided": {
+          "description": "Guided workflow setup that handles complete workflow creation end-to-end.",
+          "type": "other",
+          "parameters": [
+            "name",
+            "description",
+            "projectKey",
+            "workflowType",
+            "customStatuses",
+            "issueTypes"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          },
+          "examples": [
+            {
+              "name": "Create a full SDLC workflow for a project",
+              "input": {
+                "name": "Product SDLC Workflow",
+                "description": "Full software development lifecycle with UAT and release gates",
+                "workflowType": "sdlc",
+                "projectKey": "PROJ"
+              }
+            },
+            {
+              "name": "Create a custom workflow with specific statuses",
+              "input": {
+                "name": "Support Triage Flow",
+                "description": "Custom support triage process",
+                "workflowType": "custom",
+                "customStatuses": [
+                  {
+                    "name": "Received",
+                    "category": "TODO"
+                  },
+                  {
+                    "name": "Triaging",
+                    "category": "IN_PROGRESS"
+                  },
+                  {
+                    "name": "Awaiting Customer",
+                    "category": "IN_PROGRESS"
+                  },
+                  {
+                    "name": "Resolved",
+                    "category": "DONE"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "get_automation_rules": {
+          "description": "🔍 DISCOVERY TOOL: Primary discovery method for automation rule operations. Use this first to find available rule IDs, n",
+          "type": "read",
+          "parameters": [
+            "name",
+            "enabled",
+            "authorAccountId",
+            "projects",
+            "expand",
+            "includeDetails",
+            "startAt",
+            "maxResults"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_automation_rule_details": {
+          "description": "🔍 DISCOVERY TOOL: ⚠️ PREREQUISITE: Use \"get_automation_rules\" first to find valid rule IDs. If get_automation_rules ret",
+          "type": "read",
+          "parameters": [
+            "ruleId",
+            "expand"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_automation_templates": {
+          "description": "🔍 DISCOVERY TOOL: Retrieves available automation rule templates that can be used as starting points for creating new ru",
+          "type": "read",
+          "parameters": [
+            "category",
+            "startAt",
+            "maxResults"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_automation_component_types": {
+          "description": "🔍 DISCOVERY TOOL: Returns all available automation component types (triggers, actions, conditions, branches) with their",
+          "type": "read",
+          "parameters": [
+            "category"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "create_automation_rule": {
+          "description": "⚙️ MANAGEMENT TOOL: Creates a new automation rule. Use get_automation_component_types first to discover available types ",
+          "type": "create",
+          "parameters": [
+            "name",
+            "description",
+            "state",
+            "authorAccountId",
+            "actor",
+            "trigger",
+            "components",
+            "conditions",
+            "ruleScopeARIs",
+            "canOtherRuleTrigger",
+            "notifyOnError",
+            "labels",
+            "projects",
+            "tags",
+            "enabled",
+            "actions"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          },
+          "examples": [
+            {
+              "name": "Auto-assign new bugs to project lead",
+              "input": {
+                "name": "Auto-assign Bugs",
+                "authorAccountId": "557058:abcdef01-2345-6789-abcd-ef0123456789",
+                "trigger": {
+                  "type": "ISSUE_CREATED"
+                },
+                "components": [
+                  {
+                    "type": "ASSIGN_ISSUE",
+                    "value": {
+                      "assignee": {
+                        "type": "SMART_VALUE",
+                        "value": "{{issue.project.lead.accountId}}"
+                      }
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Add comment when issue transitions to Done",
+              "input": {
+                "name": "Done Notification Comment",
+                "authorAccountId": "557058:abcdef01-2345-6789-abcd-ef0123456789",
+                "trigger": {
+                  "type": "ISSUE_TRANSITIONED"
+                },
+                "components": [
+                  {
+                    "type": "COMMENT_ISSUE",
+                    "value": {
+                      "message": "This issue has been marked as Done."
+                    }
+                  }
+                ]
+              }
+            },
+            {
+              "name": "Log action with JQL condition",
+              "input": {
+                "name": "Log High Priority Changes",
+                "authorAccountId": "557058:abcdef01-2345-6789-abcd-ef0123456789",
+                "trigger": {
+                  "type": "ISSUE_UPDATED"
+                },
+                "conditions": [
+                  {
+                    "type": "JQL_CONDITION",
+                    "value": {
+                      "jql": "priority in (High, Highest)"
+                    }
+                  }
+                ],
+                "components": [
+                  {
+                    "type": "LOG_ACTION",
+                    "value": {
+                      "message": "High priority issue updated: {{issue.key}}"
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "update_automation_rule": {
+          "description": "⚙️ MANAGEMENT TOOL: ⚠️ PREREQUISITE: Use \"get_automation_rules\" first to find valid rule IDs. If no rules exist (empty l",
+          "type": "update",
+          "parameters": [
+            "ruleId",
+            "name",
+            "description",
+            "enabled",
+            "trigger",
+            "conditions",
+            "actions",
+            "projects",
+            "tags"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          },
+          "examples": [
+            {
+              "name": "Rename a rule and disable it",
+              "input": {
+                "ruleId": "12345",
+                "name": "Auto-assign Bugs (Disabled)",
+                "enabled": false
+              }
+            },
+            {
+              "name": "Replace the trigger on an existing rule",
+              "input": {
+                "ruleId": "12345",
+                "trigger": {
+                  "type": "ISSUE_COMMENTED"
+                }
+              }
+            }
+          ]
+        },
+        "enable_disable_automation_rule": {
+          "description": "⚙️ MANAGEMENT TOOL: ⚠️ PREREQUISITE: Use \"get_automation_rules\" first to find valid rule IDs. If no rules exist (empty l",
+          "type": "other",
+          "parameters": [
+            "ruleId",
+            "enabled"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "load_tool_schema": {
+          "description": "Get the full input schema for a specific tool. Use this before calling a tool to understand its parameters. Returns JSON",
+          "type": "read",
+          "parameters": [
+            "toolName",
+            "format"
+          ],
+          "annotations": {
+            "title": "Load Tool Schema",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        }
+      }
+    },
+    "jira-fields-permissions": {
+      "description": "Custom fields, permissions, notifications",
+      "toolCount": 31,
+      "tools": {
+        "search_tools": {
+          "description": "Discover available tools by category or type.",
+          "type": "discovery",
+          "parameters": [
+            "category",
+            "type"
+          ],
+          "annotations": {
+            "title": "Search Tools",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_permission_schemes": {
+          "description": "🔍 DISCOVERY TOOL: Primary discovery method for permission scheme operations. Use this first to find available permissio",
+          "type": "read",
+          "parameters": [
+            "expand"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "create_permission_scheme": {
+          "description": "🆕 CREATE: Creates a new permission scheme with specified permissions. After creation, use the returned ID with other pe",
+          "type": "create",
+          "parameters": [
+            "name",
+            "description",
+            "permissions"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "update_permission_scheme": {
+          "description": "⚠️ PREREQUISITE: Use \"get_permission_schemes\" first to find valid permission scheme IDs. Updates an existing permission ",
+          "type": "update",
+          "parameters": [
+            "schemeId",
+            "name",
+            "description"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "delete_permission_scheme": {
+          "description": "⚠️ PREREQUISITE: Use \"get_permission_schemes\" first to find valid permission scheme IDs. Deletes a permission scheme by ",
+          "type": "delete",
+          "parameters": [
+            "schemeId"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": true
+          }
+        },
+        "get_permission_grants": {
+          "description": "⚠️ PREREQUISITE: Use \"get_permission_schemes\" first to find valid permission scheme IDs. Gets all permission grants for ",
+          "type": "read",
+          "parameters": [
+            "schemeId",
+            "expand"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "create_permission_grant": {
+          "description": "⚠️ PREREQUISITE: Use \"get_permission_schemes\" first to find valid permission scheme IDs. Adds a permission grant to a pe",
+          "type": "create",
+          "parameters": [
+            "schemeId",
+            "permission",
+            "holder"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          },
+          "examples": [
+            {
+              "name": "Grant browse permission to a project role",
+              "input": {
+                "schemeId": 10000,
+                "permission": "BROWSE_PROJECTS",
+                "holder": {
+                  "type": "projectRole",
+                  "parameter": "10002"
+                }
+              }
+            },
+            {
+              "name": "Grant create issues permission to a group",
+              "input": {
+                "schemeId": 10000,
+                "permission": "CREATE_ISSUES",
+                "holder": {
+                  "type": "group",
+                  "parameter": "jira-software-users"
+                }
+              }
+            },
+            {
+              "name": "Grant edit permission to a specific user",
+              "input": {
+                "schemeId": 10000,
+                "permission": "EDIT_ISSUES",
+                "holder": {
+                  "type": "user",
+                  "parameter": "557058:abcdef01-2345-6789-abcd-ef0123456789"
+                }
+              }
+            }
+          ]
+        },
+        "delete_permission_grant": {
+          "description": "⚠️ PREREQUISITE: Use \"get_permission_schemes\" first to find valid permission scheme IDs. Removes a permission grant from",
+          "type": "delete",
+          "parameters": [
+            "schemeId",
+            "permissionId"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": true
+          }
+        },
+        "get_global_permissions": {
+          "description": "🔍 DISCOVERY TOOL: Primary discovery method for global permission operations. Use this first to find available global pe",
+          "type": "read",
+          "parameters": [
+            "expand"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_my_permissions": {
+          "description": "🔍 DISCOVERY TOOL: Gets current user permissions for a specific project, issue, or globally. Use this to understand your",
+          "type": "read",
+          "parameters": [
+            "projectKey",
+            "projectId",
+            "issueKey",
+            "issueId",
+            "permissions"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_fields_paginated": {
+          "description": "🔍 DISCOVERY TOOL: Primary discovery method for field operations. Use this first to find available field IDs before usin",
+          "type": "read",
+          "parameters": [
+            "query",
+            "type",
+            "orderBy",
+            "expand",
+            "startAt",
+            "maxResults"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "create_custom_field": {
+          "description": "🆕 CREATE: Creates a new custom field in Jira with specified configuration. After creation, use the returned ID with oth",
+          "type": "create",
+          "parameters": [
+            "name",
+            "description",
+            "type",
+            "searcherKey"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "update_custom_field": {
+          "description": "⚠️ PREREQUISITE: Use \"get_fields_paginated\" first to find valid field IDs. Updates the name or description of a custom f",
+          "type": "update",
+          "parameters": [
+            "fieldId",
+            "name",
+            "description"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "delete_custom_field": {
+          "description": "⚠️ PREREQUISITE: Use \"get_fields_paginated\" first to find valid field IDs. Deletes a custom field from Jira. If you get ",
+          "type": "delete",
+          "parameters": [
+            "fieldId"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": true
+          }
+        },
+        "get_custom_field_contexts": {
+          "description": "🔍 DISCOVERY TOOL: Always use this first before working with field options. Discovers all available context IDs for a cu",
+          "type": "read",
+          "parameters": [
+            "fieldId",
+            "startAt",
+            "maxResults"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "create_custom_field_context": {
+          "description": "⚠️ KNOWN LIMITATION: Some system custom fields are \"locked\" and cannot have new contexts created. Returns VALIDATION_ERR",
+          "type": "create",
+          "parameters": [
+            "fieldId",
+            "name",
+            "description",
+            "projectIds",
+            "issueTypeIds"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "update_custom_field_context": {
+          "description": "⚠️ KNOWN LIMITATION: Some system custom fields are \"locked\" and their contexts cannot be modified. Returns VALIDATION_ER",
+          "type": "update",
+          "parameters": [
+            "fieldId",
+            "contextId",
+            "name",
+            "description"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "delete_custom_field_context": {
+          "description": "⚠️ KNOWN LIMITATION: Some system custom fields are \"locked\" and their contexts cannot be deleted. Returns VALIDATION_ERR",
+          "type": "delete",
+          "parameters": [
+            "fieldId",
+            "contextId"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": true
+          }
+        },
+        "get_custom_field_options": {
+          "description": "⚠️ PREREQUISITES:",
+          "type": "read",
+          "parameters": [
+            "fieldId",
+            "contextId",
+            "startAt",
+            "maxResults"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "create_custom_field_options": {
+          "description": "⚠️ PREREQUISITES:",
+          "type": "create",
+          "parameters": [
+            "fieldId",
+            "contextId",
+            "options"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "get_field_configurations": {
+          "description": "🔍 DISCOVERY TOOL: Primary discovery method for field configuration operations. Use this first to find available field c",
+          "type": "read",
+          "parameters": [
+            "startAt",
+            "maxResults"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "create_field_configuration": {
+          "description": "🆕 CREATE: Creates a new field configuration with specified name and description. After creation, use the returned ID wi",
+          "type": "create",
+          "parameters": [
+            "name",
+            "description"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "update_field_configuration": {
+          "description": "⚠️ PREREQUISITE: Use \"get_field_configurations\" first to find valid field configuration IDs. Updates an existing field c",
+          "type": "update",
+          "parameters": [
+            "id",
+            "name",
+            "description"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "get_field_configuration_schemes": {
+          "description": "🔍 DISCOVERY TOOL: Primary discovery method for field configuration scheme operations. Use this first to find available ",
+          "type": "read",
+          "parameters": [
+            "startAt",
+            "maxResults"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "create_field_configuration_scheme": {
+          "description": "🆕 CREATE: Creates a new field configuration scheme with mappings between issue types and field configurations. After cr",
+          "type": "create",
+          "parameters": [
+            "name",
+            "description",
+            "fieldConfigurationMappings"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "get_notification_schemes": {
+          "description": "Retrieve all notification schemes with pagination support",
+          "type": "read",
+          "parameters": [
+            "startAt",
+            "maxResults",
+            "expand"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "create_notification_scheme": {
+          "description": "Create a new notification scheme with event notifications",
+          "type": "create",
+          "parameters": [
+            "name",
+            "description",
+            "notificationSchemeEvents"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "get_notification_screens": {
+          "description": "Retrieve all screens available for notification configuration",
+          "type": "read",
+          "parameters": [
+            "startAt",
+            "maxResults",
+            "expand"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "create_notification_screen": {
+          "description": "Create a new screen for notification workflows with tabs and fields",
+          "type": "create",
+          "parameters": [
+            "name",
+            "description",
+            "tabs"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "add_field_to_notification_screen": {
+          "description": "⚠️ PREREQUISITES: Use \"get_notification_screens\" to find valid screen IDs, then use jira-workflows \"get_screen_tabs\" to ",
+          "type": "create",
+          "parameters": [
+            "screenId",
+            "tabId",
+            "fieldId"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "load_tool_schema": {
+          "description": "Get the full input schema for a specific tool. Use this before calling a tool to understand its parameters. Returns JSON",
+          "type": "read",
+          "parameters": [
+            "toolName",
+            "format"
+          ],
+          "annotations": {
+            "title": "Load Tool Schema",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        }
+      }
+    },
+    "jira-service-desk": {
+      "description": "JSM request types, customer organizations",
+      "toolCount": 12,
+      "tools": {
+        "search_tools": {
+          "description": "Discover available tools by category or type.",
+          "type": "discovery",
+          "parameters": [
+            "category",
+            "type"
+          ],
+          "annotations": {
+            "title": "Search Tools",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_service_desks": {
+          "description": "🔍 DISCOVERY TOOL: Use this first to find available service desk IDs before using other service desk management tools. R",
+          "type": "read",
+          "parameters": [
+            "start",
+            "limit"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_request_types": {
+          "description": "⚠️ PREREQUISITE: Use \"get_service_desks\" first to discover valid service desk IDs. Retrieves all request types for a spe",
+          "type": "read",
+          "parameters": [
+            "serviceDeskId",
+            "start",
+            "limit",
+            "expand"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "create_request_type": {
+          "description": "⚠️ PREREQUISITE: Use \"get_service_desks\" first to find valid service desk IDs. Creates a new request type in a service d",
+          "type": "create",
+          "parameters": [
+            "serviceDeskId",
+            "name",
+            "description",
+            "helpText",
+            "issueTypeId",
+            "groupIds"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "get_request_type_fields": {
+          "description": "⚠️ MULTIPLE PREREQUISITES: Use \"get_service_desks\" and \"get_request_types\" first to discover valid service desk and requ",
+          "type": "read",
+          "parameters": [
+            "serviceDeskId",
+            "requestTypeId"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "configure_request_type_workflow": {
+          "description": "⚠️ MULTIPLE PREREQUISITES: Use \"get_service_desks\", \"get_request_types\" first AND verify workflow exists. Configures wor",
+          "type": "other",
+          "parameters": [
+            "serviceDeskId",
+            "requestTypeId",
+            "workflowId",
+            "approvalConfig"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "get_customer_organizations": {
+          "description": "🔍 DISCOVERY TOOL: Primary discovery method for customer organization operations. Use this first to find available custo",
+          "type": "read",
+          "parameters": [
+            "limit",
+            "start"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_organization_customers": {
+          "description": "⚠️ PREREQUISITE: Use \"get_customer_organizations\" first to find valid organization IDs. Lists all customers in a specifi",
+          "type": "read",
+          "parameters": [
+            "organizationId",
+            "limit",
+            "start"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_customer_organization_membership": {
+          "description": "🔍 DISCOVERY TOOL: Checks which organizations a specific customer belongs to. Use this to understand customer organizati",
+          "type": "read",
+          "parameters": [
+            "accountId",
+            "email"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_project_customer_organizations": {
+          "description": "🔍 DISCOVERY TOOL: Lists organizations associated with a specific service project. Use this to understand project-level ",
+          "type": "read",
+          "parameters": [
+            "projectKey",
+            "serviceDeskId"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "analyze_customer_visibility": {
+          "description": "🔍 DISCOVERY TOOL: Comprehensive analysis of why customers can or cannot see each other in user pickers. Use this to dia",
+          "type": "read",
+          "parameters": [
+            "projectKey",
+            "customerAccountId"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "load_tool_schema": {
+          "description": "Get the full input schema for a specific tool. Use this before calling a tool to understand its parameters. Returns JSON",
+          "type": "read",
+          "parameters": [
+            "toolName",
+            "format"
+          ],
+          "annotations": {
+            "title": "Load Tool Schema",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        }
+      }
+    },
+    "jira-organization": {
+      "description": "Atlassian Admin, identity, directories",
+      "toolCount": 31,
+      "tools": {
+        "search_tools": {
+          "description": "Discover available tools by category or type.",
+          "type": "discovery",
+          "parameters": [
+            "category",
+            "type"
+          ],
+          "annotations": {
+            "title": "Search Tools",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_organization_info": {
+          "description": "Retrieve comprehensive organization details, settings, and configuration",
+          "type": "read",
+          "parameters": [],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_organization_policies": {
+          "description": "List all security and access policies configured at organization level",
+          "type": "read",
+          "parameters": [],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_organization_domains": {
+          "description": "List all verified domains and their verification status",
+          "type": "read",
+          "parameters": [],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_organization_workspaces": {
+          "description": "List all product workspaces (Jira, Confluence, etc.) in the organization",
+          "type": "read",
+          "parameters": [],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_organization_events": {
+          "description": "Retrieve organization audit events and administrative activities",
+          "type": "read",
+          "parameters": [
+            "limit",
+            "from",
+            "to"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_identity_providers": {
+          "description": "🔍 DISCOVERY TOOL: Primary discovery method for identity provider operations. Lists all configured identity providers an",
+          "type": "read",
+          "parameters": [],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_directory_info": {
+          "description": "⚠️ PREREQUISITE: Use \"get_identity_providers\" first to find valid directory IDs. Gets detailed information about a speci",
+          "type": "read",
+          "parameters": [
+            "directoryId"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_directory_sync_status": {
+          "description": "⚠️ PREREQUISITE: Use \"get_identity_providers\" first to find valid directory IDs. Checks the sync status and health of di",
+          "type": "read",
+          "parameters": [
+            "directoryId"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_directory_sync_settings": {
+          "description": "⚠️ PREREQUISITE: Use \"get_identity_providers\" first to find valid directory IDs. Gets sync configuration including frequ",
+          "type": "read",
+          "parameters": [
+            "directoryId"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_directory_users": {
+          "description": "⚠️ PREREQUISITE: Use \"get_identity_providers\" first to find valid directory IDs. Lists users synced from directories wit",
+          "type": "read",
+          "parameters": [
+            "directoryId",
+            "limit",
+            "cursor"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_user_last_active": {
+          "description": "⚠️ PREREQUISITE: Use \"get_organization_users\" first to find valid user account IDs. Gets a user's last active dates acro",
+          "type": "read",
+          "parameters": [
+            "accountId"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_organization_users": {
+          "description": "🔍 DISCOVERY TOOL: Primary discovery method for organization user operations. Use this first to find available user IDs ",
+          "type": "read",
+          "parameters": [
+            "limit",
+            "accountType",
+            "status"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "search_organization_users": {
+          "description": "🔍 DISCOVERY TOOL: Advanced search for users in the organization with filters. Use this to find specific users by variou",
+          "type": "discovery",
+          "parameters": [
+            "query",
+            "domain",
+            "accountType",
+            "lastActiveAfter",
+            "limit"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_user_role_assignments": {
+          "description": "⚠️ PREREQUISITE: Use \"get_organization_users\" or \"search_organization_users\" first to find valid user account IDs. Gets ",
+          "type": "read",
+          "parameters": [
+            "accountId"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_user_group_memberships": {
+          "description": "⚠️ PREREQUISITE: Use \"get_organization_users\" or \"search_organization_users\" first to find valid user account IDs. Gets ",
+          "type": "read",
+          "parameters": [
+            "accountId"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "analyze_user_access": {
+          "description": "⚠️ PREREQUISITE: Use \"get_organization_users\" or \"search_organization_users\" first to find valid user account IDs. Compr",
+          "type": "read",
+          "parameters": [
+            "accountId",
+            "email"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_directory_health_status": {
+          "description": "Comprehensive directory health analysis including sync status, error patterns, and performance metrics",
+          "type": "read",
+          "parameters": [
+            "directoryId",
+            "includeSync",
+            "includeErrors",
+            "includePerformance"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_provisioning_insights": {
+          "description": "Analyze user provisioning patterns, performance, and failure rates across directories",
+          "type": "read",
+          "parameters": [
+            "directoryId",
+            "timeframe",
+            "includeFailures",
+            "includePerformance",
+            "groupBy"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_organizations": {
+          "description": "Retrieve list of Atlassian organizations with filtering and pagination support for multi-org management",
+          "type": "read",
+          "parameters": [
+            "limit",
+            "page",
+            "status",
+            "type"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_organization_details": {
+          "description": "Retrieve comprehensive details for a specific organization including statistics, audit, and compliance information",
+          "type": "read",
+          "parameters": [
+            "orgId",
+            "includeStatistics",
+            "includeAudit",
+            "includeCompliance"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_cross_product_user_activity": {
+          "description": "Analyze user activity patterns across Atlassian products for comprehensive user behavior insights",
+          "type": "read",
+          "parameters": [
+            "accountId",
+            "email",
+            "startDate",
+            "endDate",
+            "products",
+            "includeDetails"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_enhanced_identity_provider_insights": {
+          "description": "Advanced identity provider analysis with provisioning insights and performance metrics",
+          "type": "read",
+          "parameters": [],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_advanced_directory_health_monitoring": {
+          "description": "Comprehensive directory health monitoring with predictive insights and trend analysis",
+          "type": "read",
+          "parameters": [],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_user_behavior_pattern_analysis": {
+          "description": "Analyze user behavior patterns across directory and product usage for security and optimization insights",
+          "type": "read",
+          "parameters": [],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_user_manage": {
+          "description": "Retrieve user management permissions and capabilities for a specific user",
+          "type": "read",
+          "parameters": [
+            "account_id"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_user_manage_profile": {
+          "description": "Retrieve detailed user profile information for management purposes",
+          "type": "read",
+          "parameters": [
+            "account_id"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_user_manage_api_tokens": {
+          "description": "Retrieve API tokens for a specific user for security monitoring",
+          "type": "read",
+          "parameters": [
+            "account_id"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_org_user_stats": {
+          "description": "Retrieve user statistics for organization and directory analysis",
+          "type": "read",
+          "parameters": [
+            "orgId",
+            "directoryId",
+            "includeInactive",
+            "timeframe"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_org_group_stats": {
+          "description": "Retrieve group statistics for organization and directory analysis",
+          "type": "read",
+          "parameters": [
+            "orgId",
+            "directoryId",
+            "includeEmpty",
+            "timeframe"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "load_tool_schema": {
+          "description": "Get the full input schema for a specific tool. Use this before calling a tool to understand its parameters. Returns JSON",
+          "type": "read",
+          "parameters": [
+            "toolName",
+            "format"
+          ],
+          "annotations": {
+            "title": "Load Tool Schema",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        }
+      }
+    },
+    "jira-system-admin": {
+      "description": "System config, licensing, users, groups",
+      "toolCount": 21,
+      "tools": {
+        "search_tools": {
+          "description": "Discover available tools by category or type.",
+          "type": "discovery",
+          "parameters": [
+            "category",
+            "type"
+          ],
+          "annotations": {
+            "title": "Search Tools",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_audit_records": {
+          "description": "🔍 DISCOVERY TOOL: Primary audit log discovery method for administrative actions. Use this to find audit records with ad",
+          "type": "read",
+          "parameters": [
+            "offset",
+            "limit",
+            "filter",
+            "from",
+            "to"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_instance_info": {
+          "description": "🔍 DISCOVERY TOOL: Primary Jira instance information discovery method. Use this to find server details, version, deploym",
+          "type": "read",
+          "parameters": [],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_system_limits": {
+          "description": "📊 MONITORING: Retrieve system limits and current usage information for capacity planning and performance monitoring. Pr",
+          "type": "read",
+          "parameters": [],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "create_filter": {
+          "description": "🆕 CREATE: Creates a new filter with JQL query and share permissions. After creation, use the returned filter ID with ot",
+          "type": "create",
+          "parameters": [
+            "name",
+            "description",
+            "jql",
+            "favourite",
+            "sharePermissions"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "search_site_users": {
+          "description": "🔍 DISCOVERY TOOL: Primary SITE-LEVEL user discovery method for finding users by name, email, username, or account ID. U",
+          "type": "discovery",
+          "parameters": [
+            "query",
+            "username",
+            "accountId",
+            "startAt",
+            "maxResults",
+            "includeActive",
+            "includeInactive"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "search_groups": {
+          "description": "🔍 DISCOVERY TOOL: Primary group discovery method for finding groups by name or pattern. Use this first to find availabl",
+          "type": "discovery",
+          "parameters": [
+            "query",
+            "exclude",
+            "maxResults"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_site_user_groups": {
+          "description": "⚠️ PREREQUISITE: Use \"search_site_users\" first to find valid user account IDs. Get all SITE-LEVEL groups that a specific",
+          "type": "read",
+          "parameters": [
+            "accountId"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_application_roles": {
+          "description": "🔍 DISCOVERY TOOL: Primary application role discovery method. Use this first to find available application role keys bef",
+          "type": "read",
+          "parameters": [
+            "key"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_bulk_permissions": {
+          "description": "⚠️ PREREQUISITE: Use search_projects first to find valid project IDs. Check permissions across multiple projects efficie",
+          "type": "read",
+          "parameters": [
+            "projectIds",
+            "permissions"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_application_properties": {
+          "description": "🔍 DISCOVERY TOOL: Primary system configuration discovery method. Use this first to find available application property ",
+          "type": "read",
+          "parameters": [
+            "key",
+            "keyFilter"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "set_application_property": {
+          "description": "⚠️ PREREQUISITE: Use \"get_application_properties\" first to find valid property IDs. Set or update a Jira application pro",
+          "type": "update",
+          "parameters": [
+            "id",
+            "value"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "get_system_avatars": {
+          "description": "🔍 DISCOVERY TOOL: Primary avatar discovery method for projects, issue types, or users. Use this first to find available",
+          "type": "read",
+          "parameters": [
+            "type"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "get_time_tracking_settings": {
+          "description": "🔍 DISCOVERY TOOL: Primary time tracking configuration discovery method. Use this first to review current time tracking ",
+          "type": "read",
+          "parameters": [],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "update_time_tracking_settings": {
+          "description": "⚠️ KNOWN LIMITATION: Time tracking settings in Jira Cloud are managed differently than Jira Data Center. Use \"get_time_t",
+          "type": "update",
+          "parameters": [
+            "workingHoursPerDay",
+            "workingDaysPerWeek",
+            "timeFormat",
+            "defaultUnit"
+          ],
+          "annotations": {
+            "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "export_project_data": {
+          "description": "⚠️ PREREQUISITE: Use project discovery tools first to find valid project keys. Export comprehensive project data includi",
+          "type": "read",
+          "parameters": [
+            "projectKey",
+            "includeIssues",
+            "includeWorkflows",
+            "includePermissions",
+            "includeCustomFields",
+            "maxIssues"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "export_user_data": {
+          "description": "⚠️ PREREQUISITE: Use \"search_users\" first to find valid user account IDs. Export user data including profile, groups, pe",
+          "type": "read",
+          "parameters": [
+            "accountId",
+            "includeGroups",
+            "includePermissions",
+            "includeActivity"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "generate_system_report": {
+          "description": "📊 REPORTING: Generate comprehensive system health and configuration report with multiple sections (system, license, usa",
+          "type": "read",
+          "parameters": [
+            "reportType",
+            "sections"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "generate_usage_analytics": {
+          "description": "📊 REPORTING: Generate detailed usage analytics and activity reports with time period filtering. Provides comprehensive ",
+          "type": "read",
+          "parameters": [
+            "period",
+            "startDate",
+            "endDate",
+            "includeAuditData"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "generate_health_check_report": {
+          "description": "📊 REPORTING: Generate comprehensive system health check and diagnostic report with multiple check levels (basic/compreh",
+          "type": "read",
+          "parameters": [
+            "checkLevel",
+            "checks"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
+        "load_tool_schema": {
+          "description": "Get the full input schema for a specific tool. Use this before calling a tool to understand its parameters. Returns JSON",
+          "type": "read",
+          "parameters": [
+            "toolName",
+            "format"
+          ],
+          "annotations": {
+            "title": "Load Tool Schema",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        }
+      }
+    },
+    "jira-product-discovery": {
+      "description": "JPD ideas, insights, scoring",
+      "toolCount": 12,
+      "tools": {
+        "search_tools": {
+          "description": "🔍 META DISCOVERY: Find available Jira Product Discovery tools by category or capability. Start here to understand what ",
+          "type": "discovery",
+          "parameters": [
+            "category",
+            "type",
+            "query"
+          ],
+          "annotations": {
+            "title": "Search JPD Tools",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_jpd_projects": {
+          "description": "🔍 DISCOVERY: List all Jira Product Discovery projects. Use this first to find project keys before working with ideas an",
+          "type": "read",
+          "parameters": [
+            "query",
+            "startAt",
+            "maxResults",
+            "fields"
+          ],
+          "annotations": {
+            "title": "Get JPD Projects",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": true
+          }
+        },
+        "get_ideas": {
+          "description": "🔍 DISCOVERY: List all ideas in a JPD project. Use \"get_jpd_projects\" first to find valid project keys. Returns ideas wi",
+          "type": "read",
+          "parameters": [
+            "projectKey",
+            "startAt",
+            "maxResults",
+            "fields"
+          ],
+          "annotations": {
+            "title": "Get Ideas",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": true
+          }
+        },
+        "search_ideas": {
+          "description": "🔍 DISCOVERY: Search for ideas using JQL (Jira Query Language). Supports complex queries like status, labels, assignee, ",
+          "type": "discovery",
+          "parameters": [
+            "jql",
+            "startAt",
+            "maxResults",
+            "fields",
+            "expand"
+          ],
+          "annotations": {
+            "title": "Search Ideas",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": true
+          }
+        },
+        "get_idea": {
+          "description": "📖 READ: Get full details of a specific idea by ID or key. Use expand parameter to include additional data like changelo",
+          "type": "read",
+          "parameters": [
+            "ideaIdOrKey",
+            "expand",
+            "fields"
+          ],
+          "annotations": {
+            "title": "Get Idea",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "create_idea": {
+          "description": "🆕 CREATE: Create a new idea in a JPD project. Requires project key and summary. Use \"get_jpd_projects\" to find valid pr",
+          "type": "create",
+          "parameters": [
+            "projectKey",
+            "summary",
+            "description",
+            "issueType",
+            "assignee",
+            "labels",
+            "priority",
+            "customFields"
+          ],
+          "annotations": {
+            "title": "Create Idea",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": false,
+            "openWorldHint": false
+          }
+        },
+        "update_idea": {
+          "description": "✏️ UPDATE: Update fields on an existing idea. Only specified fields will be modified. Use \"get_idea\" first to see curren",
+          "type": "update",
+          "parameters": [
+            "ideaIdOrKey",
+            "summary",
+            "description",
+            "assignee",
+            "labels",
+            "priority",
+            "customFields"
+          ],
+          "annotations": {
+            "title": "Update Idea",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "delete_idea": {
+          "description": "🗑️ DELETE: Permanently delete an idea and all its associated insights. This action cannot be undone. Use with extreme c",
+          "type": "delete",
+          "parameters": [
+            "ideaIdOrKey"
+          ],
+          "annotations": {
+            "title": "Delete Idea",
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "idempotentHint": false,
+            "openWorldHint": false
+          }
+        },
+        "get_insights": {
+          "description": "🔍 DISCOVERY: List all insights (evidence) attached to an idea. Insights represent customer feedback, research findings,",
+          "type": "read",
+          "parameters": [
+            "ideaId",
+            "limit",
+            "offset"
+          ],
+          "annotations": {
+            "title": "Get Insights",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": true
+          }
+        },
+        "analyze_idea_insights": {
+          "description": "📊 ANALYSIS: Aggregate analysis of all insights for an idea. Returns summary statistics, themes, and patterns in the evi",
+          "type": "read",
+          "parameters": [
+            "ideaId",
+            "limit"
+          ],
+          "annotations": {
+            "title": "Analyze Idea Insights",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_idea_scoring": {
+          "description": "📊 READ: Get the prioritization scoring data for an idea. Includes impact, effort, confidence, reach, and other scoring ",
+          "type": "read",
+          "parameters": [
+            "ideaId"
+          ],
+          "annotations": {
+            "title": "Get Idea Scoring",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "load_tool_schema": {
+          "description": "Get the full input schema for a specific tool. Use this before calling a tool to understand its parameters. Returns JSON",
+          "type": "read",
+          "parameters": [
+            "toolName",
+            "format"
+          ],
+          "annotations": {
+            "title": "Load Tool Schema",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        }
+      }
+    },
+    "confluence": {
+      "description": "Spaces, pages, comments, attachments",
+      "toolCount": 69,
+      "tools": {
+        "search_tools": {
+          "description": "Find available Confluence tools by category or operation type. START HERE.",
+          "type": "discovery",
+          "parameters": [
+            "category",
+            "type",
+            "query"
+          ],
+          "annotations": {
+            "title": "Search Confluence Tools",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "search_spaces": {
+          "description": "🔍 DISCOVERY: Search for spaces in Confluence. Filter by type, status, or labels. This is the starting point for finding",
+          "type": "discovery",
+          "parameters": [
+            "keys",
+            "type",
+            "status",
+            "labels",
+            "sort",
+            "limit",
+            "cursor",
+            "fields"
+          ],
+          "annotations": {
+            "title": "Search Spaces",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": true
+          }
+        },
+        "get_space": {
+          "description": "📖 READ: Retrieve detailed information about a specific space including its description and homepage.",
+          "type": "read",
+          "parameters": [
+            "spaceId",
+            "descriptionFormat"
+          ],
+          "annotations": {
+            "title": "Get Space",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "create_space": {
+          "description": "🆕 CREATE: Create a new space in Confluence. Requires a unique key (uppercase alphanumeric) and name.",
+          "type": "create",
+          "parameters": [
+            "key",
+            "name",
+            "description",
+            "type"
+          ],
+          "annotations": {
+            "title": "Create Space",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": false,
+            "openWorldHint": false
+          }
+        },
+        "delete_space": {
+          "description": "🗑️ DELETE: Permanently delete a space and ALL its content. WARNING: This cannot be undone! All pages, blogs, and attach",
+          "type": "delete",
+          "parameters": [
+            "spaceId"
+          ],
+          "annotations": {
+            "title": "Delete Space",
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "idempotentHint": false,
+            "openWorldHint": false
+          }
+        },
+        "restore_space": {
+          "description": "📤 UPDATE: Restore an archived space to make it active again.",
+          "type": "other",
+          "parameters": [
+            "spaceId"
+          ],
+          "annotations": {
+            "title": "Restore Space",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_space_content": {
+          "description": "📖 READ: Get all pages in a space. Use depth=\"root\" for top-level pages only, or \"all\" for entire hierarchy.",
+          "type": "read",
+          "parameters": [
+            "spaceId",
+            "depth",
+            "limit",
+            "cursor"
+          ],
+          "annotations": {
+            "title": "Get Space Content",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_space_settings": {
+          "description": "📖 READ: Get settings for a space including routing and appearance options.",
+          "type": "read",
+          "parameters": [
+            "spaceKey"
+          ],
+          "annotations": {
+            "title": "Get Space Settings",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "update_space_settings": {
+          "description": "✏️ UPDATE: Update space settings like routing options.",
+          "type": "update",
+          "parameters": [
+            "spaceKey",
+            "routeOverrideEnabled"
+          ],
+          "annotations": {
+            "title": "Update Space Settings",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "set_space_theme": {
+          "description": "⚠️ KNOWN LIMITATION: Confluence Cloud has limited theme support. Common theme keys include \"default\" and custom theme ke",
+          "type": "update",
+          "parameters": [
+            "spaceKey",
+            "themeKey"
+          ],
+          "annotations": {
+            "title": "Set Space Theme",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "search_pages": {
+          "description": "🔍 DISCOVERY: Search for pages in Confluence. Filter by space, title, or status. Use this to find pages before reading o",
+          "type": "discovery",
+          "parameters": [
+            "spaceId",
+            "title",
+            "status",
+            "sort",
+            "limit",
+            "cursor",
+            "fields"
+          ],
+          "annotations": {
+            "title": "Search Pages",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": true
+          }
+        },
+        "get_page": {
+          "description": "📖 READ: Retrieve detailed information about a specific page including its content. Use bodyFormat to specify how you wa",
+          "type": "read",
+          "parameters": [
+            "pageId",
+            "bodyFormat",
+            "getDraft"
+          ],
+          "annotations": {
+            "title": "Get Page",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "create_page": {
+          "description": "🆕 CREATE: Create a new page in Confluence.",
+          "type": "create",
+          "parameters": [
+            "spaceId",
+            "title",
+            "body",
+            "parentId",
+            "status",
+            "representation"
+          ],
+          "annotations": {
+            "title": "Create Page",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": false,
+            "openWorldHint": false
+          },
+          "examples": [
+            {
+              "name": "Create a page with storage format XHTML content",
+              "input": {
+                "spaceId": "65537",
+                "title": "Sprint 14 Retrospective",
+                "body": "<h1>Sprint 14 Retrospective</h1><h2>What went well</h2><ul><li>Shipped auth module on time</li><li>Zero critical bugs in release</li></ul><h2>What to improve</h2><ul><li>Better test coverage for edge cases</li></ul>"
+              }
+            },
+            {
+              "name": "Create a child page under an existing parent",
+              "input": {
+                "spaceId": "65537",
+                "title": "API Reference - Authentication",
+                "parentId": "12345678",
+                "body": "<p>This page documents the authentication API endpoints.</p><h2>POST /auth/login</h2><p>Authenticates a user and returns a JWT token.</p>",
+                "status": "current"
+              }
+            },
+            {
+              "name": "Create a draft page",
+              "input": {
+                "spaceId": "65537",
+                "title": "RFC: Migration to Event-Driven Architecture",
+                "body": "<p>Draft proposal for migrating core services to event-driven architecture.</p>",
+                "status": "draft"
+              }
+            }
+          ]
+        },
+        "update_page": {
+          "description": "✏️ UPDATE: Update an existing page. Requires the current version number to prevent conflicts. Use \"get_page\" first to ge",
+          "type": "update",
+          "parameters": [
+            "pageId",
+            "title",
+            "body",
+            "version",
+            "status",
+            "representation"
+          ],
+          "annotations": {
+            "title": "Update Page",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          },
+          "examples": [
+            {
+              "name": "Update page title and content (version required)",
+              "input": {
+                "pageId": "12345678",
+                "version": 3,
+                "title": "Sprint 14 Retrospective (Updated)",
+                "body": "<h1>Sprint 14 Retrospective</h1><p>Updated with action items from the team meeting.</p>"
+              }
+            },
+            {
+              "name": "Update only the body content, keep existing title",
+              "input": {
+                "pageId": "12345678",
+                "version": 5,
+                "body": "<h1>API Reference</h1><p>Updated endpoint documentation for v2 API.</p>"
+              }
+            }
+          ]
+        },
+        "delete_page": {
+          "description": "🗑️ DELETE: Delete a page. By default moves to trash; use purge=true to permanently delete. WARNING: Cannot be undone if",
+          "type": "delete",
+          "parameters": [
+            "pageId",
+            "purge"
+          ],
+          "annotations": {
+            "title": "Delete Page",
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "idempotentHint": false,
+            "openWorldHint": false
+          }
+        },
+        "get_page_versions": {
+          "description": "📖 READ: Retrieve version history for a page. Shows who made changes and when.",
+          "type": "read",
+          "parameters": [
+            "pageId",
+            "limit",
+            "cursor"
+          ],
+          "annotations": {
+            "title": "Get Page Versions",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_page_version": {
+          "description": "📖 READ: Retrieve a specific version of a page. Useful for comparing changes or viewing historical content.",
+          "type": "read",
+          "parameters": [
+            "pageId",
+            "versionNumber",
+            "bodyFormat"
+          ],
+          "annotations": {
+            "title": "Get Page Version",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_page_children": {
+          "description": "📖 READ: Get child pages of a parent page. Use for navigating page hierarchies.",
+          "type": "read",
+          "parameters": [
+            "pageId",
+            "limit",
+            "cursor",
+            "fields"
+          ],
+          "annotations": {
+            "title": "Get Page Children",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_page_ancestors": {
+          "description": "📖 READ: Get parent pages (ancestors) of a page. Shows the hierarchy path from root to this page.",
+          "type": "read",
+          "parameters": [
+            "pageId",
+            "fields"
+          ],
+          "annotations": {
+            "title": "Get Page Ancestors",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "move_page": {
+          "description": "🔄 UPDATE: Move a page to a new parent or position. Changes the page hierarchy.",
+          "type": "update",
+          "parameters": [
+            "pageId",
+            "targetId",
+            "position"
+          ],
+          "annotations": {
+            "title": "Move Page",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "copy_page": {
+          "description": "📋 CREATE: Create a copy of a page. Can copy to different space or parent. Optionally copies attachments and labels.",
+          "type": "other",
+          "parameters": [
+            "pageId",
+            "destinationSpaceId",
+            "destinationParentId",
+            "title",
+            "copyAttachments",
+            "copyLabels"
+          ],
+          "annotations": {
+            "title": "Copy Page",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": false,
+            "openWorldHint": false
+          }
+        },
+        "get_page_restrictions": {
+          "description": "📖 READ: Get current restrictions (permissions) on a page. Shows who can read/edit the page.",
+          "type": "read",
+          "parameters": [
+            "pageId"
+          ],
+          "annotations": {
+            "title": "Get Page Restrictions",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "set_page_restrictions": {
+          "description": "🔒 UPDATE: Set restrictions on a page to control who can read or edit it.",
+          "type": "update",
+          "parameters": [
+            "pageId",
+            "operation",
+            "users",
+            "groups"
+          ],
+          "annotations": {
+            "title": "Set Page Restrictions",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_page_likes": {
+          "description": "📖 READ: Get users who liked a page. Shows engagement with the content.",
+          "type": "read",
+          "parameters": [
+            "pageId",
+            "limit",
+            "cursor"
+          ],
+          "annotations": {
+            "title": "Get Page Likes",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_space_permissions": {
+          "description": "🔍 DISCOVERY: Get all permissions configured for a space. Shows who can access the space and what they can do.",
+          "type": "read",
+          "parameters": [
+            "spaceId",
+            "limit",
+            "cursor"
+          ],
+          "annotations": {
+            "title": "Get Space Permissions",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_permission_types": {
+          "description": "🔍 DISCOVERY: Get all available permission types in Confluence. Use this to understand what operations can be granted.",
+          "type": "read",
+          "parameters": [],
+          "annotations": {
+            "title": "Get Permission Types",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "check_content_permission": {
+          "description": "📖 READ: Check if a user has a specific permission on a piece of content.",
+          "type": "read",
+          "parameters": [
+            "contentId",
+            "operation",
+            "accountId"
+          ],
+          "annotations": {
+            "title": "Check Content Permission",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_page_comments": {
+          "description": "📖 READ: Get all comments on a page (both footer and inline comments).",
+          "type": "read",
+          "parameters": [
+            "pageId",
+            "bodyFormat",
+            "limit",
+            "cursor"
+          ],
+          "annotations": {
+            "title": "Get Page Comments",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_footer_comments": {
+          "description": "📖 READ: Get only footer comments on a page (comments at the bottom of the page).",
+          "type": "read",
+          "parameters": [
+            "pageId",
+            "bodyFormat",
+            "limit",
+            "cursor"
+          ],
+          "annotations": {
+            "title": "Get Footer Comments",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_inline_comments": {
+          "description": "📖 READ: Get only inline comments on a page (comments attached to specific text).",
+          "type": "read",
+          "parameters": [
+            "pageId",
+            "bodyFormat",
+            "limit",
+            "cursor"
+          ],
+          "annotations": {
+            "title": "Get Inline Comments",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "add_footer_comment": {
+          "description": "💬 CREATE: Add a footer comment to a page. These appear at the bottom of the page.",
+          "type": "create",
+          "parameters": [
+            "pageId",
+            "body",
+            "representation"
+          ],
+          "annotations": {
+            "title": "Add Footer Comment",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": false,
+            "openWorldHint": false
+          }
+        },
+        "update_comment": {
+          "description": "✏️ UPDATE: Edit an existing comment. Requires the current version number.",
+          "type": "update",
+          "parameters": [
+            "commentId",
+            "body",
+            "version",
+            "representation"
+          ],
+          "annotations": {
+            "title": "Update Comment",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "delete_comment": {
+          "description": "🗑️ DELETE: Permanently delete a comment. This cannot be undone.",
+          "type": "delete",
+          "parameters": [
+            "commentId"
+          ],
+          "annotations": {
+            "title": "Delete Comment",
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "idempotentHint": false,
+            "openWorldHint": false
+          }
+        },
+        "get_comment_children": {
+          "description": "📖 READ: Get replies to a comment (nested comments).",
+          "type": "read",
+          "parameters": [
+            "commentId",
+            "bodyFormat",
+            "limit",
+            "cursor"
+          ],
+          "annotations": {
+            "title": "Get Comment Replies",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_attachments": {
+          "description": "🔍 DISCOVERY: Get all attachments on a page. Filter by media type or filename.",
+          "type": "read",
+          "parameters": [
+            "pageId",
+            "mediaType",
+            "filename",
+            "limit",
+            "cursor"
+          ],
+          "annotations": {
+            "title": "Get Attachments",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_attachment": {
+          "description": "📖 READ: Get details about a specific attachment.",
+          "type": "read",
+          "parameters": [
+            "attachmentId"
+          ],
+          "annotations": {
+            "title": "Get Attachment",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "upload_attachment": {
+          "description": "⚠️ KNOWN LIMITATION: File uploads require multipart/form-data which may not work in all environments. Provide base64-enc",
+          "type": "other",
+          "parameters": [
+            "pageId",
+            "filename",
+            "content",
+            "mediaType",
+            "comment"
+          ],
+          "annotations": {
+            "title": "Upload Attachment",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": false,
+            "openWorldHint": false
+          }
+        },
+        "update_attachment": {
+          "description": "✏️ UPDATE: Upload a new version of an existing attachment.",
+          "type": "update",
+          "parameters": [
+            "attachmentId",
+            "content",
+            "comment"
+          ],
+          "annotations": {
+            "title": "Update Attachment",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": false,
+            "openWorldHint": false
+          }
+        },
+        "delete_attachment": {
+          "description": "🗑️ DELETE: Delete an attachment. By default moves to trash; use purge=true to permanently delete.",
+          "type": "delete",
+          "parameters": [
+            "attachmentId",
+            "purge"
+          ],
+          "annotations": {
+            "title": "Delete Attachment",
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "idempotentHint": false,
+            "openWorldHint": false
+          }
+        },
+        "download_attachment": {
+          "description": "📥 READ: Get the download URL for an attachment.",
+          "type": "read",
+          "parameters": [
+            "attachmentId"
+          ],
+          "annotations": {
+            "title": "Download Attachment",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_attachment_versions": {
+          "description": "📖 READ: Get version history of an attachment.",
+          "type": "read",
+          "parameters": [
+            "attachmentId",
+            "limit",
+            "cursor"
+          ],
+          "annotations": {
+            "title": "Get Attachment Versions",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "copy_attachment": {
+          "description": "📋 CREATE: Copy an attachment to another page.",
+          "type": "other",
+          "parameters": [
+            "attachmentId",
+            "destinationPageId"
+          ],
+          "annotations": {
+            "title": "Copy Attachment",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": false,
+            "openWorldHint": false
+          }
+        },
+        "get_templates": {
+          "description": "🔍 DISCOVERY: Get available page templates. Filter by space for space-specific templates, or omit for global templates.",
+          "type": "read",
+          "parameters": [
+            "spaceKey",
+            "limit",
+            "cursor"
+          ],
+          "annotations": {
+            "title": "Get Templates",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_template": {
+          "description": "📖 READ: Get details and body content of a specific template.",
+          "type": "read",
+          "parameters": [
+            "templateId"
+          ],
+          "annotations": {
+            "title": "Get Template",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "create_template": {
+          "description": "🆕 CREATE: Create a new page template. Omit spaceKey for a global template.",
+          "type": "create",
+          "parameters": [
+            "name",
+            "templateType",
+            "body",
+            "description",
+            "spaceKey",
+            "labels"
+          ],
+          "annotations": {
+            "title": "Create Template",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": false,
+            "openWorldHint": false
+          }
+        },
+        "delete_template": {
+          "description": "🗑️ DELETE: Permanently delete a template.",
+          "type": "delete",
+          "parameters": [
+            "templateId"
+          ],
+          "annotations": {
+            "title": "Delete Template",
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "idempotentHint": false,
+            "openWorldHint": false
+          }
+        },
+        "get_labels": {
+          "description": "📖 READ: Get labels on a piece of content (page, blog post, etc).",
+          "type": "read",
+          "parameters": [
+            "contentId",
+            "prefix",
+            "limit",
+            "cursor"
+          ],
+          "annotations": {
+            "title": "Get Content Labels",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "add_labels": {
+          "description": "🏷️ CREATE: Add labels to a piece of content.",
+          "type": "create",
+          "parameters": [
+            "contentId",
+            "labels"
+          ],
+          "annotations": {
+            "title": "Add Labels",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_space_labels": {
+          "description": "📖 READ: Get all labels used in a space.",
+          "type": "read",
+          "parameters": [
+            "spaceId",
+            "prefix",
+            "limit",
+            "cursor"
+          ],
+          "annotations": {
+            "title": "Get Space Labels",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "search_cql": {
+          "description": "🔍 DISCOVERY: Search Confluence using CQL (Confluence Query Language). Powerful query syntax for finding content.",
+          "type": "discovery",
+          "parameters": [
+            "cql",
+            "cqlcontext",
+            "excerpt",
+            "expand",
+            "limit",
+            "cursor"
+          ],
+          "annotations": {
+            "title": "Search with CQL",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": true
+          }
+        },
+        "search_content": {
+          "description": "🔍 DISCOVERY: Simple text search across Confluence content. For complex queries, use \"search_cql\".",
+          "type": "discovery",
+          "parameters": [
+            "query",
+            "spaceKey",
+            "type",
+            "limit",
+            "cursor"
+          ],
+          "annotations": {
+            "title": "Search Content",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": true
+          }
+        },
+        "get_blog_posts": {
+          "description": "🔍 DISCOVERY: Search for blog posts in Confluence. Filter by space or status.",
+          "type": "read",
+          "parameters": [
+            "spaceId",
+            "status",
+            "sort",
+            "limit",
+            "cursor",
+            "fields"
+          ],
+          "annotations": {
+            "title": "Get Blog Posts",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": true
+          }
+        },
+        "get_blog_post": {
+          "description": "📖 READ: Get details of a specific blog post.",
+          "type": "read",
+          "parameters": [
+            "blogPostId",
+            "bodyFormat"
+          ],
+          "annotations": {
+            "title": "Get Blog Post",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "create_blog_post": {
+          "description": "📝 CREATE: Create a new blog post in a space.",
+          "type": "create",
+          "parameters": [
+            "spaceId",
+            "title",
+            "body",
+            "status",
+            "representation"
+          ],
+          "annotations": {
+            "title": "Create Blog Post",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": false,
+            "openWorldHint": false
+          }
+        },
+        "update_blog_post": {
+          "description": "✏️ UPDATE: Update an existing blog post. Requires current version number. If title is not provided, the current title wi",
+          "type": "update",
+          "parameters": [
+            "blogPostId",
+            "title",
+            "body",
+            "version",
+            "status",
+            "representation"
+          ],
+          "annotations": {
+            "title": "Update Blog Post",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "delete_blog_post": {
+          "description": "🗑️ DELETE: Delete a blog post. Moves to trash by default.",
+          "type": "delete",
+          "parameters": [
+            "blogPostId",
+            "purge"
+          ],
+          "annotations": {
+            "title": "Delete Blog Post",
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "idempotentHint": false,
+            "openWorldHint": false
+          }
+        },
+        "get_content_properties": {
+          "description": "📖 READ: Get custom properties stored on content.",
+          "type": "read",
+          "parameters": [
+            "contentId",
+            "limit",
+            "cursor"
+          ],
+          "annotations": {
+            "title": "Get Content Properties",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "create_content_property": {
+          "description": "🆕 CREATE: Create a custom property on content.",
+          "type": "create",
+          "parameters": [
+            "contentId",
+            "key",
+            "value"
+          ],
+          "annotations": {
+            "title": "Create Content Property",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": false,
+            "openWorldHint": false
+          }
+        },
+        "update_content_property": {
+          "description": "✏️ UPDATE: Update a content property value.",
+          "type": "update",
+          "parameters": [
+            "contentId",
+            "propertyKey",
+            "value",
+            "version"
+          ],
+          "annotations": {
+            "title": "Update Content Property",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "delete_content_property": {
+          "description": "🗑️ DELETE: Delete a content property.",
+          "type": "delete",
+          "parameters": [
+            "contentId",
+            "propertyKey"
+          ],
+          "annotations": {
+            "title": "Delete Content Property",
+            "readOnlyHint": false,
+            "destructiveHint": true,
+            "idempotentHint": false,
+            "openWorldHint": false
+          }
+        },
+        "get_content_watchers": {
+          "description": "📖 READ: Get users watching a piece of content.",
+          "type": "read",
+          "parameters": [
+            "contentId",
+            "limit",
+            "cursor"
+          ],
+          "annotations": {
+            "title": "Get Content Watchers",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "add_content_watch": {
+          "description": "👁️ CREATE: Start watching content to receive notifications.",
+          "type": "create",
+          "parameters": [
+            "contentId"
+          ],
+          "annotations": {
+            "title": "Watch Content",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "remove_content_watch": {
+          "description": "👁️ DELETE: Stop watching content.",
+          "type": "delete",
+          "parameters": [
+            "contentId"
+          ],
+          "annotations": {
+            "title": "Unwatch Content",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_space_watchers": {
+          "description": "📖 READ: Get users watching a space.",
+          "type": "read",
+          "parameters": [
+            "spaceId",
+            "limit",
+            "cursor"
+          ],
+          "annotations": {
+            "title": "Get Space Watchers",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_audit_records": {
+          "description": "📖 READ: Get audit log records. Admin only.",
+          "type": "read",
+          "parameters": [
+            "startDate",
+            "endDate",
+            "searchString",
+            "limit",
+            "cursor"
+          ],
+          "annotations": {
+            "title": "Get Audit Records",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_system_info": {
+          "description": "📖 READ: Get Confluence system information.",
+          "type": "read",
+          "parameters": [],
+          "annotations": {
+            "title": "Get System Info",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "get_content_states": {
+          "description": "📖 READ: Get available content states (like Draft, Review, Published).",
+          "type": "read",
+          "parameters": [
+            "spaceKey"
+          ],
+          "annotations": {
+            "title": "Get Content States",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "set_content_state": {
+          "description": "⚠️ PREREQUISITE: Use \"get_content_states\" first to find valid state IDs. State IDs must be numeric (e.g., \"1\", \"2\"). Set",
+          "type": "update",
+          "parameters": [
+            "contentId",
+            "stateId"
+          ],
+          "annotations": {
+            "title": "Set Content State",
+            "readOnlyHint": false,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        },
+        "load_tool_schema": {
+          "description": "Get the full input schema for a specific tool. Use this before calling a tool to understand its parameters. Returns JSON",
+          "type": "read",
+          "parameters": [
+            "toolName",
+            "format"
+          ],
+          "annotations": {
+            "title": "Load Tool Schema",
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "idempotentHint": true,
+            "openWorldHint": false
+          }
+        }
+      }
+    }
+  },
+  "allTools": [
+    "add_attachment",
+    "add_comment",
+    "add_content_watch",
+    "add_field_to_default_screen",
+    "add_field_to_notification_screen",
+    "add_field_to_screen",
+    "add_footer_comment",
+    "add_issue_types_to_scheme",
+    "add_labels",
+    "analyze_customer_visibility",
+    "analyze_idea_insights",
+    "analyze_user_access",
+    "assign_issue",
+    "assign_issue_type_scheme_to_project",
+    "assign_issue_type_screen_scheme_to_project",
+    "assign_workflow_scheme_to_project",
+    "bulk_create_issues",
+    "check_content_permission",
+    "configure_request_type_workflow",
+    "copy_attachment",
+    "copy_page",
+    "create_automation_rule",
+    "create_blog_post",
+    "create_board",
+    "create_content_property",
+    "create_custom_field",
+    "create_custom_field_context",
+    "create_custom_field_options",
+    "create_dashboard",
+    "create_field_configuration",
+    "create_field_configuration_scheme",
+    "create_filter",
+    "create_idea",
+    "create_issue",
+    "create_issue_type",
+    "create_issue_type_scheme",
+    "create_notification_scheme",
+    "create_notification_screen",
+    "create_page",
+    "create_permission_grant",
+    "create_permission_scheme",
+    "create_project",
+    "create_request_type",
+    "create_screen",
+    "create_screen_scheme",
+    "create_screen_tab",
+    "create_space",
+    "create_sprint",
+    "create_template",
+    "create_workflow",
+    "create_workflow_scheme",
+    "delete_attachment",
+    "delete_attachment",
+    "delete_blog_post",
+    "delete_board",
+    "delete_comment",
+    "delete_comment",
+    "delete_content_property",
+    "delete_custom_field",
+    "delete_custom_field_context",
+    "delete_dashboard",
+    "delete_idea",
+    "delete_issue",
+    "delete_issue_type",
+    "delete_issue_type_scheme",
+    "delete_page",
+    "delete_permission_grant",
+    "delete_permission_scheme",
+    "delete_project",
+    "delete_screen",
+    "delete_screen_scheme",
+    "delete_screen_tab",
+    "delete_space",
+    "delete_sprint",
+    "delete_template",
+    "delete_workflow",
+    "delete_workflow_scheme_issue_type",
+    "download_attachment",
+    "enable_disable_automation_rule",
+    "export_project_data",
+    "export_user_data",
+    "generate_health_check_report",
+    "generate_project_report",
+    "generate_system_report",
+    "generate_usage_analytics",
+    "get_advanced_directory_health_monitoring",
+    "get_application_properties",
+    "get_application_roles",
+    "get_attachment",
+    "get_attachment",
+    "get_attachment_meta",
+    "get_attachment_versions",
+    "get_attachments",
+    "get_audit_records",
+    "get_audit_records",
+    "get_automation_component_types",
+    "get_automation_rule_details",
+    "get_automation_rules",
+    "get_automation_templates",
+    "get_blog_post",
+    "get_blog_posts",
+    "get_board",
+    "get_board_backlog",
+    "get_board_configuration",
+    "get_boards",
+    "get_bulk_permissions",
+    "get_comment_children",
+    "get_comments",
+    "get_content_properties",
+    "get_content_states",
+    "get_content_watchers",
+    "get_cross_product_user_activity",
+    "get_custom_field_contexts",
+    "get_custom_field_options",
+    "get_customer_organization_membership",
+    "get_customer_organizations",
+    "get_dashboard",
+    "get_dashboards",
+    "get_directory_health_status",
+    "get_directory_info",
+    "get_directory_sync_settings",
+    "get_directory_sync_status",
+    "get_directory_users",
+    "get_enhanced_identity_provider_insights",
+    "get_field_configuration_schemes",
+    "get_field_configurations",
+    "get_fields_paginated",
+    "get_footer_comments",
+    "get_global_permissions",
+    "get_idea",
+    "get_idea_scoring",
+    "get_ideas",
+    "get_identity_providers",
+    "get_inline_comments",
+    "get_insights",
+    "get_instance_info",
+    "get_issue",
+    "get_issue_createmeta_fields",
+    "get_issue_createmeta_issuetypes",
+    "get_issue_editmeta_fields",
+    "get_issue_type_scheme_mappings",
+    "get_issue_type_schemes",
+    "get_issue_types",
+    "get_jpd_projects",
+    "get_labels",
+    "get_my_permissions",
+    "get_notification_schemes",
+    "get_notification_screens",
+    "get_org_group_stats",
+    "get_org_user_stats",
+    "get_organization_customers",
+    "get_organization_details",
+    "get_organization_domains",
+    "get_organization_events",
+    "get_organization_info",
+    "get_organization_policies",
+    "get_organization_users",
+    "get_organization_workspaces",
+    "get_organizations",
+    "get_page",
+    "get_page_ancestors",
+    "get_page_children",
+    "get_page_comments",
+    "get_page_likes",
+    "get_page_restrictions",
+    "get_page_version",
+    "get_page_versions",
+    "get_permission_grants",
+    "get_permission_schemes",
+    "get_permission_types",
+    "get_project",
+    "get_project_analytics",
+    "get_project_customer_organizations",
+    "get_provisioning_insights",
+    "get_request_type_fields",
+    "get_request_types",
+    "get_screen_available_fields",
+    "get_screen_schemes",
+    "get_screen_tab_fields",
+    "get_screen_tabs",
+    "get_screens",
+    "get_service_desks",
+    "get_site_user_groups",
+    "get_space",
+    "get_space_content",
+    "get_space_labels",
+    "get_space_permissions",
+    "get_space_settings",
+    "get_space_watchers",
+    "get_sprint",
+    "get_sprint_issues",
+    "get_sprints_for_board",
+    "get_statuses",
+    "get_system_avatars",
+    "get_system_info",
+    "get_system_limits",
+    "get_template",
+    "get_templates",
+    "get_time_tracking_settings",
+    "get_transitions",
+    "get_user_behavior_pattern_analysis",
+    "get_user_group_memberships",
+    "get_user_last_active",
+    "get_user_manage",
+    "get_user_manage_api_tokens",
+    "get_user_manage_profile",
+    "get_user_role_assignments",
+    "get_workflow_schemes_basic",
+    "get_workflow_schemes_detailed",
+    "get_workflows",
+    "list_issue_attachments",
+    "load_tool_schema",
+    "load_tool_schema",
+    "load_tool_schema",
+    "load_tool_schema",
+    "load_tool_schema",
+    "load_tool_schema",
+    "load_tool_schema",
+    "load_tool_schema",
+    "move_issues_to_backlog",
+    "move_issues_to_sprint",
+    "move_page",
+    "move_screen_tab_field",
+    "remove_content_watch",
+    "remove_field_from_screen_tab",
+    "restore_space",
+    "search_content",
+    "search_cql",
+    "search_groups",
+    "search_ideas",
+    "search_jql",
+    "search_organization_users",
+    "search_pages",
+    "search_projects",
+    "search_site_users",
+    "search_spaces",
+    "search_tools",
+    "search_tools",
+    "search_tools",
+    "search_tools",
+    "search_tools",
+    "search_tools",
+    "search_tools",
+    "search_tools",
+    "set_application_property",
+    "set_content_state",
+    "set_page_restrictions",
+    "set_space_theme",
+    "set_workflow_scheme_issue_type",
+    "setup_workflow_guided",
+    "transition_issue",
+    "update_attachment",
+    "update_automation_rule",
+    "update_blog_post",
+    "update_comment",
+    "update_comment",
+    "update_content_property",
+    "update_custom_field",
+    "update_custom_field_context",
+    "update_dashboard",
+    "update_field_configuration",
+    "update_idea",
+    "update_issue",
+    "update_issue_type",
+    "update_issue_type_scheme",
+    "update_page",
+    "update_permission_scheme",
+    "update_project",
+    "update_screen",
+    "update_screen_tab",
+    "update_space_settings",
+    "update_sprint",
+    "update_time_tracking_settings",
+    "update_workflow_scheme",
+    "upload_attachment"
+  ]
+}
