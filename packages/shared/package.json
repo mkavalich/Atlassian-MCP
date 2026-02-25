@@ -1,0 +1,56 @@
+{
+  "name": "@atlassian-mcp/shared",
+  "version": "2.0.0",
+  "description": "Shared utilities for Atlassian MCP servers including token-efficient formatters",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./formatters": {
+      "import": "./dist/formatters/index.js",
+      "types": "./dist/formatters/index.d.ts"
+    },
+    "./types": {
+      "import": "./dist/types/index.js",
+      "types": "./dist/types/index.d.ts"
+    },
+    "./telemetry": {
+      "import": "./dist/telemetry/index.js",
+      "types": "./dist/telemetry/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "rimraf dist",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.1",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.19",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "keywords": [
+    "mcp",
+    "atlassian",
+    "token-efficiency",
+    "formatters",
+    "toon"
+  ],
+  "author": "Mike Kavalich",
+  "license": "MIT"
+}
