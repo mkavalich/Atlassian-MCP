@@ -126,9 +126,11 @@ function extractDataArray(result: unknown): Record<string, unknown>[] | null {
   // Common patterns for data arrays in responses
   const arrayFields = [
     'projects', 'issues', 'comments', 'dashboards', 'workflows',
-    'screens', 'fields', 'users', 'spaces', 'pages', 'attachments',
-    'blogPosts', 'ideas', 'insights', 'results', 'values', 'records',
-    'permissions', 'schemes', 'groups', 'organizations',
+    'screens', 'screenSchemes', 'fields', 'users', 'spaces', 'pages',
+    'attachments', 'blogPosts', 'ideas', 'insights', 'results', 'values',
+    'records', 'permissions', 'permissionSchemes', 'fieldConfigurations',
+    'notificationSchemes', 'workflowSchemes', 'schemes', 'groups',
+    'organizations', 'serviceDesks', 'requestTypes',
   ];
 
   for (const field of arrayFields) {
