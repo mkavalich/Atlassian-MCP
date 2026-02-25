@@ -1,0 +1,29 @@
+{
+  "name": "atlassian-mcp",
+  "version": "2.0.0",
+  "description": "Atlassian MCP Servers with optimizations",
+  "type": "module",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "servers/*"
+  ],
+  "scripts": {
+    "build:packages": "npm run build --workspace=packages/shared && npm run build --workspace=packages/optimizations",
+    "build:servers": "npm run build --workspaces --if-present",
+    "build:all": "npm run build:packages && npm run build:servers",
+    "test:all": "npm run test --workspaces --if-present",
+    "clean:all": "npm run clean --workspaces --if-present",
+    "generate:tool-catalog": "node scripts/generate-tool-catalog.js",
+    "validate:skills": "node scripts/validate-skills.js",
+    "validate:all": "npm run generate:tool-catalog && npm run validate:skills",
+    "package:skills": "node scripts/package-skills.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "yaml": "^2.8.2"
+  }
+}

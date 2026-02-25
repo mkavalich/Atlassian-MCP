@@ -1,0 +1,76 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+*.tsbuildinfo
+
+# Environment files (contain secrets)
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+
+# Credentials and secrets
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+secrets.json
+**/secrets/
+.npmrc
+test-keys/
+
+# MCP configuration (may contain credentials)
+.mcp.json
+
+# IDE
+.idea/
+.vscode/
+
+# Claude Code local settings (user-specific)
+.claude/settings.local.json
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Test coverage
+coverage/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+tmpclaude-*
+**/tmpclaude-*
+to-dos/
+
+# Windows artifacts
+nul
+Thumbs.db
+
+# Local investigation/test scripts
+test-results/*.ps1
+test-results/*.mjs
+test-results/*.js
+test-results/*.json
+test-results/*.md
+
+# Misc artifacts
+Untitled.png
+
+# Docker
+.docker/
+docker-compose.override.yml
+docker-compose.*.local.yml
+dist/skills/
