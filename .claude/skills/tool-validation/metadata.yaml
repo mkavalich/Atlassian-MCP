@@ -1,0 +1,36 @@
+# Skill Metadata
+# This file declares the skill's dependencies for validation
+
+name: tool-validation
+description: Systematic integration testing of all MCP tools against live Atlassian Cloud
+version: 1.0.0
+
+# This skill tests ALL tools, so we skip validation to avoid circular dependency
+# (can't validate tools if validation skill depends on those tools existing)
+skip_validation: true
+
+# This skill is designed to test all servers
+target_servers:
+  - jira-projects
+  - jira-workflows
+  - jira-fields-permissions
+  - jira-service-desk
+  - jira-organization
+  - jira-system-admin
+  - jira-product-discovery
+  - confluence
+
+# No skill dependencies
+extends: []
+
+# Tags for categorization
+tags:
+  - testing
+  - validation
+  - integration-testing
+  - quality-assurance
+
+# Output directory for test results
+outputs:
+  - test-results/results.json
+  - test-results/remediation-plan.md

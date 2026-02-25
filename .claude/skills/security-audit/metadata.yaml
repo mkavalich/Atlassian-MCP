@@ -1,0 +1,34 @@
+# Security Audit Skill Metadata
+name: security-audit
+
+description: >
+  Comprehensive security audit framework for MCP servers based on Model Context Protocol 
+  Security initiative best practices. Covers input validation, authentication, credential 
+  management, dependency analysis, container security, and MCP-specific vulnerabilities 
+  like tool poisoning and prompt injection.
+
+version: 1.0.0
+
+# This skill references example tool patterns but doesn't call specific tools
+skip_validation: true
+
+tools_used: []
+
+target_servers:
+  - jira-projects
+  - jira-workflows
+  - jira-fields-permissions
+  - jira-service-desk
+  - jira-organization
+  - jira-system-admin
+  - jira-product-discovery
+  - confluence
+
+extends: []
+
+tags:
+  - security
+  - audit
+  - compliance
+  - vulnerability-assessment
+  - mcp-security

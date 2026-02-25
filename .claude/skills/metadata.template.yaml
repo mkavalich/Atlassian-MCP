@@ -1,0 +1,37 @@
+# Skill Metadata Template
+# Copy this file to your skill directory as metadata.yaml
+
+# Required: Skill identifier (should match directory name)
+name: my-skill-name
+
+# Required: Human-readable description
+description: Brief description of what this skill does
+
+# Optional: Semantic version
+version: 1.0.0
+
+# Optional: Skip tool validation for this skill
+# Use for documentation/teaching skills that contain example tool names
+# skip_validation: true
+
+# Required: List all tools this skill references
+# These are validated against schemas/tools.json before push
+# Run: npm run validate:skills to check
+tools_used:
+  - jira_create_project
+  - jira_search_issues
+  # Add all tools mentioned in SKILL.md or reference files
+
+# Optional: Servers this skill targets
+# For documentation, helps users know which servers to enable
+target_servers:
+  - jira-projects
+  # - jira-workflows
+  # - confluence
+
+# Optional: Other skills this depends on
+extends: []
+
+# Optional: Categorization tags
+tags:
+  - example

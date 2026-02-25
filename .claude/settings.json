@@ -1,0 +1,189 @@
+{
+  "model": "claude-opus-4-5-20251101",
+  "permissions": {
+    "defaultMode": "acceptEdits",
+    "allow": [
+      "Read",
+      "Edit(servers/**)",
+      "Edit(scripts/**)",
+      "Edit(docs/**)",
+      "Edit(config/**)",
+      "Edit(*.md)",
+      "Edit(*.yml)",
+      "Edit(*.yaml)",
+      "Edit(*.json)",
+      "Edit(*.ts)",
+      "Edit(*.js)",
+      "Edit(*.py)",
+      "Edit(*.ps1)",
+      "Edit(*.sh)",
+      "Edit(Dockerfile*)",
+      "Write(servers/**/*.ts)",
+      "Write(servers/**/*.js)",
+      "Write(servers/**/*.py)",
+      "Write(packages/**/*.ts)",
+      "Write(packages/**/*.js)",
+      "Write(packages/**/*.json)",
+      "Write(docs/**)",
+      "Write(config/**)",
+      "Write(scripts/**)",
+      "Write(schemas/**)",
+      "Write(*.md)",
+      "Bash(npm run:*)",
+      "Bash(npm test:*)",
+      "Bash(npm install:*)",
+      "Bash(npm start)",
+      "Bash(npm build:*)",
+      "Bash(docker build:*)",
+      "Bash(docker run:*)",
+      "Bash(docker stop:*)",
+      "Bash(docker logs:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker exec:*)",
+      "Bash(docker-compose:*)",
+      "Bash(git status)",
+      "Bash(git diff:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git log:*)",
+      "Bash(git branch:*)",
+      "Bash(git checkout:*)",
+      "Bash(powershell *.ps1)",
+      "Bash(bash *.sh)",
+      "Bash(python:*)",
+      "Bash(node:*)",
+      "Bash(jest:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(cat:*)",
+      "Bash(dir:*)",
+      "Bash(ls:*)",
+      "Bash(curl:*)",
+      "Bash(timeout:*)",
+      "Bash(gh auth:*)",
+      "Bash(gh repo view:*)",
+      "Bash(gh repo create:*)"
+    ],
+    "deny": [
+      "Bash(rm -rf /*)",
+      "Bash(rm -rf E:/*)",
+      "Bash(del /s /q E:\\*)",
+      "Bash(format:*)",
+      "Bash(diskpart:*)",
+      "Bash(reg delete:*)",
+      "Bash(Remove-Item -Recurse -Force E:\\:*)",
+      "Write(.env)",
+      "Edit(.env)",
+      "Bash(docker system prune -af)",
+      "Bash(docker volume prune -f)",
+      "Bash(docker rmi -f $(docker images -q))",
+      "Bash(npm publish:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git push --force:*)"
+    ],
+    "additionalDirectories": []
+  },
+  "env": {
+    "NODE_ENV": "development",
+    "MCP_PROJECT": "atlassian-mcp-servers",
+    "COMPOSE_HTTP_TIMEOUT": "1200",
+    "DOCKER_BUILDKIT": "1"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash(git push:*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -ExecutionPolicy Bypass -File \".claude\\hooks\\validate_prepush.ps1\"",
+            "timeout": 120
+          }
+        ]
+      },
+      {
+        "matcher": "Bash(gh repo create:*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -ExecutionPolicy Bypass -File \".claude\\hooks\\confirm_repo_create.ps1\"",
+            "timeout": 15
+          }
+        ]
+      },
+      {
+        "matcher": "Bash(npm version:*)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -ExecutionPolicy Bypass -File \".claude\\hooks\\version_reminder.ps1\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -ExecutionPolicy Bypass -File \".claude\\hooks\\version_reminder.ps1\"",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -ExecutionPolicy Bypass -File \".claude\\hooks\\validate_destructive.ps1\"",
+            "timeout": 30
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -ExecutionPolicy Bypass -File \".claude\\hooks\\validate_write.ps1\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|MultiEdit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -ExecutionPolicy Bypass -File \".claude\\hooks\\format_code.ps1\"",
+            "timeout": 90
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -ExecutionPolicy Bypass -File \".claude\\hooks\\session_start.ps1\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "mcpServers": {
+    "exa": true,
+    "ref": true,
+    "context7": true,
+    "semgrep": true,
+    "playwright": true
+  }
+}

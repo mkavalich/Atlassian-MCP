@@ -1,0 +1,37 @@
+# Memory Leak Detection Skill Metadata
+name: memory-leak-detection
+
+description: >
+  Systematic memory leak detection, diagnosis, and remediation framework for 
+  Node.js/TypeScript MCP servers. Covers unbounded caches, event listener leaks, 
+  closure captures, stream/connection leaks, timer leaks, and MCP-specific patterns 
+  like per-request client creation and tool handler state accumulation. Includes 
+  heap profiling workflows and remediation templates.
+
+version: 1.0.0
+
+# This skill provides diagnostic guidance, doesn't call specific tools
+skip_validation: true
+
+tools_used: []
+
+target_servers:
+  - jira-projects
+  - jira-workflows
+  - jira-fields-permissions
+  - jira-service-desk
+  - jira-organization
+  - jira-system-admin
+  - jira-product-discovery
+  - confluence
+
+extends:
+  - tool-validation  # Run memory profiling during validation
+
+tags:
+  - memory-management
+  - performance
+  - diagnostics
+  - profiling
+  - node.js
+  - leak-detection

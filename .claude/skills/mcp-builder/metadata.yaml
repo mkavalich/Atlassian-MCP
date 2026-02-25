@@ -1,0 +1,35 @@
+# Skill Metadata
+# This file declares the skill's dependencies for validation
+
+name: mcp-builder
+description: Guide for creating high-quality MCP servers
+version: 1.0.0
+
+# Skip validation for this skill - it contains example tool names
+# (github_*, slack_*, stripe_*) that are teaching examples, not real tools
+skip_validation: true
+
+# List all tools this skill references in its documentation
+# These are validated against schemas/tools.json before push
+tools_used: []
+
+# Servers this skill is designed to work with
+# Used for documentation, not validation
+target_servers:
+  - jira-projects
+  - jira-workflows
+  - jira-fields-permissions
+  - jira-service-desk
+  - jira-organization
+  - jira-system-admin
+  - jira-product-discovery
+  - confluence
+
+# Skills this skill depends on or extends
+extends: []
+
+# Tags for categorization
+tags:
+  - development
+  - mcp
+  - best-practices

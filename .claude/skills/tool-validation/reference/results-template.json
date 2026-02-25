@@ -1,0 +1,127 @@
+{
+  "metadata": {
+    "created": null,
+    "lastUpdated": null,
+    "totalTools": 278,
+    "tested": 0,
+    "passed": 0,
+    "failed": 0,
+    "blocked": 0,
+    "skipped": 0
+  },
+  "servers": {
+    "jira-projects": {
+      "tools": {},
+      "summary": { "total": 37, "tested": 0, "passed": 0, "failed": 0, "blocked": 0, "skipped": 0 }
+    },
+    "jira-workflows": {
+      "tools": {},
+      "summary": { "total": 41, "tested": 0, "passed": 0, "failed": 0, "blocked": 0, "skipped": 0 }
+    },
+    "jira-fields-permissions": {
+      "tools": {},
+      "summary": { "total": 35, "tested": 0, "passed": 0, "failed": 0, "blocked": 0, "skipped": 0 }
+    },
+    "jira-service-desk": {
+      "tools": {},
+      "summary": { "total": 11, "tested": 0, "passed": 0, "failed": 0, "blocked": 0, "skipped": 0 }
+    },
+    "jira-organization": {
+      "tools": {},
+      "summary": { "total": 37, "tested": 0, "passed": 0, "failed": 0, "blocked": 0, "skipped": 0 }
+    },
+    "jira-system-admin": {
+      "tools": {},
+      "summary": { "total": 21, "tested": 0, "passed": 0, "failed": 0, "blocked": 0, "skipped": 0 }
+    },
+    "jira-product-discovery": {
+      "tools": {},
+      "summary": { "total": 15, "tested": 0, "passed": 0, "failed": 0, "blocked": 0, "skipped": 0 }
+    },
+    "confluence": {
+      "tools": {},
+      "summary": { "total": 81, "tested": 0, "passed": 0, "failed": 0, "blocked": 0, "skipped": 0 }
+    }
+  },
+  "testData": {
+    "jira": {
+      "existingProjectKey": null,
+      "existingIssueTypeId": null,
+      "testProjectKey": null,
+      "testProjectId": null,
+      "testIssueKey": null,
+      "testIssueId": null,
+      "testCommentId": null,
+      "testDashboardId": null,
+      "testWorkflowSchemeId": null,
+      "testScreenId": null,
+      "testScreenTabId": null,
+      "testPermissionSchemeId": null,
+      "testCustomFieldId": null,
+      "testCustomFieldContextId": null,
+      "testAutomationRuleId": null
+    },
+    "confluence": {
+      "existingSpaceId": null,
+      "existingSpaceKey": null,
+      "testSpaceId": null,
+      "testSpaceKey": null,
+      "testPageId": null,
+      "testBlogPostId": null,
+      "testTemplateId": null,
+      "testAttachmentId": null,
+      "testCommentId": null
+    },
+    "serviceDesk": {
+      "testServiceDeskId": null,
+      "testRequestTypeId": null,
+      "testOrganizationId": null
+    },
+    "productDiscovery": {
+      "testProjectKey": null,
+      "testIdeaKey": null,
+      "testIdeaId": null,
+      "testInsightId": null
+    }
+  },
+  "phases": {
+    "phase1_discovery": {
+      "status": "not_started",
+      "startedAt": null,
+      "completedAt": null,
+      "toolsTested": 0,
+      "toolsPassed": 0
+    },
+    "phase2_create": {
+      "status": "not_started",
+      "startedAt": null,
+      "completedAt": null,
+      "toolsTested": 0,
+      "toolsPassed": 0
+    },
+    "phase3_read": {
+      "status": "not_started",
+      "startedAt": null,
+      "completedAt": null,
+      "toolsTested": 0,
+      "toolsPassed": 0
+    },
+    "phase4_update": {
+      "status": "not_started",
+      "startedAt": null,
+      "completedAt": null,
+      "toolsTested": 0,
+      "toolsPassed": 0
+    },
+    "phase5_delete": {
+      "status": "not_started",
+      "startedAt": null,
+      "completedAt": null,
+      "toolsTested": 0,
+      "toolsPassed": 0
+    }
+  },
+  "failedTools": [],
+  "blockedTools": [],
+  "remediationPlan": []
+}
