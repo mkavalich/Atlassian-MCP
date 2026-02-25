@@ -1,0 +1,31 @@
+# Atlassian MCP Servers
+
+> 275 MCP tools for Jira, Confluence, JSM, and JPD integration with AI assistants.
+
+## For AI Agents Using These Tools
+
+- [Agent Guide](AGENTS.md): Workflows, patterns, best practices for tool consumers
+
+## Documentation
+
+- [Getting Started](docs/getting-started.md): Setup and configuration
+- [Tool Catalog](docs/tool-catalog.md): Complete tool reference (275 tools)
+- [Optimization Guide](docs/optimization-guide.md): Deferred loading and tool use examples
+
+## Servers
+
+| Server | Tools | Focus |
+|--------|-------|-------|
+| [jira-projects](servers/jira-projects/README.md) | 60 | Issues, projects, dashboards |
+| [jira-workflows](servers/jira-workflows/README.md) | 39 | Workflows, screens, automation |
+| [confluence](servers/confluence/README.md) | 69 | Spaces, pages, content |
+| [jira-service-desk](servers/jira-service-desk/README.md) | 12 | JSM service desks, customers |
+| [jira-organization](servers/jira-organization/README.md) | 31 | Users, groups, org admin |
+| [jira-fields-permissions](servers/jira-fields-permissions/README.md) | 31 | Custom fields, permissions |
+| [jira-system-admin](servers/jira-system-admin/README.md) | 21 | System settings, audit |
+| [jira-product-discovery](servers/jira-product-discovery/README.md) | 12 | JPD ideas, insights |
+
+## For Contributors
+
+- [AGENTS.md](AGENTS.md): Instructions for AI agents working on this codebase
+- [CONTRIBUTING.md](CONTRIBUTING.md): Contribution guidelines
