@@ -32,6 +32,15 @@ test-keys/
 
 # Claude Code local settings (user-specific)
 .claude/settings.local.json
+
+# Claude Code hooks (platform-specific PowerShell scripts)
+# Keep hooks/README.md for documentation; actual scripts are user-specific
+.claude/hooks/*.ps1
+.claude/hooks/*.sh
+
+# Internal demo/recording guides
+.claude/skills/demo-runsheet.md
+
 *.swp
 *.swo
 
