@@ -186,14 +186,6 @@ async function validateSkill(skill, allTools) {
     }
   }
 
-  // Check if metadata exists
-  if (!metadata && contentRefs.length > 0) {
-    warnings.push({
-      tool: null,
-      message: 'No metadata.yaml found. Consider adding one to declare tool dependencies.'
-    });
-  }
-
   return { errors, warnings, toolCount: allRefs.size };
 }
 
