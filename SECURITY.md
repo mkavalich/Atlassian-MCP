@@ -74,6 +74,60 @@ This prevents blind modifications to unknown resources.
 - Unknown properties rejected (prevents injection of unexpected fields)
 - Type coercion disabled where security-relevant
 
+## Runtime Security Controls
+
+Every server implements four defense layers. These are mandatory for all servers — see the [Development Guide](docs/development-guide.md#security-patterns) for implementation details.
+
+### Path Sanitization
+
+The API client's `sanitizePath()` method runs on every outbound request to prevent path traversal attacks:
+
+- Rejects `..` and `.` path segments (throws immediately)
+- Allows only safe characters (`[\w\-.:@~+]`) through unmodified
+- Encodes all other characters with `encodeURIComponent()`
+
+**Location:** `src/api/client.ts` in every server.
+
+### Error Sanitization
+
+Error messages are sanitized before reaching MCP clients to prevent information disclosure:
+
+- **Stack traces** stripped (lines matching `at ...`)
+- **File paths** replaced with `[path]` (both Windows `C:\...` and Unix `/...`)
+- **Sensitive keys** removed from error details (`password`, `token`, `secret`, `apiKey`, `authorization`, `cookie`, `session`)
+- **Internal error properties** excluded (`stack`, `originalError`)
+- **Length capped** at 500 characters
+
+**Location:** `src/utils/errors.ts` in every server. Both `sanitizeErrorMessage()` and `sanitizeErrorDetails()` are called from the error class constructors, so sanitization cannot be bypassed.
+
+### User Content Boundaries (Prompt Injection Defense)
+
+User-generated content returned from Atlassian APIs is wrapped with boundary markers before being sent to the MCP client. This delineates untrusted content from system content, preventing prompt injection via issue descriptions, comments, page bodies, etc.
+
+- Fields wrapped: `description`, `summary`, `body`, `renderedBody`, `comment`, `content`
+- Content exceeding 10,000 characters is truncated with `...[TRUNCATED]`
+- Content is **not modified** — only boundary markers are added around it
+
+```
+===USER_CONTENT_START===
+<untrusted content here>
+===USER_CONTENT_END===
+```
+
+**Location:** `src/utils/sanitize.ts` in every server. Utility functions `wrapUserContent()`, `sanitizeUserFields()`, `sanitizeComment()`, and `sanitizeIssueFields()` are called from tool handlers before returning data.
+
+### Rate Limit Tracking
+
+Each API client tracks Atlassian rate limit headers (`X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`) in a bounded LRU cache (max 100 entries, 5-minute TTL). This prevents unbounded memory growth and enables `waitForRateLimit()` to pause before hitting limits.
+
+### Connection Security
+
+- All outbound connections use HTTPS to Atlassian Cloud endpoints
+- Connection pooling via `https.Agent` with `keepAlive: true` and `maxSockets: 10`
+- Automatic retry with exponential backoff on network errors and 5xx responses (except 503 rate limits)
+- Request timeout defaults to 30 seconds (configurable via `REQUEST_TIMEOUT` env var)
+- **mTLS is not supported** — Atlassian Cloud uses API token authentication over standard TLS. Client certificate authentication would only be relevant for self-hosted Data Center instances behind a reverse proxy.
+
 ## Security Best Practices
 
 ### API Token Handling
