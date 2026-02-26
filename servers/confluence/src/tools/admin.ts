@@ -21,6 +21,7 @@ import {
   exportAuditRecordsSchema,
   setContentStateSchema,
   getContentStatesSchema,
+  getSystemInfoSchema,
 } from '../validation/schemas.js';
 import {
   getBlogPostsInputSchema,
@@ -1136,8 +1137,9 @@ export async function registerAdminTools(server: McpServer, apiClient: Confluenc
         openWorldHint: false,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
+        getSystemInfoSchema.parse(params);
         const response = await apiClient.makeV1Request<SystemInfo>({
           method: 'GET',
           path: '/settings/systemInfo',

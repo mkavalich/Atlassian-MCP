@@ -8,6 +8,9 @@ import {
   getOrganizationWorkspacesInputSchema,
   getOrganizationEventsInputSchema,
 } from '../validation/input-schemas.js';
+import {
+  getOrganizationEventsSchema,
+} from '../validation/schemas.js';
 
 /**
  * Register Global Organization Analysis Tools
@@ -436,8 +439,9 @@ export async function registerGlobalOrganizationTools(server: McpServer, apiClie
         destructiveHint: false,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
+        const validatedParams = getOrganizationEventsSchema.parse(params);
         const orgId = apiClient.getOrgId();
         if (!orgId) {
           return {
@@ -456,9 +460,7 @@ export async function registerGlobalOrganizationTools(server: McpServer, apiClie
           };
         }
 
-        const limit = params.limit || 50;
-        const from = params.from;
-        const to = params.to;
+        const { limit = 50, from, to } = validatedParams;
 
         const queryParams: Record<string, any> = { limit };
         if (from) queryParams.from = from;

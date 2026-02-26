@@ -8,6 +8,7 @@ import {
   copySpacePermissionsSchema,
   checkContentPermissionSchema,
   bulkUpdatePermissionsSchema,
+  getPermissionTypesSchema,
 } from '../validation/schemas.js';
 import {
   getSpacePermissionsInputSchema,
@@ -460,8 +461,9 @@ export async function registerPermissionTools(server: McpServer, apiClient: Conf
         openWorldHint: false,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
+        getPermissionTypesSchema.parse(params);
         // Return the standard Confluence permission types
         const permissionTypes = [
           { key: 'read', description: 'View content in the space' },

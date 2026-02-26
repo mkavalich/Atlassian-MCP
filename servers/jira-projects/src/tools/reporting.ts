@@ -1,6 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { JiraApiClient } from '../api/client.js';
-import { searchJQLSchema } from '../validation/schemas.js';
+import { searchJQLSchema, generateProjectReportSchema, getProjectAnalyticsSchema } from '../validation/schemas.js';
 import { searchJQLInputSchema, generateProjectReportInputSchema } from '../validation/input-schemas.js';
 import { logger } from '../utils/logger.js';
 import { wrapUserContent } from '../utils/sanitize.js';
@@ -179,12 +179,13 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
         openWorldHint: true,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
-        const projectKey = params.projectKey;
-        const includeIssues = params.includeIssues !== false;
-        const includeProgress = params.includeProgress !== false;
-        const dateRange = params.dateRange || '30d';
+        const validatedParams = generateProjectReportSchema.parse(params);
+        const projectKey = validatedParams.projectKey;
+        const includeIssues = validatedParams.includeIssues;
+        const includeProgress = validatedParams.includeProgress;
+        const dateRange = validatedParams.dateRange || '30d';
 
         // Validate project exists first
         try {
@@ -312,7 +313,7 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
         let nextSteps: string[] = [];
 
         if (error.message?.includes('not found') || error.message?.includes('NOT_FOUND') || error.message?.includes('404')) {
-          enhancedSuggestion = `Project "${params.projectKey}" not found or not accessible`;
+          enhancedSuggestion = `Project "${(params as Record<string, unknown>).projectKey}" not found or not accessible`;
           nextSteps = [
             '1. Verify the project key is correct (case sensitive)',
             '2. Use "search_jql" with query "project = projectKey" to test access',
@@ -320,7 +321,7 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
             '4. Ensure you have "Browse Projects" permission for this project'
           ];
         } else if (error.message?.includes('permission') || error.message?.includes('Unauthorized')) {
-          enhancedSuggestion = `You do not have permission to access project "${params.projectKey}"`;
+          enhancedSuggestion = `You do not have permission to access project "${(params as Record<string, unknown>).projectKey}"`;
           nextSteps = [
             '1. Contact your project administrator for access',
             '2. Verify you are assigned to this project',
@@ -343,7 +344,7 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
               error: {
                 code: error.code || 'GENERATE_REPORT_ERROR',
                 message: error.message,
-                project_key: params.projectKey,
+                project_key: (params as Record<string, unknown>).projectKey,
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 workflow_guidance: nextSteps.length > 0 ? 'Verify project access first, then retry report generation' : undefined,
@@ -379,9 +380,10 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
         openWorldHint: true,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
-        const { projectKey, metricsType = 'all', timeFrame = '30d' } = params;
+        const validatedParams = getProjectAnalyticsSchema.parse(params);
+        const { projectKey, metricsType, timeFrame } = validatedParams;
 
         // First verify project exists and is accessible
         try {

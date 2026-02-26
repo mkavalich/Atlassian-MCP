@@ -486,3 +486,17 @@ export const moveIssuesToSprintSchema = z.object({
 export const moveIssuesToBacklogSchema = z.object({
   issues: z.array(z.string()).min(1).max(50).describe('Issue keys or IDs to move to backlog (1-50)'),
 }).strict();
+
+// Reporting schemas
+export const generateProjectReportSchema = z.object({
+  projectKey: z.string().min(1),
+  includeIssues: z.boolean().optional().default(true),
+  includeProgress: z.boolean().optional().default(true),
+  dateRange: z.string().optional(),
+}).strict();
+
+export const getProjectAnalyticsSchema = z.object({
+  projectKey: z.string().min(1),
+  metricsType: z.enum(['velocity', 'burndown', 'team_performance', 'all']).default('all'),
+  timeFrame: z.enum(['7d', '30d', '90d', '6m', '1y']).default('30d'),
+}).strict();

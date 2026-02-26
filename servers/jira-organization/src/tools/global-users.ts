@@ -8,6 +8,13 @@ import {
   getUserGroupMembershipsInputSchema,
   analyzeUserAccessInputSchema,
 } from '../validation/input-schemas.js';
+import {
+  getOrganizationUsersSchema,
+  searchOrganizationUsersSchema,
+  getUserRoleAssignmentsSchema,
+  getUserGroupMembershipsSchema,
+  analyzeUserAccessSchema,
+} from '../validation/schemas.js';
 
 /**
  * Register Global User Analysis Tools
@@ -34,8 +41,9 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
         destructiveHint: false,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
+        const validatedParams = getOrganizationUsersSchema.parse(params);
         const orgId = apiClient.getOrgId();
         if (!orgId) {
           return {
@@ -54,7 +62,7 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
           };
         }
 
-        const { limit = 100, accountType, status } = params;
+        const { limit = 100, accountType, status } = validatedParams;
 
         // Build query parameters
         const queryParams: Record<string, any> = {};
@@ -162,8 +170,9 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
         destructiveHint: false,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
+        const validatedParams = searchOrganizationUsersSchema.parse(params);
         const orgId = apiClient.getOrgId();
         if (!orgId) {
           return {
@@ -182,7 +191,7 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
           };
         }
 
-        const { query, domain, accountType, lastActiveAfter, limit = 50 } = params;
+        const { query, domain, accountType, lastActiveAfter, limit = 50 } = validatedParams;
 
         // Build query parameters
         const queryParams: Record<string, any> = { limit };
@@ -301,8 +310,9 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
         destructiveHint: false,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
+        const validatedParams = getUserRoleAssignmentsSchema.parse(params);
         const orgId = apiClient.getOrgId();
         if (!orgId) {
           return {
@@ -321,7 +331,7 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
           };
         }
 
-        const { accountId } = params;
+        const { accountId } = validatedParams;
 
         // Get user details including product access from Organization API
         const userResponse = await apiClient.makeOrganizationApiRequest<{
@@ -432,10 +442,11 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
         destructiveHint: false,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
+        const validatedParams = getUserGroupMembershipsSchema.parse(params);
         const orgId = apiClient.getOrgId();
-        const { accountId } = params;
+        const { accountId } = validatedParams;
 
         // Get Jira groups
         let jiraGroups: any[] = [];
@@ -559,10 +570,11 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
         destructiveHint: false,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
+        const validatedParams = analyzeUserAccessSchema.parse(params);
         const orgId = apiClient.getOrgId();
-        const { accountId, email } = params;
+        const { accountId, email } = validatedParams;
 
         if (!accountId && !email) {
           throw new Error('Either accountId or email must be provided');

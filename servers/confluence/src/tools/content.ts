@@ -1026,10 +1026,11 @@ export async function registerContentTools(server: McpServer, apiClient: Conflue
       try {
         const validatedParams = searchContentSchema.parse(params);
 
-        // Build CQL query from simple parameters
-        let cql = `text~"${validatedParams.query}"`;
+        // Build CQL query from simple parameters (escape special chars to prevent CQL injection)
+        const escapedQuery = validatedParams.query.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+        let cql = `text~"${escapedQuery}"`;
         if (validatedParams.spaceKey) {
-          cql += ` AND space=${validatedParams.spaceKey}`;
+          cql += ` AND space="${validatedParams.spaceKey}"`;
         }
         if (validatedParams.type) {
           cql += ` AND type=${validatedParams.type}`;

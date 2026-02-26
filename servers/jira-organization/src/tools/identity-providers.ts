@@ -10,6 +10,13 @@ import {
   getDirectoryGroupsInputSchema,
   getUserLastActiveInputSchema,
 } from '../validation/input-schemas.js';
+import {
+  getDirectoryInfoSchema,
+  getDirectorySyncStatusSchema,
+  getDirectorySyncSettingsSchema,
+  getDirectoryUsersSchema,
+  getUserLastActiveSchema,
+} from '../validation/schemas.js';
 
 /**
  * Register Identity Provider and Directory Analysis Tools
@@ -122,9 +129,10 @@ export async function registerIdentityProviderTools(server: McpServer, apiClient
         destructiveHint: false,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
-        const { directoryId } = params;
+        const validatedParams = getDirectoryInfoSchema.parse(params);
+        const { directoryId } = validatedParams;
 
         const orgId = apiClient.getOrgId();
         if (!orgId) {
@@ -208,9 +216,10 @@ export async function registerIdentityProviderTools(server: McpServer, apiClient
         destructiveHint: false,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
-        const { directoryId } = params;
+        const validatedParams = getDirectorySyncStatusSchema.parse(params);
+        const { directoryId } = validatedParams;
 
         const orgId = apiClient.getOrgId();
         if (!orgId) {
@@ -340,9 +349,10 @@ export async function registerIdentityProviderTools(server: McpServer, apiClient
         destructiveHint: false,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
-        const { directoryId } = params;
+        const validatedParams = getDirectorySyncSettingsSchema.parse(params);
+        const { directoryId } = validatedParams;
 
         const orgId = apiClient.getOrgId();
         if (!orgId) {
@@ -436,9 +446,10 @@ export async function registerIdentityProviderTools(server: McpServer, apiClient
         destructiveHint: false,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
-        const { directoryId, limit = 100, cursor } = params;
+        const validatedParams = getDirectoryUsersSchema.parse(params);
+        const { directoryId, limit = 100, cursor } = validatedParams;
 
         const orgId = apiClient.getOrgId();
         if (!orgId) {
@@ -560,9 +571,10 @@ export async function registerIdentityProviderTools(server: McpServer, apiClient
         destructiveHint: false,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
-        const { accountId } = params;
+        const validatedParams = getUserLastActiveSchema.parse(params);
+        const { accountId } = validatedParams;
 
         const orgId = apiClient.getOrgId();
         if (!orgId) {

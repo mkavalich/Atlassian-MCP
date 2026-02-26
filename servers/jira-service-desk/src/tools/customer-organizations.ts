@@ -8,6 +8,13 @@ import {
   getProjectCustomerOrganizationsInputSchema,
   analyzeCustomerVisibilityInputSchema,
 } from '../validation/input-schemas.js';
+import {
+  getCustomerOrganizationsSchema,
+  getOrganizationCustomersSchema,
+  getCustomerOrganizationMembershipSchema,
+  getProjectCustomerOrganizationsSchema,
+  analyzeCustomerVisibilitySchema,
+} from '../validation/schemas.js';
 
 /**
  * Register Customer Organization Analysis Tools
@@ -34,9 +41,10 @@ export async function registerCustomerOrganizationTools(server: McpServer, apiCl
         destructiveHint: false,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
-        const { limit = 50, start = 0 } = params;
+        const validatedParams = getCustomerOrganizationsSchema.parse(params);
+        const { limit, start } = validatedParams;
 
         // Get organizations using Jira Service Management API
         const response = await apiClient.makeServiceDeskRequest<any>({
@@ -108,9 +116,10 @@ export async function registerCustomerOrganizationTools(server: McpServer, apiCl
         destructiveHint: false,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
-        const { organizationId, limit = 50, start = 0 } = params;
+        const validatedParams = getOrganizationCustomersSchema.parse(params);
+        const { organizationId, limit, start } = validatedParams;
 
         // Get customers in organization using Jira Service Management API
         const response = await apiClient.makeServiceDeskRequest<any>({
@@ -202,9 +211,10 @@ export async function registerCustomerOrganizationTools(server: McpServer, apiCl
         destructiveHint: false,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
-        const { accountId, email } = params;
+        const validatedParams = getCustomerOrganizationMembershipSchema.parse(params);
+        const { accountId, email } = validatedParams;
 
         if (!accountId && !email) {
           throw new Error('Either accountId or email must be provided');
@@ -317,9 +327,10 @@ export async function registerCustomerOrganizationTools(server: McpServer, apiCl
         destructiveHint: false,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
-        const { projectKey, serviceDeskId } = params;
+        const validatedParams = getProjectCustomerOrganizationsSchema.parse(params);
+        const { projectKey, serviceDeskId } = validatedParams;
 
         if (!projectKey && !serviceDeskId) {
           throw new Error('Either projectKey or serviceDeskId must be provided');
@@ -440,9 +451,10 @@ export async function registerCustomerOrganizationTools(server: McpServer, apiCl
         destructiveHint: false,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
-        const { projectKey, customerAccountId } = params;
+        const validatedParams = analyzeCustomerVisibilitySchema.parse(params);
+        const { projectKey, customerAccountId } = validatedParams;
 
         // This is a comprehensive analysis tool that would check multiple factors
         const analysis = {

@@ -395,7 +395,7 @@ export const searchCqlSchema = paginationSchema.extend({
 
 export const searchContentSchema = paginationSchema.extend({
   query: z.string().min(1),
-  spaceKey: z.string().optional(),
+  spaceKey: z.string().regex(/^[A-Z][A-Z0-9_]*$/, 'Space key must be uppercase letters, digits, and underscores, starting with a letter').optional(),
   type: z.enum(['page', 'blogpost', 'attachment', 'comment']).optional(),
 }).strict();
 
@@ -539,3 +539,8 @@ export const setContentStateSchema = z.object({
 export const getContentStatesSchema = z.object({
   spaceKey: z.string().optional(),
 }).strict();
+
+// No-parameter tool schemas (for strict validation consistency)
+export const getSystemInfoSchema = z.object({}).strict();
+
+export const getPermissionTypesSchema = z.object({}).strict();

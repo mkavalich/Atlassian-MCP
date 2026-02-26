@@ -9,6 +9,12 @@ import {
   getRequestTypeFieldsInputSchema,
   // REMOVED: updateRequestTypeFieldsInputSchema - Cloud API limitation
 } from '../validation/input-schemas.js';
+import {
+  getServiceDesksSchema,
+  getRequestTypesSchema,
+  createRequestTypeSchema,
+  getRequestTypeFieldsSchema,
+} from '../validation/schemas.js';
 
 // Additional input schemas for tools not in input-schemas.ts
 const configureRequestTypeWorkflowInputSchema = {
@@ -20,6 +26,17 @@ const configureRequestTypeWorkflowInputSchema = {
     approvers: z.array(z.string()).optional().describe('List of approver user keys'),
   }).optional().describe('Approval configuration'),
 };
+
+// Validation schema for configure_request_type_workflow
+const configureRequestTypeWorkflowSchema = z.object({
+  serviceDeskId: z.string().describe('Service desk ID (from get_service_desks)'),
+  requestTypeId: z.string().describe('Request type ID (from get_request_types)'),
+  workflowId: z.string().describe('Workflow ID to assign to request type'),
+  approvalConfig: z.object({
+    requiresApproval: z.boolean().optional().describe('Whether requests require approval'),
+    approvers: z.array(z.string()).optional().describe('List of approver user keys'),
+  }).optional().describe('Approval configuration'),
+}).strict();
 
 export async function registerServiceDeskTools(server: McpServer, apiClient: JiraApiClient) {
   // Tool: getServiceDesks - DISCOVERY TOOL (Enhanced with UX patterns)
@@ -34,9 +51,10 @@ export async function registerServiceDeskTools(server: McpServer, apiClient: Jir
         destructiveHint: false,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
-        const { start = 0, limit = 50 } = params;
+        const validatedParams = getServiceDesksSchema.parse(params);
+        const { start, limit } = validatedParams;
 
         const response = await apiClient.makeServiceDeskRequest<any>({
           method: 'GET',
@@ -137,9 +155,10 @@ export async function registerServiceDeskTools(server: McpServer, apiClient: Jir
         destructiveHint: false,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
-        const { serviceDeskId, start = 0, limit = 50, searchQuery } = params;
+        const validatedParams = getRequestTypesSchema.parse(params);
+        const { serviceDeskId, start, limit } = validatedParams;
 
         // First verify service desk exists
         try {
@@ -182,15 +201,10 @@ export async function registerServiceDeskTools(server: McpServer, apiClient: Jir
         }
 
         // Get request types for the service desk
-        const requestParams: any = { start, limit };
-        if (searchQuery) {
-          requestParams.searchQuery = searchQuery;
-        }
-
         const response = await apiClient.makeServiceDeskRequest<any>({
           method: 'GET',
           path: `/servicedesk/${serviceDeskId}/requesttype`,
-          params: requestParams,
+          params: { start, limit },
         });
 
         if (response.success && response.data) {
@@ -232,8 +246,9 @@ export async function registerServiceDeskTools(server: McpServer, apiClient: Jir
         let enhancedSuggestion = 'Check service desk ID and permissions';
         let nextSteps: string[] = [];
 
+        const rawParams = params as Record<string, unknown>;
         if (error.message?.includes('not found') || error.message?.includes('NOT_FOUND') || error.message?.includes('404')) {
-          enhancedSuggestion = `Service desk ID ${params.serviceDeskId} not found or not accessible`;
+          enhancedSuggestion = `Service desk ID ${rawParams.serviceDeskId} not found or not accessible`;
           nextSteps = [
             '1. Use "get_service_desks" to find available service desk IDs',
             '2. If no service desks exist, create one in JSM interface first',
@@ -241,7 +256,7 @@ export async function registerServiceDeskTools(server: McpServer, apiClient: Jir
             '4. Then retry with a valid service desk ID from step 1'
           ];
         } else if (error.message?.includes('permission') || error.message?.includes('Unauthorized')) {
-          enhancedSuggestion = `You do not have permission to access service desk ${params.serviceDeskId}`;
+          enhancedSuggestion = `You do not have permission to access service desk ${rawParams.serviceDeskId}`;
           nextSteps = [
             '1. Ensure you have "Service Desk Agent" or "Administrator" permission',
             '2. Contact the service desk administrator for access',
@@ -257,7 +272,7 @@ export async function registerServiceDeskTools(server: McpServer, apiClient: Jir
               error: {
                 code: error.code || 'GET_REQUEST_TYPES_ERROR',
                 message: error.message,
-                service_desk_id: params.serviceDeskId,
+                service_desk_id: rawParams.serviceDeskId,
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 workflow_guidance: nextSteps.length > 0 ? 'The proper workflow is: Service Desk Discovery → Request Type Operations' : undefined
@@ -282,10 +297,11 @@ export async function registerServiceDeskTools(server: McpServer, apiClient: Jir
         destructiveHint: false,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
-        const { serviceDeskId, name, description, issueTypeId, helpText } = params;
-        
+        const validatedParams = createRequestTypeSchema.parse(params);
+        const { serviceDeskId, name, description, issueTypeId, helpText } = validatedParams;
+
         // Validate service desk exists first
         try {
           const serviceDeskResponse = await apiClient.makeServiceDeskRequest<any>({
@@ -372,15 +388,16 @@ export async function registerServiceDeskTools(server: McpServer, apiClient: Jir
         let enhancedSuggestion = 'Check service desk ID, permissions, and issue type ID';
         let nextSteps: string[] = [];
 
+        const rawParams = params as Record<string, unknown>;
         if (error.message?.includes('not found') && error.message?.includes('service desk')) {
-          enhancedSuggestion = `Service desk ID ${params.serviceDeskId} not found`;
+          enhancedSuggestion = `Service desk ID ${rawParams.serviceDeskId} not found`;
           nextSteps = [
             '1. Use "get_service_desks" to find available service desk IDs',
             '2. If no service desks exist, create one in JSM interface first',
             '3. Then retry with a valid service desk ID from step 1'
           ];
         } else if (error.message?.includes('issue type') || error.message?.includes('issueTypeId')) {
-          enhancedSuggestion = `Issue type ID ${params.issueTypeId} not found or invalid`;
+          enhancedSuggestion = `Issue type ID ${rawParams.issueTypeId} not found or invalid`;
           nextSteps = [
             '1. Verify the issue type ID is correct and exists',
             '2. Common issue type IDs: 10001 (Task), 10002 (Bug), 10004 (Story)',
@@ -411,7 +428,7 @@ export async function registerServiceDeskTools(server: McpServer, apiClient: Jir
               error: {
                 code: error.code || 'CREATE_REQUEST_TYPE_ERROR',
                 message: error.message,
-                service_desk_id: params.serviceDeskId,
+                service_desk_id: rawParams.serviceDeskId,
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 workflow_guidance: nextSteps.length > 0 ? 'Resolve dependencies first, then retry request type creation' : undefined,
@@ -441,10 +458,11 @@ export async function registerServiceDeskTools(server: McpServer, apiClient: Jir
         destructiveHint: false,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
-        const { serviceDeskId, requestTypeId } = params;
-        
+        const validatedParams = getRequestTypeFieldsSchema.parse(params);
+        const { serviceDeskId, requestTypeId } = validatedParams;
+
         // Validate both service desk and request type exist
         let serviceDeskExists = false;
         let requestTypeExists = false;
@@ -572,8 +590,8 @@ export async function registerServiceDeskTools(server: McpServer, apiClient: Jir
               error: {
                 code: error.code || 'GET_REQUEST_TYPE_FIELDS_ERROR',
                 message: error.message,
-                service_desk_id: params.serviceDeskId,
-                request_type_id: params.requestTypeId,
+                service_desk_id: (params as Record<string, unknown>).serviceDeskId,
+                request_type_id: (params as Record<string, unknown>).requestTypeId,
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 workflow_guidance: nextSteps.length > 0 ? 'The proper workflow is: Service Desk Discovery → Request Type Discovery → Field Operations' : undefined
@@ -600,10 +618,11 @@ export async function registerServiceDeskTools(server: McpServer, apiClient: Jir
         destructiveHint: false,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
-        const { serviceDeskId, requestTypeId, workflowId, approvalConfig } = params;
-        
+        const validatedParams = configureRequestTypeWorkflowSchema.parse(params);
+        const { serviceDeskId, requestTypeId, workflowId, approvalConfig } = validatedParams;
+
         // This is a complex operation that would validate multiple dependencies
         // in a real implementation. For now, we'll simulate the validation logic.
         
@@ -689,7 +708,8 @@ export async function registerServiceDeskTools(server: McpServer, apiClient: Jir
         };
       } catch (error: any) {
         logger.error('Failed to configure request type workflow', { error: error.message });
-        
+
+        const rawParams = params as Record<string, unknown>;
         let enhancedSuggestion = 'Check all IDs and permissions for workflow configuration';
         let nextSteps: string[] = [];
 
@@ -701,7 +721,7 @@ export async function registerServiceDeskTools(server: McpServer, apiClient: Jir
             '3. Contact your JSM administrator for workflow configuration rights'
           ];
         } else if (error.message?.includes('workflow') && error.message?.includes('not found')) {
-          enhancedSuggestion = `Workflow ID ${params.workflowId} not found`;
+          enhancedSuggestion = `Workflow ID ${rawParams.workflowId} not found`;
           nextSteps = [
             '1. Verify the workflow ID exists in Jira workflow configuration',
             '2. Check Jira admin interface for available workflows',
@@ -718,9 +738,9 @@ export async function registerServiceDeskTools(server: McpServer, apiClient: Jir
               error: {
                 code: error.code || 'CONFIGURE_WORKFLOW_ERROR',
                 message: error.message,
-                service_desk_id: params.serviceDeskId,
-                request_type_id: params.requestTypeId,
-                workflow_id: params.workflowId,
+                service_desk_id: rawParams.serviceDeskId,
+                request_type_id: rawParams.requestTypeId,
+                workflow_id: rawParams.workflowId,
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 workflow_guidance: nextSteps.length > 0 ? 'The proper workflow is: Service Desk Discovery → Request Type Discovery → Workflow Validation → Configuration' : undefined,

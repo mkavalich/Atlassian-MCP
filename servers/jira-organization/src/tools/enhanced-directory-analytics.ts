@@ -4,6 +4,9 @@ import { logger } from '../utils/logger.js';
 import {
   getCrossProductUserActivityInputSchema,
 } from '../validation/input-schemas.js';
+import {
+  getCrossProductUserActivitySchema,
+} from '../validation/schemas.js';
 
 // Helper function to calculate time since a date
 function getTimeSince(dateString: string): string {
@@ -175,8 +178,9 @@ export async function registerEnhancedDirectoryAnalyticsTools(server: McpServer,
         destructiveHint: false,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
+        const validatedParams = getCrossProductUserActivitySchema.parse(params);
         const orgId = apiClient.getOrgId();
         if (!orgId) {
           return {
@@ -202,7 +206,7 @@ export async function registerEnhancedDirectoryAnalyticsTools(server: McpServer,
           endDate,
           products = ['jira', 'confluence', 'bitbucket', 'trello'],
           includeDetails = false,
-        } = params;
+        } = validatedParams;
 
         // Get organization users to find the target user
         const usersResponse = await apiClient.makeOrganizationApiRequest<{

@@ -1140,3 +1140,35 @@ export const updateRequestTypeGroupsSchema = z.object({
   requestTypeId: z.string().describe('The ID of the request type'),
   groupNames: z.array(z.string()).describe('Array of customer group names to grant access to this request type'),
 }).strict();
+
+// Customer Organization schemas
+export const getCustomerOrganizationsSchema = z.object({
+  limit: z.number().min(1).max(1000).optional().default(50)
+    .describe('Maximum number of organizations to return (default: 50, max: 1000)'),
+  start: z.number().min(0).optional().default(0)
+    .describe('Starting index for pagination (default: 0)'),
+}).strict();
+
+export const getOrganizationCustomersSchema = z.object({
+  organizationId: z.string().describe('Organization ID to get customers from'),
+  limit: z.number().min(1).max(1000).optional().default(50)
+    .describe('Maximum number of customers to return (default: 50, max: 1000)'),
+  start: z.number().min(0).optional().default(0)
+    .describe('Starting index for pagination (default: 0)'),
+}).strict();
+
+export const getCustomerOrganizationMembershipSchema = z.object({
+  accountId: z.string().optional().describe('Customer account ID to check membership for'),
+  email: z.string().optional().describe('Customer email to check membership for (alternative to accountId)'),
+}).strict();
+
+export const getProjectCustomerOrganizationsSchema = z.object({
+  projectKey: z.string().optional().describe('Service project key to get organizations for'),
+  serviceDeskId: z.string().optional().describe('Service desk ID to get organizations for (alternative to projectKey)'),
+}).strict();
+
+export const analyzeCustomerVisibilitySchema = z.object({
+  projectKey: z.string().describe('Service project key to analyze'),
+  customerAccountId: z.string().optional()
+    .describe('Specific customer account ID to analyze (optional)'),
+}).strict();

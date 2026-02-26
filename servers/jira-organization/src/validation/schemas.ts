@@ -1172,3 +1172,144 @@ export const getOrgGroupStatsSchema = z.object({
   timeframe: z.enum(['7d', '30d', '90d', '1y']).optional().default('30d')
     .describe('Timeframe for group activity statistics'),
 }).strict();
+
+// ============================================================
+// F-001 Fix: Strict validation schemas for jira-organization tools
+// ============================================================
+
+// Global Users schemas (global-users.ts)
+export const getOrganizationUsersSchema = z.object({
+  limit: z.number().min(1).max(1000).optional().default(100)
+    .describe('Maximum number of users to return (default: 100, max: 1000)'),
+  accountType: z.enum(['atlassian', 'customer', 'app']).optional()
+    .describe('Filter by account type'),
+  status: z.enum(['active', 'inactive', 'suspended']).optional()
+    .describe('Filter by account status'),
+}).strict();
+
+export const searchOrganizationUsersSchema = z.object({
+  query: z.string().optional()
+    .describe('Search query for user name, email, or display name'),
+  domain: z.string().optional()
+    .describe('Filter by email domain (useful for Azure AD analysis)'),
+  accountType: z.enum(['atlassian', 'customer', 'app']).optional()
+    .describe('Filter by account type'),
+  lastActiveAfter: z.string().optional()
+    .describe('Filter users active after this date (ISO 8601 format)'),
+  limit: z.number().min(1).max(1000).optional().default(50)
+    .describe('Maximum number of users to return (default: 50, max: 1000)'),
+}).strict();
+
+export const getUserRoleAssignmentsSchema = z.object({
+  accountId: z.string().min(1).describe('User account ID to get role assignments for'),
+}).strict();
+
+export const getUserGroupMembershipsSchema = z.object({
+  accountId: z.string().min(1).describe('User account ID to get group memberships for'),
+}).strict();
+
+export const analyzeUserAccessSchema = z.object({
+  accountId: z.string().optional().describe('User account ID to analyze'),
+  email: z.string().optional().describe('User email to analyze (alternative to accountId)'),
+}).strict();
+
+// Identity Providers schemas (identity-providers.ts)
+export const getDirectoryInfoSchema = z.object({
+  directoryId: z.string().min(1).describe('Directory ID to get information for'),
+}).strict();
+
+export const getDirectorySyncStatusSchema = z.object({
+  directoryId: z.string().optional()
+    .describe('Directory ID to check sync status for (optional - checks all if not specified)'),
+}).strict();
+
+export const getDirectorySyncSettingsSchema = z.object({
+  directoryId: z.string().min(1).describe('Directory ID to get sync settings for'),
+}).strict();
+
+export const getDirectoryUsersSchema = z.object({
+  directoryId: z.string().optional()
+    .describe('Directory ID to get users from (optional - gets from all directories if not specified)'),
+  limit: z.number().min(1).max(1000).optional().default(100)
+    .describe('Maximum number of users to return (default: 100, max: 1000)'),
+  cursor: z.string().optional()
+    .describe('Pagination cursor for large result sets'),
+}).strict();
+
+export const getUserLastActiveSchema = z.object({
+  accountId: z.string().min(1).describe('User account ID to get last active dates for'),
+}).strict();
+
+// Directory Health schemas (directory-health.ts)
+export const getDirectoryHealthStatusSchema = z.object({
+  directoryId: z.string().optional()
+    .describe('Directory ID to check health for (optional - checks all if not specified)'),
+  includeSync: z.boolean().optional().default(true)
+    .describe('Include synchronization status and metrics'),
+  includeErrors: z.boolean().optional().default(true)
+    .describe('Include recent error logs and issues'),
+  includePerformance: z.boolean().optional().default(false)
+    .describe('Include performance metrics and sync speeds'),
+}).strict();
+
+export const getProvisioningInsightsSchema = z.object({
+  directoryId: z.string().optional()
+    .describe('Directory ID to analyze provisioning for'),
+  timeframe: z.enum(['7d', '30d', '90d', '1y']).optional().default('30d')
+    .describe('Timeframe for provisioning analysis'),
+  includeFailures: z.boolean().optional().default(true)
+    .describe('Include failed provisioning attempts'),
+  includePerformance: z.boolean().optional().default(false)
+    .describe('Include provisioning performance metrics'),
+  groupBy: z.enum(['day', 'week', 'month']).optional().default('day')
+    .describe('Group provisioning data by time period'),
+}).strict();
+
+// Enhanced Directory Analytics schemas (enhanced-directory-analytics.ts)
+export const getCrossProductUserActivitySchema = z.object({
+  accountId: z.string().optional()
+    .describe('User account ID to analyze activity across products'),
+  email: z.string().optional()
+    .describe('User email to analyze (alternative to accountId)'),
+  startDate: z.string().optional()
+    .describe('Start date for activity analysis (ISO 8601 format)'),
+  endDate: z.string().optional()
+    .describe('End date for activity analysis (ISO 8601 format)'),
+  products: z.array(z.enum(['jira', 'confluence', 'bitbucket', 'trello'])).optional()
+    .describe('Specific products to include in activity analysis'),
+  includeDetails: z.boolean().optional().default(false)
+    .describe('Include detailed activity breakdown by product'),
+}).strict();
+
+// Global Organization schemas (global-organization.ts)
+export const getOrganizationEventsSchema = z.object({
+  limit: z.number().min(1).max(1000).optional().default(50)
+    .describe('Maximum number of events to return (default: 50, max: 1000)'),
+  from: z.string().optional()
+    .describe('Start date for events (ISO 8601 format)'),
+  to: z.string().optional()
+    .describe('End date for events (ISO 8601 format)'),
+}).strict();
+
+// Organization Management schemas (organization-management.ts)
+export const getOrganizationsSchema = z.object({
+  limit: z.number().min(1).max(200).optional().default(50)
+    .describe('Maximum number of organizations to return (default: 50, max: 200)'),
+  page: z.number().min(1).optional().default(1)
+    .describe('Page number for pagination (default: 1)'),
+  status: z.enum(['active', 'suspended', 'deleted']).optional()
+    .describe('Filter organizations by status'),
+  type: z.enum(['standard', 'enterprise']).optional()
+    .describe('Filter organizations by type'),
+}).strict();
+
+export const getOrganizationDetailsSchema = z.object({
+  orgId: z.string().min(1)
+    .describe('Organization ID to get detailed information for'),
+  includeStatistics: z.boolean().optional().default(false)
+    .describe('Include usage statistics in the response'),
+  includeAudit: z.boolean().optional().default(false)
+    .describe('Include audit configuration details'),
+  includeCompliance: z.boolean().optional().default(false)
+    .describe('Include compliance certification status'),
+}).strict();

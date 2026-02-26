@@ -9,6 +9,10 @@ import {
   getDirectoryHealthStatusInputSchema,
   getProvisioningInsightsInputSchema,
 } from '../validation/input-schemas.js';
+import {
+  getDirectoryHealthStatusSchema,
+  getProvisioningInsightsSchema,
+} from '../validation/schemas.js';
 
 /**
  * Register Directory Integration Health Tools (SCIM API)
@@ -154,8 +158,9 @@ export async function registerDirectoryHealthTools(server: McpServer, apiClient:
         destructiveHint: false,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
+        const validatedParams = getDirectoryHealthStatusSchema.parse(params);
         const orgId = apiClient.getOrgId();
         if (!orgId) {
           return {
@@ -174,7 +179,7 @@ export async function registerDirectoryHealthTools(server: McpServer, apiClient:
           };
         }
 
-        const { directoryId, includeSync = true, includeErrors = true, includePerformance = false } = params;
+        const { directoryId, includeSync = true, includeErrors = true, includePerformance = false } = validatedParams;
 
         // Get directories from Organization API
         const directoriesResponse = await apiClient.makeOrganizationApiRequest<{
@@ -307,8 +312,9 @@ export async function registerDirectoryHealthTools(server: McpServer, apiClient:
         destructiveHint: false,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
+        const validatedParams = getProvisioningInsightsSchema.parse(params);
         const orgId = apiClient.getOrgId();
         if (!orgId) {
           return {
@@ -333,7 +339,7 @@ export async function registerDirectoryHealthTools(server: McpServer, apiClient:
           includeFailures = true,
           includePerformance = false,
           groupBy = 'day'
-        } = params;
+        } = validatedParams;
 
         // Get directories for context
         const directoriesResponse = await apiClient.makeOrganizationApiRequest<{

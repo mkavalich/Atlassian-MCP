@@ -24,6 +24,19 @@ const setupWorkflowGuidedInputSchema = {
   issueTypes: z.array(z.string()).optional().describe('Issue type names that should use this workflow (optional - for scheme creation)')
 };
 
+// Strict validation schema for guided workflow setup
+const setupWorkflowGuidedSchema = z.object({
+  name: z.string().min(1),
+  description: z.string(),
+  projectKey: z.string().optional(),
+  workflowType: z.enum(['simple', 'development', 'sdlc', 'support', 'custom']),
+  customStatuses: z.array(z.object({
+    name: z.string(),
+    category: z.enum(['TODO', 'IN_PROGRESS', 'DONE']),
+  })).optional(),
+  issueTypes: z.array(z.string()).optional(),
+}).strict();
+
 /**
  * Workflow template definition (user-friendly format matching create_workflow).
  * Uses self-referencing IDs — these are NOT Jira status IDs, they're internal references
@@ -308,14 +321,15 @@ AUTOMATED STEPS: Checks name uniqueness, generates template, creates workflow vi
       },
       examples: toolExamples['setup_workflow_guided'],
     },
-    async (params: any) => {
+    async (params) => {
       try {
-        const workflowName = params.name;
-        const workflowDescription = params.description;
-        const workflowType = params.workflowType;
-        const projectKey = params.projectKey;
-        const customStatuses = params.customStatuses;
-        const issueTypes = params.issueTypes;
+        const validatedParams = setupWorkflowGuidedSchema.parse(params);
+        const workflowName = validatedParams.name;
+        const workflowDescription = validatedParams.description;
+        const workflowType = validatedParams.workflowType;
+        const projectKey = validatedParams.projectKey;
+        const customStatuses = validatedParams.customStatuses;
+        const issueTypes = validatedParams.issueTypes;
 
         if (!workflowName) {
           return {

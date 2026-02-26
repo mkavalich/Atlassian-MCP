@@ -9,6 +9,10 @@ import {
   getOrganizationsInputSchema,
   getOrganizationDetailsInputSchema,
 } from '../validation/input-schemas.js';
+import {
+  getOrganizationsSchema,
+  getOrganizationDetailsSchema,
+} from '../validation/schemas.js';
 
 /**
  * Register Organization Management Tools (Atlassian Organization API)
@@ -37,15 +41,16 @@ export async function registerOrganizationManagementTools(server: McpServer, api
         destructiveHint: false,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
+        const validatedParams = getOrganizationsSchema.parse(params);
         // Build query parameters for Organization API
         const queryParams: Record<string, any> = {};
 
-        if (params.limit) queryParams.limit = params.limit;
-        if (params.page) queryParams.page = params.page;
-        if (params.status) queryParams.status = params.status;
-        if (params.type) queryParams.type = params.type;
+        if (validatedParams.limit) queryParams.limit = validatedParams.limit;
+        if (validatedParams.page) queryParams.page = validatedParams.page;
+        if (validatedParams.status) queryParams.status = validatedParams.status;
+        if (validatedParams.type) queryParams.type = validatedParams.type;
 
         // Make request to Organization API
         const response = await apiClient.makeOrganizationApiRequest<AtlassianOrganizationsResponse>({
@@ -162,16 +167,17 @@ export async function registerOrganizationManagementTools(server: McpServer, api
         destructiveHint: false,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
-        const orgId = params.orgId;
-        
+        const validatedParams = getOrganizationDetailsSchema.parse(params);
+        const orgId = validatedParams.orgId;
+
         // Build query parameters for detailed organization information
         const queryParams: Record<string, any> = {};
-        
-        if (params.includeStatistics) queryParams.include_statistics = params.includeStatistics;
-        if (params.includeAudit) queryParams.include_audit = params.includeAudit;
-        if (params.includeCompliance) queryParams.include_compliance = params.includeCompliance;
+
+        if (validatedParams.includeStatistics) queryParams.include_statistics = validatedParams.includeStatistics;
+        if (validatedParams.includeAudit) queryParams.include_audit = validatedParams.includeAudit;
+        if (validatedParams.includeCompliance) queryParams.include_compliance = validatedParams.includeCompliance;
 
         // Make request to Organization API for specific organization
         const response = await apiClient.makeOrganizationApiRequest<OrganizationDetails>({
@@ -308,7 +314,8 @@ export async function registerOrganizationManagementTools(server: McpServer, api
 
         throw new Error('Failed to retrieve organization details from Atlassian Organization API');
       } catch (error: any) {
-        logger.error('Failed to get organization details', { error: error.message, orgId: params.orgId });
+        const rawOrgId = (params as Record<string, unknown>)?.orgId;
+        logger.error('Failed to get organization details', { error: error.message, orgId: rawOrgId });
         return {
           content: [{
             type: 'text',
@@ -319,7 +326,7 @@ export async function registerOrganizationManagementTools(server: McpServer, api
                 message: error.message,
                 details: {
                   ...error.details,
-                  orgId: params.orgId,
+                  orgId: rawOrgId,
                 },
                 suggestion: error.suggestion || 'Ensure you have organization admin token with read:organizations:admin scope',
               },

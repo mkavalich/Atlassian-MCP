@@ -112,6 +112,17 @@ export class JiraApiClient {
     }
   }
 
+  private sanitizePath(path: string): string {
+    return path.split('/').map(segment => {
+      if (!segment) return segment;
+      if (segment === '.' || segment === '..') {
+        throw new Error(`Invalid path segment: ${segment}`);
+      }
+      if (/^[\w\-.:@~+]+$/.test(segment)) return segment;
+      return encodeURIComponent(segment);
+    }).join('/');
+  }
+
   private handleError(error: AxiosError): never {
     const status = error.response?.status;
     const data = error.response?.data as any;
@@ -220,7 +231,7 @@ export class JiraApiClient {
       
       const axiosConfig: AxiosConfigWithMetadata = {
         method: config.method,
-        url: config.path,
+        url: this.sanitizePath(config.path),
         baseURL,
         params: config.params,
         data: config.data,
@@ -286,7 +297,7 @@ export class JiraApiClient {
       
       const axiosConfig: AxiosConfigWithMetadata = {
         method: config.method,
-        url: config.path,
+        url: this.sanitizePath(config.path),
         baseURL,
         params: config.params,
         data: config.data,
