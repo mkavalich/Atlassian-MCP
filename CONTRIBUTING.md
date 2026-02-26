@@ -63,6 +63,10 @@ All tools must follow these patterns:
 
 ## Adding New Tools
 
+See the [Development Guide](docs/development-guide.md) for a complete walkthrough with code examples.
+
+Quick steps:
+
 1. Add Zod schema in `src/validation/schemas.ts`
 2. Add MCP input schema in `src/validation/input-schemas.ts`
 3. Implement tool in appropriate `src/tools/*.ts` file
