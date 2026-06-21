@@ -77,7 +77,7 @@
     "axios-retry": "^4.0.0",
     "dotenv": "^16.0.0",
     "express": "^4.21.0",
-    "form-data": "^4.0.0",
+    "form-data": "^4.0.6",
     "lru-cache": "^10.0.0",
     "winston": "^3.11.0",
     "zod": "^3.25.0"
