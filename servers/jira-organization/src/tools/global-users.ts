@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { JiraApiClient } from '../api/client.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
 import {
   getOrganizationUsersInputSchema,
   searchOrganizationUsersInputSchema,
@@ -41,9 +42,9 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
         destructiveHint: false,
       },
     },
-    async (params) => {
+    async (params: any) => {
       try {
-        const validatedParams = getOrganizationUsersSchema.parse(params);
+        const validated = getOrganizationUsersSchema.parse(params);
         const orgId = apiClient.getOrgId();
         if (!orgId) {
           return {
@@ -62,7 +63,7 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
           };
         }
 
-        const { limit = 100, accountType, status } = validatedParams;
+        const { limit = 100, accountType, status } = validated;
 
         // Build query parameters
         const queryParams: Record<string, any> = {};
@@ -146,7 +147,7 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
               success: false,
               error: {
                 code: error.code || 'GET_ORGANIZATION_USERS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have Organization Admin API access with user read scope',
               },
@@ -170,9 +171,9 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
         destructiveHint: false,
       },
     },
-    async (params) => {
+    async (params: any) => {
       try {
-        const validatedParams = searchOrganizationUsersSchema.parse(params);
+        const validated = searchOrganizationUsersSchema.parse(params);
         const orgId = apiClient.getOrgId();
         if (!orgId) {
           return {
@@ -191,7 +192,7 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
           };
         }
 
-        const { query, domain, accountType, lastActiveAfter, limit = 50 } = validatedParams;
+        const { query, domain, accountType, lastActiveAfter, limit = 50 } = validated;
 
         // Build query parameters
         const queryParams: Record<string, any> = { limit };
@@ -286,7 +287,7 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
               success: false,
               error: {
                 code: error.code || 'SEARCH_ORGANIZATION_USERS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have Organization Admin API access with user read scope',
               },
@@ -310,9 +311,9 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
         destructiveHint: false,
       },
     },
-    async (params) => {
+    async (params: any) => {
       try {
-        const validatedParams = getUserRoleAssignmentsSchema.parse(params);
+        const validated = getUserRoleAssignmentsSchema.parse(params);
         const orgId = apiClient.getOrgId();
         if (!orgId) {
           return {
@@ -331,7 +332,7 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
           };
         }
 
-        const { accountId } = validatedParams;
+        const { accountId } = validated;
 
         // Get user details including product access from Organization API
         const userResponse = await apiClient.makeOrganizationApiRequest<{
@@ -418,7 +419,7 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
               success: false,
               error: {
                 code: error.code || 'GET_USER_ROLE_ASSIGNMENTS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have Organization Admin API access',
               },
@@ -442,11 +443,11 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
         destructiveHint: false,
       },
     },
-    async (params) => {
+    async (params: any) => {
       try {
-        const validatedParams = getUserGroupMembershipsSchema.parse(params);
+        const validated = getUserGroupMembershipsSchema.parse(params);
         const orgId = apiClient.getOrgId();
-        const { accountId } = validatedParams;
+        const { accountId } = validated;
 
         // Get Jira groups
         let jiraGroups: any[] = [];
@@ -546,7 +547,7 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
               success: false,
               error: {
                 code: error.code || 'GET_USER_GROUP_MEMBERSHIPS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have Organization Admin API access for complete group data',
               },
@@ -570,11 +571,11 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
         destructiveHint: false,
       },
     },
-    async (params) => {
+    async (params: any) => {
       try {
-        const validatedParams = analyzeUserAccessSchema.parse(params);
+        const validated = analyzeUserAccessSchema.parse(params);
         const orgId = apiClient.getOrgId();
-        const { accountId, email } = validatedParams;
+        const { accountId, email } = validated;
 
         if (!accountId && !email) {
           throw new Error('Either accountId or email must be provided');
@@ -766,7 +767,7 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
               success: false,
               error: {
                 code: error.code || 'ANALYZE_USER_ACCESS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Provide valid accountId or email',
               },

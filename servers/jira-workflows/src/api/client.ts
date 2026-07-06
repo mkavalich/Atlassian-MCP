@@ -8,9 +8,10 @@ import { RequestConfig, ApiResponse, RateLimitInfo } from '../types/index.js';
 import {
   JiraApiError,
   mapAtlassianError,
-  analyzeAtlassianError
+  analyzeAtlassianError,
+  sanitizeErrorDetails
 } from '../utils/errors.js';
-import { logger, logApiCall } from '../utils/logger.js';
+import { logger, logApiCall, redactSensitive } from '../utils/logger.js';
 
 interface AxiosConfigWithMetadata extends AxiosRequestConfig {
   metadata?: {
@@ -55,7 +56,7 @@ export class JiraApiClient {
         logger.debug('API Request', {
           method: config.method,
           url: config.url,
-          params: config.params,
+          params: redactSensitive(config.params),
         });
         return config;
       },
@@ -139,13 +140,14 @@ export class JiraApiClient {
       mappedError.code = analysis.code;
       mappedError.suggestion = analysis.suggestion;
       
-      // Add request context for debugging
-      mappedError.details = {
+      // Add request context for debugging (re-sanitize the merged object so the
+      // post-constructor reassignment does not bypass sanitizeErrorDetails)
+      mappedError.details = sanitizeErrorDetails({
         ...mappedError.details,
         requestUrl: error.config?.url,
         requestMethod: error.config?.method?.toUpperCase(),
         timestamp: new Date().toISOString(),
-      };
+      });
       
       throw mappedError;
     }

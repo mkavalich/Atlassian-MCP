@@ -1,6 +1,8 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { JiraApiClient } from '../api/client.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
+import { setupWorkflowGuidedSchema } from '../validation/schemas.js';
 import { z } from 'zod';
 import { toolExamples } from '../validation/tool-examples.js';
 import { randomUUID } from 'node:crypto';
@@ -23,19 +25,6 @@ const setupWorkflowGuidedInputSchema = {
   })).optional().describe('Custom status list (required if workflowType is "custom"). Each status needs name and category.'),
   issueTypes: z.array(z.string()).optional().describe('Issue type names that should use this workflow (optional - for scheme creation)')
 };
-
-// Strict validation schema for guided workflow setup
-const setupWorkflowGuidedSchema = z.object({
-  name: z.string().min(1),
-  description: z.string(),
-  projectKey: z.string().optional(),
-  workflowType: z.enum(['simple', 'development', 'sdlc', 'support', 'custom']),
-  customStatuses: z.array(z.object({
-    name: z.string(),
-    category: z.enum(['TODO', 'IN_PROGRESS', 'DONE']),
-  })).optional(),
-  issueTypes: z.array(z.string()).optional(),
-}).strict();
 
 /**
  * Workflow template definition (user-friendly format matching create_workflow).
@@ -318,18 +307,21 @@ AUTOMATED STEPS: Checks name uniqueness, generates template, creates workflow vi
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
+        openWorldHint: false,
       },
       examples: toolExamples['setup_workflow_guided'],
     },
-    async (params) => {
+    async (params: any) => {
       try {
-        const validatedParams = setupWorkflowGuidedSchema.parse(params);
-        const workflowName = validatedParams.name;
-        const workflowDescription = validatedParams.description;
-        const workflowType = validatedParams.workflowType;
-        const projectKey = validatedParams.projectKey;
-        const customStatuses = validatedParams.customStatuses;
-        const issueTypes = validatedParams.issueTypes;
+        const validated = setupWorkflowGuidedSchema.parse(params);
+        const workflowName = validated.name;
+        const workflowDescription = validated.description;
+        const workflowType = validated.workflowType;
+        const projectKey = validated.projectKey;
+        // customStatuses is validated above; read from params to preserve the
+        // exact shape getWorkflowTemplate expects (required name/category fields)
+        const customStatuses = params.customStatuses;
+        const issueTypes = validated.issueTypes;
 
         if (!workflowName) {
           return {
@@ -534,7 +526,7 @@ AUTOMATED STEPS: Checks name uniqueness, generates template, creates workflow vi
               success: false,
               error: {
                 code: error.code || 'GUIDED_WORKFLOW_SETUP_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 workflow_guidance: workflowGuidance || 'Guided workflow setup automates complex workflow creation',

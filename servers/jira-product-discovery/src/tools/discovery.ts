@@ -5,6 +5,7 @@ import { getJpdProjectsSchema } from '../validation/schemas.js';
 import { getJpdProjectsInputSchema } from '../validation/input-schemas.js';
 import { JpdProject } from '../types/index.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
 
 // Tool catalog for progressive disclosure (11 tools - 4 removed for Polaris GraphQL API limitations)
 const toolCatalog = [
@@ -111,7 +112,7 @@ export async function registerDiscoveryTools(server: McpServer, apiClient: JiraA
               success: false,
               error: {
                 code: 'SEARCH_TOOLS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Try with different filter parameters',
               },
             }, null, 2),
@@ -234,7 +235,7 @@ export async function registerDiscoveryTools(server: McpServer, apiClient: JiraA
               success: false,
               error: {
                 code: error.code || 'GET_JPD_PROJECTS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
               },

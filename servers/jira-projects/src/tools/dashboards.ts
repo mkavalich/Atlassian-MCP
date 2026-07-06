@@ -15,6 +15,7 @@ import {
   deleteDashboardInputSchema,
 } from '../validation/input-schemas.js';
 import { JiraDashboard } from '../types/index.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
 
 export async function registerDashboardTools(server: McpServer, apiClient: JiraApiClient) {
@@ -107,7 +108,7 @@ export async function registerDashboardTools(server: McpServer, apiClient: JiraA
               success: false,
               error: {
                 code: error.code || 'GET_DASHBOARDS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 workflow_guidance: nextSteps.length > 0 ? 'Resolve permissions first, then retry dashboard discovery' : undefined
@@ -194,7 +195,7 @@ export async function registerDashboardTools(server: McpServer, apiClient: JiraA
               success: false,
               error: {
                 code: error.code || 'CREATE_DASHBOARD_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 workflow_guidance: nextSteps.length > 0 ? 'Resolve the issue above, then retry dashboard creation' : undefined
@@ -279,7 +280,7 @@ export async function registerDashboardTools(server: McpServer, apiClient: JiraA
               success: false,
               error: {
                 code: error.code || 'GET_DASHBOARD_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 workflow_guidance: nextSteps.length > 0 ? 'The proper workflow is: Discovery → Validation → Action' : undefined
@@ -368,7 +369,7 @@ export async function registerDashboardTools(server: McpServer, apiClient: JiraA
               success: false,
               error: {
                 code: error.code || 'UPDATE_DASHBOARD_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 workflow_guidance: nextSteps.length > 0 ? 'The proper workflow is: Discovery → Validation → Action' : undefined
@@ -453,7 +454,7 @@ export async function registerDashboardTools(server: McpServer, apiClient: JiraA
               success: false,
               error: {
                 code: error.code || 'DELETE_DASHBOARD_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 workflow_guidance: nextSteps.length > 0 ? 'The proper workflow is: Discovery → Validation → Action' : undefined

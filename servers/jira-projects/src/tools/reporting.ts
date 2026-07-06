@@ -3,7 +3,11 @@ import { JiraApiClient } from '../api/client.js';
 import { searchJQLSchema, generateProjectReportSchema, getProjectAnalyticsSchema } from '../validation/schemas.js';
 import { searchJQLInputSchema, generateProjectReportInputSchema } from '../validation/input-schemas.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
 import { wrapUserContent } from '../utils/sanitize.js';
+
+// Escape values interpolated inside JQL string literals (defense-in-depth against JQL injection)
+const jqlSafe = (v: string) => String(v).replace(/["\\]/g, '\\$&');
 import { toolExamples } from '../validation/tool-examples.js';
 import { z } from 'zod';
 
@@ -141,7 +145,7 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
               success: false,
               error: {
                 code: error.code || 'JQL_SEARCH_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 query_attempted: params.jql,
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
@@ -179,19 +183,19 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
         openWorldHint: true,
       },
     },
-    async (params) => {
+    async (params: any) => {
       try {
-        const validatedParams = generateProjectReportSchema.parse(params);
-        const projectKey = validatedParams.projectKey;
-        const includeIssues = validatedParams.includeIssues;
-        const includeProgress = validatedParams.includeProgress;
-        const dateRange = validatedParams.dateRange || '30d';
+        const validated = generateProjectReportSchema.parse(params);
+        const projectKey = validated.projectKey;
+        const includeIssues = validated.includeIssues !== false;
+        const includeProgress = validated.includeProgress !== false;
+        const dateRange = validated.dateRange || '30d';
 
         // Validate project exists first
         try {
           const projectCheckResponse = await apiClient.makeRequest<any>({
             method: 'GET',
-            path: `/project/${projectKey}`,
+            path: `/project/${encodeURIComponent(projectKey)}`,
           });
           
           if (!projectCheckResponse.success) {
@@ -227,8 +231,8 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
           }
         }
 
-        // Build JQL for project overview
-        let jql = `project = "${projectKey}"`;
+        // Build JQL for project overview (projectKey is regex-validated; escape as defense-in-depth)
+        let jql = `project = "${jqlSafe(projectKey)}"`;
         if (dateRange) {
           jql += ` AND created >= -${dateRange}`;
         }
@@ -313,7 +317,7 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
         let nextSteps: string[] = [];
 
         if (error.message?.includes('not found') || error.message?.includes('NOT_FOUND') || error.message?.includes('404')) {
-          enhancedSuggestion = `Project "${(params as Record<string, unknown>).projectKey}" not found or not accessible`;
+          enhancedSuggestion = `Project "${params.projectKey}" not found or not accessible`;
           nextSteps = [
             '1. Verify the project key is correct (case sensitive)',
             '2. Use "search_jql" with query "project = projectKey" to test access',
@@ -321,7 +325,7 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
             '4. Ensure you have "Browse Projects" permission for this project'
           ];
         } else if (error.message?.includes('permission') || error.message?.includes('Unauthorized')) {
-          enhancedSuggestion = `You do not have permission to access project "${(params as Record<string, unknown>).projectKey}"`;
+          enhancedSuggestion = `You do not have permission to access project "${params.projectKey}"`;
           nextSteps = [
             '1. Contact your project administrator for access',
             '2. Verify you are assigned to this project',
@@ -343,8 +347,8 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
               success: false,
               error: {
                 code: error.code || 'GENERATE_REPORT_ERROR',
-                message: error.message,
-                project_key: (params as Record<string, unknown>).projectKey,
+                message: sanitizeErrorMessage(error.message),
+                project_key: params.projectKey,
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 workflow_guidance: nextSteps.length > 0 ? 'Verify project access first, then retry report generation' : undefined,
@@ -380,16 +384,16 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
         openWorldHint: true,
       },
     },
-    async (params) => {
+    async (params: any) => {
       try {
-        const validatedParams = getProjectAnalyticsSchema.parse(params);
-        const { projectKey, metricsType, timeFrame } = validatedParams;
+        const validated = getProjectAnalyticsSchema.parse(params);
+        const { projectKey, metricsType, timeFrame } = validated;
 
         // First verify project exists and is accessible
         try {
           await apiClient.makeRequest<any>({
             method: 'GET',
-            path: `/project/${projectKey}`,
+            path: `/project/${encodeURIComponent(projectKey)}`,
           });
         } catch (projectError: any) {
           return {
@@ -419,8 +423,8 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
           };
         }
 
-        // Build analytics query based on metrics type
-        let analyticsJQL = `project = "${projectKey}" AND created >= -${timeFrame}`;
+        // Build analytics query based on metrics type (projectKey regex-validated; escape as defense-in-depth)
+        let analyticsJQL = `project = "${jqlSafe(projectKey)}" AND created >= -${timeFrame}`;
 
         // Use new /search/jql endpoint (old /search deprecated Aug 2025)
         const analyticsResponse = await apiClient.makeRequest<{
@@ -514,7 +518,7 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
               success: false,
               error: {
                 code: error.code || 'GET_ANALYTICS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Check project key and permissions',
                 next_steps: [
                   '1. Use "generate_project_report" first to verify project access',

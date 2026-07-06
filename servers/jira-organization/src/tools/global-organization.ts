@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { JiraApiClient } from '../api/client.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
 import {
   getOrganizationInfoInputSchema,
   getOrganizationPoliciesInputSchema,
@@ -130,7 +131,7 @@ export async function registerGlobalOrganizationTools(server: McpServer, apiClie
               success: false,
               error: {
                 code: error.code || 'GET_ORGANIZATION_INFO_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have organization admin permissions',
               },
@@ -226,7 +227,7 @@ export async function registerGlobalOrganizationTools(server: McpServer, apiClie
               success: false,
               error: {
                 code: error.code || 'GET_ORG_POLICIES_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have Organization Admin API access',
               },
@@ -318,7 +319,7 @@ export async function registerGlobalOrganizationTools(server: McpServer, apiClie
               success: false,
               error: {
                 code: error.code || 'GET_ORG_DOMAINS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have Organization Admin API access',
               },
@@ -415,7 +416,7 @@ export async function registerGlobalOrganizationTools(server: McpServer, apiClie
               success: false,
               error: {
                 code: error.code || 'GET_ORG_WORKSPACES_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have Organization Admin API access',
               },
@@ -439,9 +440,9 @@ export async function registerGlobalOrganizationTools(server: McpServer, apiClie
         destructiveHint: false,
       },
     },
-    async (params) => {
+    async (params: any) => {
       try {
-        const validatedParams = getOrganizationEventsSchema.parse(params);
+        const validated = getOrganizationEventsSchema.parse(params);
         const orgId = apiClient.getOrgId();
         if (!orgId) {
           return {
@@ -460,7 +461,9 @@ export async function registerGlobalOrganizationTools(server: McpServer, apiClie
           };
         }
 
-        const { limit = 50, from, to } = validatedParams;
+        const limit = validated.limit || 50;
+        const from = validated.from;
+        const to = validated.to;
 
         const queryParams: Record<string, any> = { limit };
         if (from) queryParams.from = from;
@@ -536,7 +539,7 @@ export async function registerGlobalOrganizationTools(server: McpServer, apiClie
               success: false,
               error: {
                 code: error.code || 'GET_ORG_EVENTS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have Organization Admin API access with read:audit-log:organization scope',
               },

@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { JiraApiClient } from '../api/client.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
 import {
   getUserManageSchema,
   getUserManageProfileSchema,
@@ -78,7 +79,7 @@ export async function registerApiSecurityMonitoringTools(server: McpServer, apiC
               success: false,
               error: {
                 code: error.code || 'GET_USER_MANAGE_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have Organization Admin permissions and the correct scopes (read:user-permissions:admin)',
                 requiredScopes: ['read:user-permissions:admin'],
@@ -139,7 +140,7 @@ export async function registerApiSecurityMonitoringTools(server: McpServer, apiC
               success: false,
               error: {
                 code: error.code || 'GET_USER_MANAGE_PROFILE_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have Organization Admin permissions and the correct scopes (read:user-permissions:admin)',
                 requiredScopes: ['read:user-permissions:admin'],
@@ -201,7 +202,7 @@ export async function registerApiSecurityMonitoringTools(server: McpServer, apiC
               success: false,
               error: {
                 code: error.code || 'GET_USER_API_TOKENS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have Organization Admin permissions and the correct scopes (read:user-permissions:admin)',
                 requiredScopes: ['read:user-permissions:admin'],
@@ -274,7 +275,7 @@ export async function registerApiSecurityMonitoringTools(server: McpServer, apiC
               success: false,
               error: {
                 code: error.code || 'GET_ORG_USER_STATS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have Organization Admin permissions and the correct scopes (read:user-stats:admin)',
                 requiredScopes: ['read:user-stats:admin'],
@@ -347,7 +348,7 @@ export async function registerApiSecurityMonitoringTools(server: McpServer, apiC
               success: false,
               error: {
                 code: error.code || 'GET_ORG_GROUP_STATS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have Organization Admin permissions and the correct scopes (read:user-stats:admin)',
                 requiredScopes: ['read:user-stats:admin'],

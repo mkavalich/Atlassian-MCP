@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { JiraApiClient } from '../api/client.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
 import {
   getCrossProductUserActivityInputSchema,
 } from '../validation/input-schemas.js';
@@ -178,9 +179,9 @@ export async function registerEnhancedDirectoryAnalyticsTools(server: McpServer,
         destructiveHint: false,
       },
     },
-    async (params) => {
+    async (params: any) => {
       try {
-        const validatedParams = getCrossProductUserActivitySchema.parse(params);
+        const validated = getCrossProductUserActivitySchema.parse(params);
         const orgId = apiClient.getOrgId();
         if (!orgId) {
           return {
@@ -206,7 +207,7 @@ export async function registerEnhancedDirectoryAnalyticsTools(server: McpServer,
           endDate,
           products = ['jira', 'confluence', 'bitbucket', 'trello'],
           includeDetails = false,
-        } = validatedParams;
+        } = validated;
 
         // Get organization users to find the target user
         const usersResponse = await apiClient.makeOrganizationApiRequest<{
@@ -326,7 +327,7 @@ export async function registerEnhancedDirectoryAnalyticsTools(server: McpServer,
               success: false,
               error: {
                 code: error.code || 'GET_CROSS_PRODUCT_ACTIVITY_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have Organization Admin API access',
               },
@@ -468,7 +469,7 @@ export async function registerEnhancedDirectoryAnalyticsTools(server: McpServer,
               success: false,
               error: {
                 code: error.code || 'GET_ENHANCED_IDP_INSIGHTS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have Organization Admin API access',
               },
@@ -623,7 +624,7 @@ export async function registerEnhancedDirectoryAnalyticsTools(server: McpServer,
               success: false,
               error: {
                 code: error.code || 'GET_ADVANCED_DIRECTORY_MONITORING_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have Organization Admin API access',
               },
@@ -780,7 +781,7 @@ export async function registerEnhancedDirectoryAnalyticsTools(server: McpServer,
               success: false,
               error: {
                 code: error.code || 'GET_USER_BEHAVIOR_ANALYSIS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have Organization Admin API access',
               },

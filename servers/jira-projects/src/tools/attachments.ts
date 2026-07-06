@@ -15,6 +15,7 @@ import {
   getAttachmentMetaInputSchema,
 } from '../validation/input-schemas.js';
 import { JiraAttachment } from '../types/index.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
 
 interface AttachmentMetaResponse {
@@ -139,7 +140,7 @@ export async function registerAttachmentTools(server: McpServer, apiClient: Jira
               success: false,
               error: {
                 code: error.code || 'ADD_ATTACHMENT_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion,
                 workflow_guidance: 'Use "get_attachment_meta" first to check if attachments are enabled and size limits',
@@ -223,7 +224,7 @@ export async function registerAttachmentTools(server: McpServer, apiClient: Jira
               success: false,
               error: {
                 code: error.code || 'GET_ATTACHMENT_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion,
                 related_tools: ['list_issue_attachments'],
@@ -313,7 +314,7 @@ export async function registerAttachmentTools(server: McpServer, apiClient: Jira
               success: false,
               error: {
                 code: error.code || 'LIST_ATTACHMENTS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion,
                 related_tools: ['get_issue', 'search_jql'],
@@ -386,7 +387,7 @@ export async function registerAttachmentTools(server: McpServer, apiClient: Jira
               success: false,
               error: {
                 code: error.code || 'DELETE_ATTACHMENT_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion,
               },
@@ -454,7 +455,7 @@ export async function registerAttachmentTools(server: McpServer, apiClient: Jira
               success: false,
               error: {
                 code: error.code || 'GET_ATTACHMENT_META_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: 'Unable to retrieve attachment settings. Check your permissions.',
               },

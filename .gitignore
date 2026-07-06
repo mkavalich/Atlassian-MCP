@@ -83,3 +83,4 @@ Untitled.png
 docker-compose.override.yml
 docker-compose.*.local.yml
 dist/skills/
+.security-fix/

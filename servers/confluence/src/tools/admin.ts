@@ -60,6 +60,8 @@ import {
   PaginatedResponse,
 } from '../types/index.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
+import { sanitizePageBody, wrapUserContent } from '../utils/sanitize.js';
 
 // NOTE: TOOL_CATALOG is now defined in index.ts for proper progressive disclosure
 
@@ -153,7 +155,7 @@ export async function registerAdminTools(server: McpServer, apiClient: Confluenc
               success: false,
               error: {
                 code: error.code || 'GET_BLOG_POSTS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Check your search parameters',
               },
             }, null, 2),
@@ -204,13 +206,13 @@ export async function registerAdminTools(server: McpServer, apiClient: Confluenc
                 success: true,
                 blogPost: {
                   id: blog.id,
-                  title: blog.title,
+                  title: wrapUserContent(blog.title),
                   status: blog.status,
                   spaceId: blog.spaceId,
                   authorId: blog.authorId,
                   createdAt: blog.createdAt,
                   version: blog.version,
-                  body: blog.body,
+                  body: sanitizePageBody(blog.body as Record<string, unknown> | undefined),
                   _links: blog._links,
                 },
               }, null, 2),
@@ -229,7 +231,7 @@ export async function registerAdminTools(server: McpServer, apiClient: Confluenc
               success: false,
               error: {
                 code: error.code || 'GET_BLOG_POST_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the blog post ID is correct',
               },
             }, null, 2),
@@ -307,7 +309,7 @@ export async function registerAdminTools(server: McpServer, apiClient: Confluenc
               success: false,
               error: {
                 code: error.code || 'CREATE_BLOG_POST_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the space ID and content are correct',
               },
             }, null, 2),
@@ -418,7 +420,7 @@ export async function registerAdminTools(server: McpServer, apiClient: Confluenc
               success: false,
               error: {
                 code: error.code || 'UPDATE_BLOG_POST_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion,
               },
             }, null, 2),
@@ -486,7 +488,7 @@ export async function registerAdminTools(server: McpServer, apiClient: Confluenc
               success: false,
               error: {
                 code: error.code || 'DELETE_BLOG_POST_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the blog post ID is correct',
               },
             }, null, 2),
@@ -556,7 +558,7 @@ export async function registerAdminTools(server: McpServer, apiClient: Confluenc
               success: false,
               error: {
                 code: error.code || 'GET_CONTENT_PROPERTIES_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the content ID is correct',
               },
             }, null, 2),
@@ -631,7 +633,7 @@ export async function registerAdminTools(server: McpServer, apiClient: Confluenc
               success: false,
               error: {
                 code: error.code || 'CREATE_CONTENT_PROPERTY_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the content ID is correct',
               },
             }, null, 2),
@@ -703,7 +705,7 @@ export async function registerAdminTools(server: McpServer, apiClient: Confluenc
               success: false,
               error: {
                 code: error.code || 'UPDATE_CONTENT_PROPERTY_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the version number is correct',
               },
             }, null, 2),
@@ -768,7 +770,7 @@ export async function registerAdminTools(server: McpServer, apiClient: Confluenc
               success: false,
               error: {
                 code: error.code || 'DELETE_CONTENT_PROPERTY_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the content ID and property key are correct',
               },
             }, null, 2),
@@ -831,7 +833,7 @@ export async function registerAdminTools(server: McpServer, apiClient: Confluenc
               success: false,
               error: {
                 code: error.code || 'GET_CONTENT_WATCHERS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the content ID is correct',
               },
             }, null, 2),
@@ -892,7 +894,7 @@ export async function registerAdminTools(server: McpServer, apiClient: Confluenc
               success: false,
               error: {
                 code: error.code || 'ADD_CONTENT_WATCH_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the content ID is correct',
               },
             }, null, 2),
@@ -953,7 +955,7 @@ export async function registerAdminTools(server: McpServer, apiClient: Confluenc
               success: false,
               error: {
                 code: error.code || 'REMOVE_CONTENT_WATCH_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the content ID is correct',
               },
             }, null, 2),
@@ -1030,7 +1032,7 @@ export async function registerAdminTools(server: McpServer, apiClient: Confluenc
               success: false,
               error: {
                 code: error.code || 'GET_SPACE_WATCHERS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the space ID is correct',
               },
             }, null, 2),
@@ -1111,7 +1113,7 @@ export async function registerAdminTools(server: McpServer, apiClient: Confluenc
               success: false,
               error: {
                 code: error.code || 'GET_AUDIT_RECORDS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify you have admin permissions',
               },
             }, null, 2),
@@ -1168,7 +1170,7 @@ export async function registerAdminTools(server: McpServer, apiClient: Confluenc
               success: false,
               error: {
                 code: error.code || 'GET_SYSTEM_INFO_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
               },
             }, null, 2),
           }],
@@ -1231,7 +1233,7 @@ export async function registerAdminTools(server: McpServer, apiClient: Confluenc
               success: false,
               error: {
                 code: error.code || 'GET_CONTENT_STATES_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
               },
             }, null, 2),
           }],
@@ -1302,7 +1304,7 @@ export async function registerAdminTools(server: McpServer, apiClient: Confluenc
               success: false,
               error: {
                 code: error.code || 'SET_CONTENT_STATE_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the content ID and state ID are correct',
               },
             }, null, 2),

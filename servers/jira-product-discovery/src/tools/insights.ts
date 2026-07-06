@@ -28,6 +28,21 @@ import {
 } from '../graphql/mutations.js';
 import { JpdInsight } from '../types/index.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
+import { wrapUserContent } from '../utils/sanitize.js';
+
+// Wrap the user-generated free-text fields of an insight with boundary markers
+// (prompt-injection defense) while leaving structural/metadata fields intact.
+function wrapInsight(insight: JpdInsight): Record<string, unknown> {
+  return {
+    ...insight,
+    description: wrapUserContent(insight.description),
+    snippets: insight.snippets?.map((s) => ({
+      ...s,
+      data: s.data !== undefined ? wrapUserContent(s.data) : s.data,
+    })),
+  };
+}
 
 export async function registerInsightTools(
   server: McpServer,
@@ -64,7 +79,7 @@ export async function registerInsightTools(
             fields: { project: { id: string } };
           }>({
             method: 'GET',
-            path: `/issue/${validatedParams.ideaId}`,
+            path: `/issue/${encodeURIComponent(validatedParams.ideaId)}`,
             params: { fields: 'project' },
           });
           if (issueResponse.success && issueResponse.data) {
@@ -102,7 +117,7 @@ export async function registerInsightTools(
                 text: JSON.stringify({
                   success: true,
                   ideaId: validatedParams.ideaId,
-                  insights,
+                  insights: insights.map(wrapInsight),
                   pagination: {
                     total: insights.length,
                     count: insights.length,
@@ -166,7 +181,7 @@ export async function registerInsightTools(
               success: false,
               error: {
                 code: error.code || 'GET_INSIGHTS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 related_tools: ['get_ideas', 'get_idea'],
               },
@@ -547,7 +562,7 @@ export async function registerInsightTools(
             fields: { project: { id: string } };
           }>({
             method: 'GET',
-            path: `/issue/${validatedParams.ideaId}`,
+            path: `/issue/${encodeURIComponent(validatedParams.ideaId)}`,
             params: { fields: 'project' },
           });
           if (issueResponse.success && issueResponse.data) {
@@ -603,7 +618,7 @@ export async function registerInsightTools(
                   analysis,
                   insights: insights.map(i => ({
                     id: i.id,
-                    description: i.description?.substring(0, 200) + (i.description && i.description.length > 200 ? '...' : ''),
+                    description: wrapUserContent(i.description?.substring(0, 200) + (i.description && i.description.length > 200 ? '...' : '')),
                     created: i.created,
                     author: i.author?.displayName,
                     snippetCount: i.snippets?.length || 0,
@@ -646,7 +661,7 @@ export async function registerInsightTools(
               success: false,
               error: {
                 code: error.code || 'ANALYZE_INSIGHTS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the idea exists and JPD is enabled for this project',
                 related_tools: ['get_ideas', 'get_insights'],
               },

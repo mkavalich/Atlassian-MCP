@@ -1,6 +1,6 @@
 ARG SERVER=jira-projects
 
-FROM node:20-slim AS builder
+FROM node:20-slim@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0 AS builder
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY packages/ ./packages/
@@ -14,7 +14,7 @@ WORKDIR /app
 ENV SKIP_DECLARATIONS=true
 RUN npm run build --workspaces --if-present
 
-FROM node:20-slim AS production
+FROM node:20-slim@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0 AS production
 ARG SERVER
 WORKDIR /app
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*

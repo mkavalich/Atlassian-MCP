@@ -1082,44 +1082,46 @@ export const getServiceDesksSchema = z.object({
 }).strict();
 
 export const getServiceDeskSchema = z.object({
-  serviceDeskId: z.string().describe('The ID of the service desk'),
+  serviceDeskId: z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id').describe('The ID of the service desk'),
 }).strict();
 
 export const getRequestTypesSchema = z.object({
-  serviceDeskId: z.string().describe('The ID of the service desk'),
+  serviceDeskId: z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id').describe('The ID of the service desk'),
   start: z.number().optional().default(0).describe('The starting index for results'),
   limit: z.number().max(100).optional().default(50)
     .describe('The maximum number of results to return'),
-  expand: z.string().optional()
+  searchQuery: z.string().max(10000).optional()
+    .describe('Optional search query to filter request types'),
+  expand: z.string().max(1000).optional()
     .describe('Comma-separated list of fields to expand (e.g., field)'),
 }).strict();
 
 export const createRequestTypeSchema = z.object({
-  serviceDeskId: z.string().describe('The ID of the service desk'),
+  serviceDeskId: z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id').describe('The ID of the service desk'),
   name: z.string().min(1).max(255).describe('The name of the request type'),
-  description: z.string().optional().describe('The description of the request type'),
-  helpText: z.string().optional().describe('The help text for the request type'),
-  issueTypeId: z.string().describe('The ID of the issue type to use for this request type'),
-  groupIds: z.array(z.string()).optional()
+  description: z.string().max(32768).optional().describe('The description of the request type'),
+  helpText: z.string().max(32768).optional().describe('The help text for the request type'),
+  issueTypeId: z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id').describe('The ID of the issue type to use for this request type'),
+  groupIds: z.array(z.string().max(255)).optional()
     .describe('Array of customer group names that can access this request type'),
 }).strict();
 
 
 export const deleteRequestTypeSchema = z.object({
-  serviceDeskId: z.string().describe('The ID of the service desk'),
-  requestTypeId: z.string().describe('The ID of the request type to delete'),
+  serviceDeskId: z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id').describe('The ID of the service desk'),
+  requestTypeId: z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id').describe('The ID of the request type to delete'),
 }).strict();
 
 export const getRequestTypeFieldsSchema = z.object({
-  serviceDeskId: z.string().describe('The ID of the service desk'),
-  requestTypeId: z.string().describe('The ID of the request type'),
+  serviceDeskId: z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id').describe('The ID of the service desk'),
+  requestTypeId: z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id').describe('The ID of the request type'),
 }).strict();
 
 export const updateRequestTypeFieldsSchema = z.object({
-  serviceDeskId: z.string().describe('The ID of the service desk'),
-  requestTypeId: z.string().describe('The ID of the request type'),
+  serviceDeskId: z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id').describe('The ID of the service desk'),
+  requestTypeId: z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id').describe('The ID of the request type'),
   requestTypeFields: z.array(z.object({
-    fieldId: z.string().describe('The ID of the field'),
+    fieldId: z.string().max(255).describe('The ID of the field'),
     required: z.boolean().optional().describe('Whether the field is required'),
     visible: z.boolean().optional().describe('Whether the field is visible'),
     defaultValues: z.array(z.unknown()).optional().describe('Default values for the field'),
@@ -1128,20 +1130,33 @@ export const updateRequestTypeFieldsSchema = z.object({
 }).strict();
 
 export const getRequestTypeGroupsSchema = z.object({
-  serviceDeskId: z.string().describe('The ID of the service desk'),
-  requestTypeId: z.string().describe('The ID of the request type'),
+  serviceDeskId: z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id').describe('The ID of the service desk'),
+  requestTypeId: z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id').describe('The ID of the request type'),
   start: z.number().optional().default(0).describe('The starting index for results'),
   limit: z.number().max(100).optional().default(50)
     .describe('The maximum number of results to return'),
 }).strict();
 
 export const updateRequestTypeGroupsSchema = z.object({
-  serviceDeskId: z.string().describe('The ID of the service desk'),
-  requestTypeId: z.string().describe('The ID of the request type'),
-  groupNames: z.array(z.string()).describe('Array of customer group names to grant access to this request type'),
+  serviceDeskId: z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id').describe('The ID of the service desk'),
+  requestTypeId: z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id').describe('The ID of the request type'),
+  groupNames: z.array(z.string().max(255)).describe('Array of customer group names to grant access to this request type'),
 }).strict();
 
-// Customer Organization schemas
+// Additional strict schemas for handler-side validation (F-001)
+
+export const configureRequestTypeWorkflowSchema = z.object({
+  serviceDeskId: z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id').describe('The ID of the service desk'),
+  requestTypeId: z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id').describe('The ID of the request type'),
+  workflowId: z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id').describe('The ID of the workflow to assign to the request type'),
+  approvalConfig: z.object({
+    requiresApproval: z.boolean().optional().describe('Whether requests require approval'),
+    approvers: z.array(z.string().max(255)).optional().describe('List of approver user keys'),
+  }).strict().optional().describe('Approval configuration'),
+}).strict();
+
+// Customer Organization strict schemas (F-001)
+
 export const getCustomerOrganizationsSchema = z.object({
   limit: z.number().min(1).max(1000).optional().default(50)
     .describe('Maximum number of organizations to return (default: 50, max: 1000)'),
@@ -1150,7 +1165,7 @@ export const getCustomerOrganizationsSchema = z.object({
 }).strict();
 
 export const getOrganizationCustomersSchema = z.object({
-  organizationId: z.string().describe('Organization ID to get customers from'),
+  organizationId: z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id').describe('Organization ID to get customers from'),
   limit: z.number().min(1).max(1000).optional().default(50)
     .describe('Maximum number of customers to return (default: 50, max: 1000)'),
   start: z.number().min(0).optional().default(0)
@@ -1158,17 +1173,22 @@ export const getOrganizationCustomersSchema = z.object({
 }).strict();
 
 export const getCustomerOrganizationMembershipSchema = z.object({
-  accountId: z.string().optional().describe('Customer account ID to check membership for'),
-  email: z.string().optional().describe('Customer email to check membership for (alternative to accountId)'),
+  accountId: z.string().max(255).regex(/^[a-zA-Z0-9:._\-]+$/, 'invalid accountId').optional()
+    .describe('Customer account ID to check membership for'),
+  email: z.string().max(255).optional()
+    .describe('Customer email to check membership for (alternative to accountId)'),
 }).strict();
 
 export const getProjectCustomerOrganizationsSchema = z.object({
-  projectKey: z.string().optional().describe('Service project key to get organizations for'),
-  serviceDeskId: z.string().optional().describe('Service desk ID to get organizations for (alternative to projectKey)'),
+  projectKey: z.string().regex(/^[A-Za-z][A-Za-z0-9_]{1,255}$/, 'invalid project key').optional()
+    .describe('Service project key to get organizations for'),
+  serviceDeskId: z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id').optional()
+    .describe('Service desk ID to get organizations for (alternative to projectKey)'),
 }).strict();
 
 export const analyzeCustomerVisibilitySchema = z.object({
-  projectKey: z.string().describe('Service project key to analyze'),
-  customerAccountId: z.string().optional()
+  projectKey: z.string().regex(/^[A-Za-z][A-Za-z0-9_]{1,255}$/, 'invalid project key')
+    .describe('Service project key to analyze'),
+  customerAccountId: z.string().max(255).regex(/^[a-zA-Z0-9:._\-]+$/, 'invalid accountId').optional()
     .describe('Specific customer account ID to analyze (optional)'),
 }).strict();

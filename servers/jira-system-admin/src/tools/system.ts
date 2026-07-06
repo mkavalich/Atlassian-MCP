@@ -29,6 +29,7 @@ import {
   updateTimeTrackingSettingsInputSchema,
 } from '../validation/input-schemas.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
 
 
 export async function registerSystemTools(server: McpServer, apiClient: JiraApiClient) {
@@ -92,7 +93,7 @@ export async function registerSystemTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'GET_AUDIT_RECORDS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have audit log viewing permissions',
               },
@@ -145,7 +146,7 @@ export async function registerSystemTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'GET_INSTANCE_INFO_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion,
               },
@@ -221,7 +222,7 @@ export async function registerSystemTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'GET_SYSTEM_LIMITS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion,
               },
@@ -300,7 +301,7 @@ export async function registerSystemTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'CREATE_FILTER_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Check your JQL syntax and ensure you have filter creation permissions',
               },
@@ -370,7 +371,7 @@ export async function registerSystemTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'SEARCH_USERS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have user browsing permissions',
               },
@@ -438,7 +439,7 @@ export async function registerSystemTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'SEARCH_GROUPS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have group browsing permissions',
               },
@@ -468,7 +469,7 @@ export async function registerSystemTools(server: McpServer, apiClient: JiraApiC
 
         const response = await apiClient.makeRequest<any>({
           method: 'GET',
-          path: `/user/groups?accountId=${validatedParams.accountId}`,
+          path: `/user/groups?accountId=${encodeURIComponent(validatedParams.accountId)}`,
         });
 
         if (response.success && response.data) {
@@ -496,7 +497,7 @@ export async function registerSystemTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'GET_USER_GROUPS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure the user exists and you have appropriate permissions',
               },
@@ -556,7 +557,7 @@ export async function registerSystemTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'GET_APPLICATION_ROLES_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have administrator permissions',
               },
@@ -624,7 +625,7 @@ export async function registerSystemTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'GET_BULK_PERMISSIONS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure all projects exist and you have appropriate permissions. Valid permission keys include: BROWSE_PROJECTS, CREATE_ISSUES, EDIT_ISSUES, ADMINISTER_PROJECTS.',
               },
@@ -687,7 +688,7 @@ export async function registerSystemTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'GET_APPLICATION_PROPERTIES_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have system administrator permissions',
               },
@@ -717,7 +718,7 @@ export async function registerSystemTools(server: McpServer, apiClient: JiraApiC
 
         const response = await apiClient.makeRequest<any>({
           method: 'PUT',
-          path: `/application-properties/${validatedParams.id}`,
+          path: `/application-properties/${encodeURIComponent(validatedParams.id)}`,
           data: {
             id: validatedParams.id,
             value: validatedParams.value,
@@ -755,7 +756,7 @@ export async function registerSystemTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'SET_APPLICATION_PROPERTY_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have system administrator permissions and the property exists',
               },
@@ -816,7 +817,7 @@ export async function registerSystemTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'GET_SYSTEM_AVATARS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have appropriate permissions to view avatars',
               },
@@ -870,7 +871,7 @@ export async function registerSystemTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'GET_TIME_TRACKING_SETTINGS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have system administrator permissions',
               },
@@ -943,7 +944,7 @@ export async function registerSystemTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'UPDATE_TIME_TRACKING_SETTINGS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: isCloudLimitation
                   ? 'Time tracking settings in Jira Cloud may be read-only via REST API. Configure these settings via Jira Administration UI: Administration > System > Time Tracking.'
@@ -1135,7 +1136,7 @@ export async function registerSystemTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'GET_SYSTEM_WEBHOOKS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: isPermissionError
                   ? 'The webhook API requires OAuth 2.0 (3LO) authentication or Connect app permissions. Standard API tokens cannot access webhooks.'

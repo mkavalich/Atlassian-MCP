@@ -25,6 +25,7 @@ import {
   CursorPaginatedResponse,
 } from '../types/index.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
 import { sanitizePageBody } from '../utils/sanitize.js';
 
 export async function registerCommentTools(server: McpServer, apiClient: ConfluenceApiClient) {
@@ -120,7 +121,7 @@ export async function registerCommentTools(server: McpServer, apiClient: Conflue
               success: false,
               error: {
                 code: error.code || 'GET_PAGE_COMMENTS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the page ID is correct',
               },
             }, null, 2),
@@ -208,7 +209,7 @@ export async function registerCommentTools(server: McpServer, apiClient: Conflue
               success: false,
               error: {
                 code: error.code || 'GET_FOOTER_COMMENTS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the page ID is correct',
               },
             }, null, 2),
@@ -297,7 +298,7 @@ export async function registerCommentTools(server: McpServer, apiClient: Conflue
               success: false,
               error: {
                 code: error.code || 'GET_INLINE_COMMENTS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the page ID is correct',
               },
             }, null, 2),
@@ -382,7 +383,7 @@ export async function registerCommentTools(server: McpServer, apiClient: Conflue
               success: false,
               error: {
                 code: error.code || 'ADD_FOOTER_COMMENT_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the page ID is correct and you have comment permissions',
               },
             }, null, 2),
@@ -489,7 +490,7 @@ export async function registerCommentTools(server: McpServer, apiClient: Conflue
               success: false,
               error: {
                 code: error.code || 'ADD_INLINE_COMMENT_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion,
                 tip: 'For reliable inline comments, first use get_page to retrieve the exact text content, then select a unique text snippet',
               },
@@ -586,7 +587,7 @@ export async function registerCommentTools(server: McpServer, apiClient: Conflue
               success: false,
               error: {
                 code: error.code || 'UPDATE_COMMENT_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion,
               },
             }, null, 2),
@@ -658,7 +659,7 @@ export async function registerCommentTools(server: McpServer, apiClient: Conflue
               success: false,
               error: {
                 code: error.code || 'DELETE_COMMENT_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the comment ID is correct and you have delete permissions',
               },
             }, null, 2),
@@ -779,7 +780,7 @@ export async function registerCommentTools(server: McpServer, apiClient: Conflue
               success: false,
               error: {
                 code: error.code || 'GET_COMMENT_CHILDREN_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the comment ID is correct',
               },
             }, null, 2),

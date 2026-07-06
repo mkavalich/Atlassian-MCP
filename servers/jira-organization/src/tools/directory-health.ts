@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { JiraApiClient } from '../api/client.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
 import {
   ScimDirectoryGroupsResponse,
 } from '../types/index.js';
@@ -125,7 +126,7 @@ export async function registerDirectoryHealthTools(server: McpServer, apiClient:
               success: false,
               error: {
                 code: error.code || 'GET_SCIM_DIRECTORY_GROUPS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have organization admin token with read:directory:admin scope',
               },
@@ -158,9 +159,9 @@ export async function registerDirectoryHealthTools(server: McpServer, apiClient:
         destructiveHint: false,
       },
     },
-    async (params) => {
+    async (params: any) => {
       try {
-        const validatedParams = getDirectoryHealthStatusSchema.parse(params);
+        const validated = getDirectoryHealthStatusSchema.parse(params);
         const orgId = apiClient.getOrgId();
         if (!orgId) {
           return {
@@ -179,7 +180,7 @@ export async function registerDirectoryHealthTools(server: McpServer, apiClient:
           };
         }
 
-        const { directoryId, includeSync = true, includeErrors = true, includePerformance = false } = validatedParams;
+        const { directoryId, includeSync = true, includeErrors = true, includePerformance = false } = validated;
 
         // Get directories from Organization API
         const directoriesResponse = await apiClient.makeOrganizationApiRequest<{
@@ -288,7 +289,7 @@ export async function registerDirectoryHealthTools(server: McpServer, apiClient:
               success: false,
               error: {
                 code: error.code || 'GET_DIRECTORY_HEALTH_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have Organization Admin API access',
               },
@@ -312,9 +313,9 @@ export async function registerDirectoryHealthTools(server: McpServer, apiClient:
         destructiveHint: false,
       },
     },
-    async (params) => {
+    async (params: any) => {
       try {
-        const validatedParams = getProvisioningInsightsSchema.parse(params);
+        const validated = getProvisioningInsightsSchema.parse(params);
         const orgId = apiClient.getOrgId();
         if (!orgId) {
           return {
@@ -339,7 +340,7 @@ export async function registerDirectoryHealthTools(server: McpServer, apiClient:
           includeFailures = true,
           includePerformance = false,
           groupBy = 'day'
-        } = validatedParams;
+        } = validated;
 
         // Get directories for context
         const directoriesResponse = await apiClient.makeOrganizationApiRequest<{
@@ -468,7 +469,7 @@ export async function registerDirectoryHealthTools(server: McpServer, apiClient:
               success: false,
               error: {
                 code: error.code || 'GET_PROVISIONING_INSIGHTS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have Organization Admin API access',
               },

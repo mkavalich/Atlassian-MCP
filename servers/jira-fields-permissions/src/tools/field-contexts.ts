@@ -22,6 +22,7 @@ import {
   JiraCustomFieldOption
 } from '../types/index.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
 
 export async function registerFieldContextTools(server: McpServer, apiClient: JiraApiClient) {
   // Tool: getCustomFieldContexts
@@ -84,7 +85,7 @@ export async function registerFieldContextTools(server: McpServer, apiClient: Ji
               success: false,
               error: {
                 code: error.code || 'GET_CUSTOM_FIELD_CONTEXTS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure the custom field exists and you have permission to view its contexts',
               },
@@ -163,7 +164,7 @@ export async function registerFieldContextTools(server: McpServer, apiClient: Ji
               success: false,
               error: {
                 code: error.code || 'CREATE_CUSTOM_FIELD_CONTEXT_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure the custom field exists and you have Jira Administrator permissions',
               },
@@ -231,7 +232,7 @@ export async function registerFieldContextTools(server: McpServer, apiClient: Ji
               success: false,
               error: {
                 code: error.code || 'UPDATE_CUSTOM_FIELD_CONTEXT_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure the custom field and context exist and you have admin permissions',
               },
@@ -291,7 +292,7 @@ export async function registerFieldContextTools(server: McpServer, apiClient: Ji
               success: false,
               error: {
                 code: error.code || 'DELETE_CUSTOM_FIELD_CONTEXT_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure the custom field context exists, is not in use, and you have admin permissions',
               },
@@ -391,7 +392,7 @@ Use "get_fields_paginated" to check a field's schema.custom before calling this 
               success: false,
               error: {
                 code: error.code || 'GET_CUSTOM_FIELD_OPTIONS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
@@ -556,7 +557,7 @@ Use "get_fields_paginated" to check a field's schema.custom before calling this 
               success: false,
               error: {
                 code: error.code || 'CREATE_CUSTOM_FIELD_OPTIONS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,

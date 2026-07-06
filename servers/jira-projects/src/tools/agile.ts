@@ -40,10 +40,28 @@ import {
   JiraSprintPage,
   JiraAgileIssuePage,
 } from '../types/index.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
+import { wrapUserContent } from '../utils/sanitize.js';
 import { toolExamples } from '../validation/tool-examples.js';
 
 const AGILE_API_BASE = '/rest/agile/1.0';
+
+/**
+ * Wrap user-generated content (summary/description) in issue fields with
+ * boundary markers to defend against prompt injection (F-008).
+ */
+function sanitizeAgileIssueFields(issue: any): any {
+  if (!issue || !issue.fields) return issue;
+  return {
+    ...issue,
+    fields: {
+      ...issue.fields,
+      summary: issue.fields.summary ? wrapUserContent(issue.fields.summary) : issue.fields.summary,
+      description: issue.fields.description ? wrapUserContent(issue.fields.description) : issue.fields.description,
+    },
+  };
+}
 
 export async function registerAgileTools(server: McpServer, apiClient: JiraApiClient) {
   // =====================
@@ -122,7 +140,7 @@ Returns board ID, name, type (scrum/kanban), and associated project. Only Scrum 
             type: 'text',
             text: JSON.stringify({
               success: false,
-              error: error.message || 'Failed to get boards',
+              error: sanitizeErrorMessage(error.message) || 'Failed to get boards',
               code: error.code || 'BOARD_FETCH_ERROR',
               suggestion: 'Check that you have access to Jira Software projects',
             }, null, 2),
@@ -180,7 +198,7 @@ Returns board ID, name, type (scrum/kanban), and associated project. Only Scrum 
             type: 'text',
             text: JSON.stringify({
               success: false,
-              error: error.message || 'Failed to get board',
+              error: sanitizeErrorMessage(error.message) || 'Failed to get board',
               code: error.code || 'BOARD_NOT_FOUND',
               suggestion: 'Use get_boards to find valid board IDs',
             }, null, 2),
@@ -235,7 +253,7 @@ Returns board ID, name, type (scrum/kanban), and associated project. Only Scrum 
             type: 'text',
             text: JSON.stringify({
               success: false,
-              error: error.message || 'Failed to get board configuration',
+              error: sanitizeErrorMessage(error.message) || 'Failed to get board configuration',
               code: error.code || 'CONFIG_FETCH_ERROR',
               suggestion: 'Verify the board ID exists using get_boards',
             }, null, 2),
@@ -287,7 +305,7 @@ Returns board ID, name, type (scrum/kanban), and associated project. Only Scrum 
               type: 'text',
               text: JSON.stringify({
                 success: true,
-                issues: response.data.issues,
+                issues: (response.data.issues || []).map(sanitizeAgileIssueFields),
                 pagination: {
                   startAt: response.data.startAt,
                   maxResults: response.data.maxResults,
@@ -310,7 +328,7 @@ Returns board ID, name, type (scrum/kanban), and associated project. Only Scrum 
             type: 'text',
             text: JSON.stringify({
               success: false,
-              error: error.message || 'Failed to get backlog',
+              error: sanitizeErrorMessage(error.message) || 'Failed to get backlog',
               code: error.code || 'BACKLOG_FETCH_ERROR',
               suggestion: 'Verify the board ID exists using get_boards',
             }, null, 2),
@@ -407,7 +425,7 @@ Create a new Scrum or Kanban board. The board displays issues matching the filte
             type: 'text',
             text: JSON.stringify({
               success: false,
-              error: error.message || 'Failed to create board',
+              error: sanitizeErrorMessage(error.message) || 'Failed to create board',
               code: error.code || 'BOARD_CREATE_ERROR',
               suggestion,
               prerequisite: 'Use create_filter in jira-system-admin to create a JQL filter first',
@@ -462,7 +480,7 @@ The associated JQL filter is also NOT deleted automatically.`,
             type: 'text',
             text: JSON.stringify({
               success: false,
-              error: error.message || 'Failed to delete board',
+              error: sanitizeErrorMessage(error.message) || 'Failed to delete board',
               code: error.code || 'BOARD_DELETE_ERROR',
               suggestion: 'Check board ID and ensure you have permission to delete boards',
             }, null, 2),
@@ -546,7 +564,7 @@ Filter by state to find relevant sprints:
             type: 'text',
             text: JSON.stringify({
               success: false,
-              error: error.message || 'Failed to get sprints',
+              error: sanitizeErrorMessage(error.message) || 'Failed to get sprints',
               code: error.code || 'SPRINT_FETCH_ERROR',
               suggestion: 'Ensure this is a Scrum board (not Kanban). Use get_boards to verify board type.',
             }, null, 2),
@@ -625,7 +643,7 @@ Create a new sprint on a Scrum board. Sprints are created in "future" state by d
             type: 'text',
             text: JSON.stringify({
               success: false,
-              error: error.message || 'Failed to create sprint',
+              error: sanitizeErrorMessage(error.message) || 'Failed to create sprint',
               code: error.code || 'SPRINT_CREATE_ERROR',
               suggestion: 'Ensure the board is a Scrum board and you have permissions to manage sprints',
             }, null, 2),
@@ -680,7 +698,7 @@ Create a new sprint on a Scrum board. Sprints are created in "future" state by d
             type: 'text',
             text: JSON.stringify({
               success: false,
-              error: error.message || 'Failed to get sprint',
+              error: sanitizeErrorMessage(error.message) || 'Failed to get sprint',
               code: error.code || 'SPRINT_NOT_FOUND',
               suggestion: 'Use get_sprints_for_board to find valid sprint IDs',
             }, null, 2),
@@ -763,7 +781,7 @@ Update sprint details including name, dates, goal, or state.
             type: 'text',
             text: JSON.stringify({
               success: false,
-              error: error.message || 'Failed to update sprint',
+              error: sanitizeErrorMessage(error.message) || 'Failed to update sprint',
               code: error.code || 'SPRINT_UPDATE_ERROR',
               suggestion,
             }, null, 2),
@@ -815,7 +833,7 @@ Update sprint details including name, dates, goal, or state.
             type: 'text',
             text: JSON.stringify({
               success: false,
-              error: error.message || 'Failed to delete sprint',
+              error: sanitizeErrorMessage(error.message) || 'Failed to delete sprint',
               code: error.code || 'SPRINT_DELETE_ERROR',
               suggestion: 'Check sprint ID and ensure you have permission to delete sprints',
             }, null, 2),
@@ -865,7 +883,7 @@ Update sprint details including name, dates, goal, or state.
               type: 'text',
               text: JSON.stringify({
                 success: true,
-                issues: response.data.issues,
+                issues: (response.data.issues || []).map(sanitizeAgileIssueFields),
                 pagination: {
                   startAt: response.data.startAt,
                   maxResults: response.data.maxResults,
@@ -884,7 +902,7 @@ Update sprint details including name, dates, goal, or state.
             type: 'text',
             text: JSON.stringify({
               success: false,
-              error: error.message || 'Failed to get sprint issues',
+              error: sanitizeErrorMessage(error.message) || 'Failed to get sprint issues',
               code: error.code || 'SPRINT_ISSUES_ERROR',
               suggestion: 'Use get_sprints_for_board to find valid sprint IDs',
             }, null, 2),
@@ -950,7 +968,7 @@ Move issues into a sprint from backlog or other sprints. Only works with future 
             type: 'text',
             text: JSON.stringify({
               success: false,
-              error: error.message || 'Failed to move issues to sprint',
+              error: sanitizeErrorMessage(error.message) || 'Failed to move issues to sprint',
               code: error.code || 'MOVE_ISSUES_ERROR',
               suggestion: 'Ensure the sprint is not closed and all issue keys are valid',
             }, null, 2),
@@ -1006,7 +1024,7 @@ Move issues into a sprint from backlog or other sprints. Only works with future 
             type: 'text',
             text: JSON.stringify({
               success: false,
-              error: error.message || 'Failed to move issues to backlog',
+              error: sanitizeErrorMessage(error.message) || 'Failed to move issues to backlog',
               code: error.code || 'MOVE_BACKLOG_ERROR',
               suggestion: 'Ensure all issue keys are valid and you have permissions to modify them',
             }, null, 2),

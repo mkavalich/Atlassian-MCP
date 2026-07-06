@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { JiraApiClient } from '../api/client.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
 import {
   AtlassianOrganizationsResponse,
   OrganizationDetails,
@@ -41,16 +42,17 @@ export async function registerOrganizationManagementTools(server: McpServer, api
         destructiveHint: false,
       },
     },
-    async (params) => {
+    async (params: any) => {
       try {
-        const validatedParams = getOrganizationsSchema.parse(params);
+        const validated = getOrganizationsSchema.parse(params);
+
         // Build query parameters for Organization API
         const queryParams: Record<string, any> = {};
 
-        if (validatedParams.limit) queryParams.limit = validatedParams.limit;
-        if (validatedParams.page) queryParams.page = validatedParams.page;
-        if (validatedParams.status) queryParams.status = validatedParams.status;
-        if (validatedParams.type) queryParams.type = validatedParams.type;
+        if (validated.limit) queryParams.limit = validated.limit;
+        if (validated.page) queryParams.page = validated.page;
+        if (validated.status) queryParams.status = validated.status;
+        if (validated.type) queryParams.type = validated.type;
 
         // Make request to Organization API
         const response = await apiClient.makeOrganizationApiRequest<AtlassianOrganizationsResponse>({
@@ -142,7 +144,7 @@ export async function registerOrganizationManagementTools(server: McpServer, api
               success: false,
               error: {
                 code: error.code || 'GET_ORGANIZATIONS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have organization admin token with read:organizations:admin scope',
                 _source: 'ATLASSIAN_MCP_JAN12_V1',
@@ -167,22 +169,22 @@ export async function registerOrganizationManagementTools(server: McpServer, api
         destructiveHint: false,
       },
     },
-    async (params) => {
+    async (params: any) => {
       try {
-        const validatedParams = getOrganizationDetailsSchema.parse(params);
-        const orgId = validatedParams.orgId;
+        const validated = getOrganizationDetailsSchema.parse(params);
+        const orgId = validated.orgId;
 
         // Build query parameters for detailed organization information
         const queryParams: Record<string, any> = {};
 
-        if (validatedParams.includeStatistics) queryParams.include_statistics = validatedParams.includeStatistics;
-        if (validatedParams.includeAudit) queryParams.include_audit = validatedParams.includeAudit;
-        if (validatedParams.includeCompliance) queryParams.include_compliance = validatedParams.includeCompliance;
+        if (validated.includeStatistics) queryParams.include_statistics = validated.includeStatistics;
+        if (validated.includeAudit) queryParams.include_audit = validated.includeAudit;
+        if (validated.includeCompliance) queryParams.include_compliance = validated.includeCompliance;
 
         // Make request to Organization API for specific organization
         const response = await apiClient.makeOrganizationApiRequest<OrganizationDetails>({
           method: 'GET',
-          path: `/v1/orgs/${orgId}`,
+          path: `/v1/orgs/${encodeURIComponent(orgId)}`,
           params: queryParams,
         });
 
@@ -314,8 +316,7 @@ export async function registerOrganizationManagementTools(server: McpServer, api
 
         throw new Error('Failed to retrieve organization details from Atlassian Organization API');
       } catch (error: any) {
-        const rawOrgId = (params as Record<string, unknown>)?.orgId;
-        logger.error('Failed to get organization details', { error: error.message, orgId: rawOrgId });
+        logger.error('Failed to get organization details', { error: error.message, orgId: params.orgId });
         return {
           content: [{
             type: 'text',
@@ -323,10 +324,10 @@ export async function registerOrganizationManagementTools(server: McpServer, api
               success: false,
               error: {
                 code: error.code || 'GET_ORGANIZATION_DETAILS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: {
                   ...error.details,
-                  orgId: rawOrgId,
+                  orgId: params.orgId,
                 },
                 suggestion: error.suggestion || 'Ensure you have organization admin token with read:organizations:admin scope',
               },

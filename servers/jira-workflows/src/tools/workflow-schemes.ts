@@ -22,7 +22,7 @@ import {
   setWorkflowSchemeIssueTypeInputSchema,
   deleteWorkflowSchemeIssueTypeInputSchema,
 } from '../validation/input-schemas.js';
-import { ValidationError } from '../utils/errors.js';
+import { ValidationError, sanitizeErrorMessage } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
 
 export async function registerWorkflowSchemeTools(server: McpServer, apiClient: JiraApiClient) {
@@ -36,6 +36,7 @@ export async function registerWorkflowSchemeTools(server: McpServer, apiClient: 
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -102,7 +103,7 @@ export async function registerWorkflowSchemeTools(server: McpServer, apiClient: 
               success: false,
               error: {
                 code: error.code || 'GET_WORKFLOW_SCHEMES_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
@@ -130,6 +131,7 @@ export async function registerWorkflowSchemeTools(server: McpServer, apiClient: 
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -224,7 +226,7 @@ export async function registerWorkflowSchemeTools(server: McpServer, apiClient: 
               success: false,
               error: {
                 code: error.code || 'CREATE_WORKFLOW_SCHEME_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
@@ -252,6 +254,7 @@ export async function registerWorkflowSchemeTools(server: McpServer, apiClient: 
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -345,7 +348,7 @@ export async function registerWorkflowSchemeTools(server: McpServer, apiClient: 
               success: false,
               error: {
                 code: error.code || 'UPDATE_WORKFLOW_SCHEME_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
@@ -373,6 +376,7 @@ export async function registerWorkflowSchemeTools(server: McpServer, apiClient: 
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -459,7 +463,7 @@ export async function registerWorkflowSchemeTools(server: McpServer, apiClient: 
               success: false,
               error: {
                 code: error.code || 'ASSIGN_WORKFLOW_SCHEME_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
@@ -483,6 +487,7 @@ export async function registerWorkflowSchemeTools(server: McpServer, apiClient: 
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -565,7 +570,7 @@ export async function registerWorkflowSchemeTools(server: McpServer, apiClient: 
               success: false,
               error: {
                 code: error.code || 'SET_WORKFLOW_SCHEME_ISSUE_TYPE_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
@@ -594,6 +599,7 @@ export async function registerWorkflowSchemeTools(server: McpServer, apiClient: 
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -662,7 +668,7 @@ export async function registerWorkflowSchemeTools(server: McpServer, apiClient: 
               success: false,
               error: {
                 code: error.code || 'DELETE_WORKFLOW_SCHEME_ISSUE_TYPE_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
