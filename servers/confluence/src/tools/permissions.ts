@@ -462,7 +462,7 @@ export async function registerPermissionTools(server: McpServer, apiClient: Conf
         openWorldHint: false,
       },
     },
-    async (params: any) => {
+    async (params) => {
       try {
         getPermissionTypesSchema.parse(params);
         // Return the standard Confluence permission types

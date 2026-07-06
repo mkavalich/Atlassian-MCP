@@ -446,6 +446,7 @@ atlassian-mcp-servers/
 │   ├── jira-system-admin/
 │   └── jira-workflows/
 ├── docs/
+│   ├── development-guide.md    # Adding tools and creating servers
 │   ├── getting-started.md      # Setup and configuration
 │   ├── optimization-guide.md   # Deferred loading and tool examples
 │   └── tool-catalog.md         # Complete tool reference
@@ -457,6 +458,7 @@ atlassian-mcp-servers/
 ## Documentation
 
 - [Getting Started](docs/getting-started.md) - Setup and configuration
+- [Development Guide](docs/development-guide.md) - Adding tools and creating servers
 - [Tool Catalog](docs/tool-catalog.md) - Complete tool reference
 - [Optimization Guide](docs/optimization-guide.md) - Deferred loading and tool use examples
 - [AGENTS.md](AGENTS.md) - For AI agents working on this codebase
