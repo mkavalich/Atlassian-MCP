@@ -19,6 +19,7 @@ import {
 import { JpdIdea, JiraSearchResult, JiraCreateIssueResponse } from '../types/index.js';
 import { logger } from '../utils/logger.js';
 import { wrapUserContent } from '../utils/sanitize.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
 
 export async function registerIdeaTools(server: McpServer, apiClient: JiraApiClient) {
   // Tool: get_ideas (Discovery Tool)
@@ -41,8 +42,11 @@ export async function registerIdeaTools(server: McpServer, apiClient: JiraApiCli
         const validatedParams = getIdeasSchema.parse(params);
         const { projectKey, fields, ...pagination } = validatedParams;
 
-        // Build JQL to search for ideas in the project
-        const jql = `project = "${projectKey}" ORDER BY created DESC`;
+        // Build JQL to search for ideas in the project.
+        // projectKey is regex-constrained in the schema; escape as defense-in-depth
+        // so the value interpolated inside the quotes can never break out.
+        const jqlSafe = (v: string) => String(v).replace(/["\\]/g, '\\$&');
+        const jql = `project = "${jqlSafe(projectKey)}" ORDER BY created DESC`;
 
         // Use new /search/jql endpoint (old /search deprecated Aug 2025)
         // See: https://developer.atlassian.com/changelog/#CHANGE-2046
@@ -137,7 +141,7 @@ export async function registerIdeaTools(server: McpServer, apiClient: JiraApiCli
               success: false,
               error: {
                 code: error.code || 'GET_IDEAS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 related_tools: ['get_jpd_projects'],
@@ -250,7 +254,7 @@ export async function registerIdeaTools(server: McpServer, apiClient: JiraApiCli
               success: false,
               error: {
                 code: error.code || 'SEARCH_IDEAS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 jql_examples: [
                   'project = JPD',
@@ -296,7 +300,7 @@ export async function registerIdeaTools(server: McpServer, apiClient: JiraApiCli
 
         const response = await apiClient.makeRequest<JpdIdea>({
           method: 'GET',
-          path: `/issue/${validatedParams.ideaIdOrKey}`,
+          path: `/issue/${encodeURIComponent(validatedParams.ideaIdOrKey)}`,
           params: queryParams,
         });
 
@@ -358,7 +362,7 @@ export async function registerIdeaTools(server: McpServer, apiClient: JiraApiCli
               success: false,
               error: {
                 code: error.code || 'GET_IDEA_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 related_tools: ['get_ideas', 'search_ideas'],
               },
@@ -497,7 +501,7 @@ export async function registerIdeaTools(server: McpServer, apiClient: JiraApiCli
               success: false,
               error: {
                 code: error.code || 'CREATE_IDEA_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion,
                 workflow_guidance: 'Proper workflow: get_jpd_projects → create_idea',
                 related_tools: ['get_jpd_projects'],
@@ -583,7 +587,7 @@ export async function registerIdeaTools(server: McpServer, apiClient: JiraApiCli
 
         const response = await apiClient.makeRequest<void>({
           method: 'PUT',
-          path: `/issue/${ideaIdOrKey}`,
+          path: `/issue/${encodeURIComponent(ideaIdOrKey)}`,
           data: { fields },
         });
 
@@ -626,7 +630,7 @@ export async function registerIdeaTools(server: McpServer, apiClient: JiraApiCli
               success: false,
               error: {
                 code: error.code || 'UPDATE_IDEA_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion,
                 workflow_guidance: 'Use "get_idea" first to verify the idea exists and see current values',
               },
@@ -659,7 +663,7 @@ export async function registerIdeaTools(server: McpServer, apiClient: JiraApiCli
 
         const response = await apiClient.makeRequest<void>({
           method: 'DELETE',
-          path: `/issue/${validatedParams.ideaIdOrKey}`,
+          path: `/issue/${encodeURIComponent(validatedParams.ideaIdOrKey)}`,
         });
 
         if (response.success) {
@@ -696,7 +700,7 @@ export async function registerIdeaTools(server: McpServer, apiClient: JiraApiCli
               success: false,
               error: {
                 code: error.code || 'DELETE_IDEA_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion,
               },
             }, null, 2),

@@ -38,6 +38,8 @@ import {
   CursorPaginatedResponse,
 } from '../types/index.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
+import { wrapUserContent } from '../utils/sanitize.js';
 import { toolExamples } from '../validation/tool-examples.js';
 
 export async function registerContentTools(server: McpServer, apiClient: ConfluenceApiClient) {
@@ -119,7 +121,7 @@ export async function registerContentTools(server: McpServer, apiClient: Conflue
               success: false,
               error: {
                 code: error.code || 'GET_TEMPLATES_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Check your search parameters',
               },
             }, null, 2),
@@ -188,7 +190,7 @@ export async function registerContentTools(server: McpServer, apiClient: Conflue
               success: false,
               error: {
                 code: error.code || 'GET_TEMPLATE_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the template ID is correct',
               },
             }, null, 2),
@@ -276,7 +278,7 @@ export async function registerContentTools(server: McpServer, apiClient: Conflue
               success: false,
               error: {
                 code: error.code || 'CREATE_TEMPLATE_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Check template name and body content',
               },
             }, null, 2),
@@ -359,7 +361,7 @@ export async function registerContentTools(server: McpServer, apiClient: Conflue
               success: false,
               error: {
                 code: error.code || 'UPDATE_TEMPLATE_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the template ID is correct',
               },
             }, null, 2),
@@ -421,7 +423,7 @@ export async function registerContentTools(server: McpServer, apiClient: Conflue
               success: false,
               error: {
                 code: error.code || 'DELETE_TEMPLATE_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the template ID is correct',
               },
             }, null, 2),
@@ -503,7 +505,7 @@ export async function registerContentTools(server: McpServer, apiClient: Conflue
               success: false,
               error: {
                 code: error.code || 'GET_LABELS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the content ID is correct',
               },
             }, null, 2),
@@ -573,7 +575,7 @@ export async function registerContentTools(server: McpServer, apiClient: Conflue
               success: false,
               error: {
                 code: error.code || 'ADD_LABELS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the content ID is correct',
               },
             }, null, 2),
@@ -666,7 +668,7 @@ export async function registerContentTools(server: McpServer, apiClient: Conflue
               success: false,
               error: {
                 code: error.code || 'REMOVE_LABEL_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion,
               },
             }, null, 2),
@@ -742,7 +744,7 @@ export async function registerContentTools(server: McpServer, apiClient: Conflue
               success: false,
               error: {
                 code: error.code || 'GET_SPACE_LABELS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the space ID is correct',
               },
             }, null, 2),
@@ -813,7 +815,7 @@ export async function registerContentTools(server: McpServer, apiClient: Conflue
               success: false,
               error: {
                 code: error.code || 'ADD_SPACE_LABEL_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the space ID is correct',
               },
             }, null, 2),
@@ -878,7 +880,7 @@ export async function registerContentTools(server: McpServer, apiClient: Conflue
               success: false,
               error: {
                 code: error.code || 'REMOVE_SPACE_LABEL_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the space ID and label name are correct',
               },
             }, null, 2),
@@ -942,9 +944,9 @@ export async function registerContentTools(server: McpServer, apiClient: Conflue
           const results = response.data.results;
 
           const resultsData = results.map(r => ({
-            title: r.title || r.content?.title,
+            title: wrapUserContent(r.title || r.content?.title),
             url: r.url,
-            excerpt: r.excerpt,
+            excerpt: wrapUserContent(r.excerpt),
             entityType: r.entityType,
             lastModified: r.lastModified,
             contentId: r.content?.id,
@@ -989,7 +991,7 @@ export async function registerContentTools(server: McpServer, apiClient: Conflue
               success: false,
               error: {
                 code: error.code || 'SEARCH_CQL_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion,
                 cql_examples: [
                   'type=page - Find all pages',
@@ -1026,13 +1028,14 @@ export async function registerContentTools(server: McpServer, apiClient: Conflue
       try {
         const validatedParams = searchContentSchema.parse(params);
 
-        // Build CQL query from simple parameters
-        let cql = `text~"${validatedParams.query}"`;
+        // Build CQL query from simple parameters (escape to prevent CQL injection)
+        const cqlEscape = (v: string) => String(v).replace(/["\\]/g, '\\$&');
+        let cql = `text~"${cqlEscape(validatedParams.query)}"`;
         if (validatedParams.spaceKey) {
-          cql += ` AND space=${validatedParams.spaceKey}`;
+          cql += ` AND space="${cqlEscape(validatedParams.spaceKey)}"`;
         }
         if (validatedParams.type) {
-          cql += ` AND type=${validatedParams.type}`;
+          cql += ` AND type="${cqlEscape(validatedParams.type)}"`;
         }
 
         const queryParams: Record<string, any> = {
@@ -1056,9 +1059,9 @@ export async function registerContentTools(server: McpServer, apiClient: Conflue
           const results = response.data.results;
 
           const resultsData = results.map(r => ({
-            title: r.title || r.content?.title,
+            title: wrapUserContent(r.title || r.content?.title),
             url: r.url,
-            excerpt: r.excerpt,
+            excerpt: wrapUserContent(r.excerpt),
             entityType: r.entityType,
             space: r.space?.key,
             lastModified: r.lastModified,
@@ -1092,7 +1095,7 @@ export async function registerContentTools(server: McpServer, apiClient: Conflue
               success: false,
               error: {
                 code: error.code || 'SEARCH_CONTENT_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Check your search query',
               },
             }, null, 2),

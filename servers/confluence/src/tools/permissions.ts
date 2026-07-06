@@ -8,6 +8,7 @@ import {
   copySpacePermissionsSchema,
   checkContentPermissionSchema,
   bulkUpdatePermissionsSchema,
+  getPermissionTypesSchema,
 } from '../validation/schemas.js';
 import {
   getSpacePermissionsInputSchema,
@@ -24,6 +25,7 @@ import {
   CursorPaginatedResponse,
 } from '../types/index.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
 
 export async function registerPermissionTools(server: McpServer, apiClient: ConfluenceApiClient) {
   // =====================
@@ -102,7 +104,7 @@ export async function registerPermissionTools(server: McpServer, apiClient: Conf
               success: false,
               error: {
                 code: error.code || 'GET_SPACE_PERMISSIONS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the space ID is correct and you have admin permissions',
               },
             }, null, 2),
@@ -193,7 +195,7 @@ export async function registerPermissionTools(server: McpServer, apiClient: Conf
               success: false,
               error: {
                 code: error.code || 'ADD_SPACE_PERMISSION_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion,
               },
             }, null, 2),
@@ -267,7 +269,7 @@ export async function registerPermissionTools(server: McpServer, apiClient: Conf
               success: false,
               error: {
                 code: error.code || 'REMOVE_SPACE_PERMISSION_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion,
                 knownLimitation: 'Space permission write operations may require OAuth 2.0 authentication',
               },
@@ -338,7 +340,7 @@ export async function registerPermissionTools(server: McpServer, apiClient: Conf
               success: false,
               error: {
                 code: error.code || 'GET_PERMISSION_USERS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the space key and permission key are correct',
               },
             }, null, 2),
@@ -433,7 +435,7 @@ export async function registerPermissionTools(server: McpServer, apiClient: Conf
               success: false,
               error: {
                 code: error.code || 'COPY_PERMISSIONS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify both space IDs are correct and you have admin permissions',
               },
             }, null, 2),
@@ -462,6 +464,7 @@ export async function registerPermissionTools(server: McpServer, apiClient: Conf
     },
     async (params: any) => {
       try {
+        getPermissionTypesSchema.parse(params);
         // Return the standard Confluence permission types
         const permissionTypes = [
           { key: 'read', description: 'View content in the space' },
@@ -502,7 +505,7 @@ export async function registerPermissionTools(server: McpServer, apiClient: Conf
               success: false,
               error: {
                 code: error.code || 'GET_PERMISSION_TYPES_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
               },
             }, null, 2),
           }],
@@ -595,7 +598,7 @@ export async function registerPermissionTools(server: McpServer, apiClient: Conf
               success: false,
               error: {
                 code: error.code || 'CHECK_PERMISSION_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the content ID is correct. Use get_page_restrictions as an alternative.',
               },
             }, null, 2),
@@ -680,7 +683,7 @@ export async function registerPermissionTools(server: McpServer, apiClient: Conf
               success: false,
               error: {
                 code: error.code || 'BULK_UPDATE_PERMISSIONS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the space ID and permission data are correct',
               },
             }, null, 2),

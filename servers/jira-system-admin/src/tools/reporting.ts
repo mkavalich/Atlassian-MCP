@@ -15,7 +15,12 @@ import {
   generateHealthCheckReportInputSchema,
 } from '../validation/input-schemas.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
 
+
+// Escapes a value interpolated inside a double-quoted JQL string literal so
+// injection characters (" and \) cannot break out of the quotes.
+const jqlSafe = (v: string) => String(v).replace(/["\\]/g, '\\$&');
 
 export async function registerReportingTools(server: McpServer, apiClient: JiraApiClient) {
   // Tool: exportProjectData
@@ -37,7 +42,7 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
         // Get project data
         const projectResponse = await apiClient.makeRequest<any>({
           method: 'GET',
-          path: `/project/${validatedParams.projectKey}?expand=description,lead,url,projectKeys,permissions,issueTypes,issueTypeHierarchy`,
+          path: `/project/${encodeURIComponent(validatedParams.projectKey)}?expand=description,lead,url,projectKeys,permissions,issueTypes,issueTypeHierarchy`,
         });
 
         if (!projectResponse.success) {
@@ -62,7 +67,7 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
             method: 'POST',
             path: '/search/jql',
             data: {
-              jql: `project = "${validatedParams.projectKey}"`,
+              jql: `project = "${jqlSafe(validatedParams.projectKey)}"`,
               maxResults: validatedParams.maxIssues || 1000,
               expand: 'changelog,comments,attachments,worklog',
             },
@@ -103,7 +108,7 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
         if (validatedParams.includePermissions) {
           const permissionsResponse = await apiClient.makeRequest<any>({
             method: 'GET',
-            path: `/project/${validatedParams.projectKey}/permissionscheme`,
+            path: `/project/${encodeURIComponent(validatedParams.projectKey)}/permissionscheme`,
           });
 
           if (permissionsResponse.success) {
@@ -147,7 +152,7 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
               success: false,
               error: {
                 code: error.code || 'EXPORT_PROJECT_DATA_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure the project exists and you have appropriate permissions',
               },
@@ -178,7 +183,7 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
         // Get user data
         const userResponse = await apiClient.makeRequest<any>({
           method: 'GET',
-          path: `/user?accountId=${validatedParams.accountId}&expand=groups,applicationRoles`,
+          path: `/user?accountId=${encodeURIComponent(validatedParams.accountId)}&expand=groups,applicationRoles`,
         });
 
         if (!userResponse.success) {
@@ -199,7 +204,7 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
         if (validatedParams.includeGroups) {
           const groupsResponse = await apiClient.makeRequest<any>({
             method: 'GET',
-            path: `/user/groups?accountId=${validatedParams.accountId}`,
+            path: `/user/groups?accountId=${encodeURIComponent(validatedParams.accountId)}`,
           });
 
           if (groupsResponse.success) {
@@ -215,7 +220,7 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
             // Get user's group memberships which determine permissions
             const groupsResponse = await apiClient.makeRequest<any>({
               method: 'GET',
-              path: `/user/groups?accountId=${validatedParams.accountId}`,
+              path: `/user/groups?accountId=${encodeURIComponent(validatedParams.accountId)}`,
             });
 
             exportData.permissions = {
@@ -281,7 +286,7 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
               success: false,
               error: {
                 code: error.code || 'EXPORT_USER_DATA_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure the user exists and you have appropriate permissions',
               },
@@ -434,7 +439,7 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
               success: false,
               error: {
                 code: error.code || 'GENERATE_SYSTEM_REPORT_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have system administrator permissions',
               },
@@ -472,7 +477,7 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
         // Build JQL for time period
         let timeFilter = '';
         if (validatedParams.startDate && validatedParams.endDate) {
-          timeFilter = `created >= "${validatedParams.startDate}" AND created <= "${validatedParams.endDate}"`;
+          timeFilter = `created >= "${jqlSafe(validatedParams.startDate)}" AND created <= "${jqlSafe(validatedParams.endDate)}"`;
         } else if (validatedParams.period) {
           const periodMap = new Map([
             ['week', '-1w'],
@@ -522,7 +527,7 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
                   method: 'POST',
                   path: '/search/jql',
                   data: {
-                    jql: `project = "${project.key}" AND (${timeFilter || 'created >= -1M'})`,
+                    jql: `project = "${jqlSafe(project.key)}" AND (${timeFilter || 'created >= -1M'})`,
                     maxResults: 1,
                     fields: ['key'],
                   },
@@ -582,7 +587,7 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
               success: false,
               error: {
                 code: error.code || 'GENERATE_USAGE_ANALYTICS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have appropriate permissions and valid date parameters',
               },
@@ -802,7 +807,7 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
               success: false,
               error: {
                 code: error.code || 'GENERATE_HEALTH_CHECK_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have system administrator permissions',
               },

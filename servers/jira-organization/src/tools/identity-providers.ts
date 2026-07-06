@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { JiraApiClient } from '../api/client.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
 import {
   getIdentityProvidersInputSchema,
   getDirectoryInfoInputSchema,
@@ -10,6 +11,13 @@ import {
   getDirectoryGroupsInputSchema,
   getUserLastActiveInputSchema,
 } from '../validation/input-schemas.js';
+import {
+  getDirectoryInfoSchema,
+  getDirectorySyncStatusSchema,
+  getDirectorySyncSettingsSchema,
+  getDirectoryUsersSchema,
+  getUserLastActiveSchema,
+} from '../validation/schemas.js';
 
 /**
  * Register Identity Provider and Directory Analysis Tools
@@ -98,7 +106,7 @@ export async function registerIdentityProviderTools(server: McpServer, apiClient
               success: false,
               error: {
                 code: error.code || 'GET_IDENTITY_PROVIDERS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have Organization Admin API access with read:directory:admin scope',
               },
@@ -124,7 +132,7 @@ export async function registerIdentityProviderTools(server: McpServer, apiClient
     },
     async (params: any) => {
       try {
-        const { directoryId } = params;
+        const { directoryId } = getDirectoryInfoSchema.parse(params);
 
         const orgId = apiClient.getOrgId();
         if (!orgId) {
@@ -157,7 +165,7 @@ export async function registerIdentityProviderTools(server: McpServer, apiClient
           attributes?: Record<string, any>;
         }>({
           method: 'GET',
-          path: `/v1/orgs/${orgId}/directories/${directoryId}`,
+          path: `/v1/orgs/${orgId}/directories/${encodeURIComponent(directoryId)}`,
         });
 
         if (response.success && response.data) {
@@ -184,7 +192,7 @@ export async function registerIdentityProviderTools(server: McpServer, apiClient
               success: false,
               error: {
                 code: error.code || 'GET_DIRECTORY_INFO_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Use get_identity_providers first to find valid directory IDs',
               },
@@ -210,7 +218,7 @@ export async function registerIdentityProviderTools(server: McpServer, apiClient
     },
     async (params: any) => {
       try {
-        const { directoryId } = params;
+        const { directoryId } = getDirectorySyncStatusSchema.parse(params);
 
         const orgId = apiClient.getOrgId();
         if (!orgId) {
@@ -280,7 +288,7 @@ export async function registerIdentityProviderTools(server: McpServer, apiClient
           errors?: Array<{ code: string; message: string }>;
         }>({
           method: 'GET',
-          path: `/v1/orgs/${orgId}/directories/${directoryId}`,
+          path: `/v1/orgs/${orgId}/directories/${encodeURIComponent(directoryId as string)}`,
         });
 
         if (response.success && response.data) {
@@ -316,7 +324,7 @@ export async function registerIdentityProviderTools(server: McpServer, apiClient
               success: false,
               error: {
                 code: error.code || 'GET_DIRECTORY_SYNC_STATUS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Use get_identity_providers first to find valid directory IDs',
               },
@@ -342,7 +350,7 @@ export async function registerIdentityProviderTools(server: McpServer, apiClient
     },
     async (params: any) => {
       try {
-        const { directoryId } = params;
+        const { directoryId } = getDirectorySyncSettingsSchema.parse(params);
 
         const orgId = apiClient.getOrgId();
         if (!orgId) {
@@ -375,7 +383,7 @@ export async function registerIdentityProviderTools(server: McpServer, apiClient
           attributes?: Record<string, any>;
         }>({
           method: 'GET',
-          path: `/v1/orgs/${orgId}/directories/${directoryId}`,
+          path: `/v1/orgs/${orgId}/directories/${encodeURIComponent(directoryId)}`,
         });
 
         if (response.success && response.data) {
@@ -412,7 +420,7 @@ export async function registerIdentityProviderTools(server: McpServer, apiClient
               success: false,
               error: {
                 code: error.code || 'GET_DIRECTORY_SYNC_SETTINGS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Use get_identity_providers first to find valid directory IDs',
               },
@@ -438,7 +446,7 @@ export async function registerIdentityProviderTools(server: McpServer, apiClient
     },
     async (params: any) => {
       try {
-        const { directoryId, limit = 100, cursor } = params;
+        const { directoryId, limit = 100, cursor } = getDirectoryUsersSchema.parse(params);
 
         const orgId = apiClient.getOrgId();
         if (!orgId) {
@@ -463,7 +471,7 @@ export async function registerIdentityProviderTools(server: McpServer, apiClient
 
         // Use directory-filtered users endpoint or general users endpoint
         const path = directoryId
-          ? `/v1/orgs/${orgId}/directory/users?directoryId=${directoryId}`
+          ? `/v1/orgs/${orgId}/directory/users?directoryId=${encodeURIComponent(directoryId)}`
           : `/v1/orgs/${orgId}/directory/users`;
 
         const response = await apiClient.makeOrganizationApiRequest<{
@@ -534,7 +542,7 @@ export async function registerIdentityProviderTools(server: McpServer, apiClient
               success: false,
               error: {
                 code: error.code || 'GET_DIRECTORY_USERS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Use get_identity_providers first to find valid directory IDs',
               },
@@ -562,7 +570,7 @@ export async function registerIdentityProviderTools(server: McpServer, apiClient
     },
     async (params: any) => {
       try {
-        const { accountId } = params;
+        const { accountId } = getUserLastActiveSchema.parse(params);
 
         const orgId = apiClient.getOrgId();
         if (!orgId) {
@@ -594,7 +602,7 @@ export async function registerIdentityProviderTools(server: McpServer, apiClient
           };
         }>({
           method: 'GET',
-          path: `/v1/orgs/${orgId}/directory/users/${accountId}/last-active-dates`,
+          path: `/v1/orgs/${orgId}/directory/users/${encodeURIComponent(accountId)}/last-active-dates`,
         });
 
         if (response.success && response.data) {
@@ -621,7 +629,7 @@ export async function registerIdentityProviderTools(server: McpServer, apiClient
               success: false,
               error: {
                 code: error.code || 'GET_USER_LAST_ACTIVE_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Use get_organization_users first to find valid user account IDs',
               },

@@ -32,6 +32,7 @@ import {
 } from '../validation/input-schemas.js';
 import { JiraPermissionScheme } from '../types/index.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
 import { toolExamples } from '../validation/tool-examples.js';
 
 
@@ -83,7 +84,7 @@ export async function registerPermissionTools(server: McpServer, apiClient: Jira
               success: false,
               error: {
                 code: error.code || 'GET_PERMISSION_SCHEMES_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion,
               },
@@ -149,7 +150,7 @@ export async function registerPermissionTools(server: McpServer, apiClient: Jira
               success: false,
               error: {
                 code: error.code || 'CREATE_PERMISSION_SCHEME_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have Jira Administrator permissions',
               },
@@ -232,7 +233,7 @@ export async function registerPermissionTools(server: McpServer, apiClient: Jira
               success: false,
               error: {
                 code: error.code || 'UPDATE_PERMISSION_SCHEME_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure the permission scheme exists and you have admin permissions',
               },
@@ -291,7 +292,7 @@ export async function registerPermissionTools(server: McpServer, apiClient: Jira
               success: false,
               error: {
                 code: error.code || 'DELETE_PERMISSION_SCHEME_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure the permission scheme exists, is not in use, and you have admin permissions',
               },
@@ -354,7 +355,7 @@ export async function registerPermissionTools(server: McpServer, apiClient: Jira
               success: false,
               error: {
                 code: error.code || 'GET_PERMISSION_GRANTS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure the permission scheme exists and you have view permissions',
               },
@@ -424,7 +425,7 @@ export async function registerPermissionTools(server: McpServer, apiClient: Jira
               success: false,
               error: {
                 code: error.code || 'CREATE_PERMISSION_GRANT_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Verify the permission key, holder type, and that you have admin permissions',
               },
@@ -484,7 +485,7 @@ export async function registerPermissionTools(server: McpServer, apiClient: Jira
               success: false,
               error: {
                 code: error.code || 'DELETE_PERMISSION_GRANT_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure the permission grant exists and you have admin permissions',
               },
@@ -547,7 +548,7 @@ export async function registerPermissionTools(server: McpServer, apiClient: Jira
               success: false,
               error: {
                 code: error.code || 'GET_GLOBAL_PERMISSIONS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have Jira Administrator permissions to view global permissions',
               },
@@ -619,7 +620,7 @@ export async function registerPermissionTools(server: McpServer, apiClient: Jira
               success: false,
               error: {
                 code: error.code || 'GET_MY_PERMISSIONS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have valid authentication and the specified project/issue exists',
               },

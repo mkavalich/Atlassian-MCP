@@ -19,6 +19,7 @@ import {
   JiraFieldConfigurationScheme
 } from '../types/index.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
 
 export async function registerFieldConfigurationTools(server: McpServer, apiClient: JiraApiClient) {
   // Tool: getFieldConfigurations
@@ -77,7 +78,7 @@ export async function registerFieldConfigurationTools(server: McpServer, apiClie
               success: false,
               error: {
                 code: error.code || 'GET_FIELD_CONFIGURATIONS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have permission to view field configurations',
               },
@@ -147,7 +148,7 @@ export async function registerFieldConfigurationTools(server: McpServer, apiClie
               success: false,
               error: {
                 code: error.code || 'CREATE_FIELD_CONFIGURATION_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have Jira Administrator permissions',
               },
@@ -214,7 +215,7 @@ export async function registerFieldConfigurationTools(server: McpServer, apiClie
               success: false,
               error: {
                 code: error.code || 'UPDATE_FIELD_CONFIGURATION_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure the field configuration exists and you have admin permissions',
               },
@@ -282,7 +283,7 @@ export async function registerFieldConfigurationTools(server: McpServer, apiClie
               success: false,
               error: {
                 code: error.code || 'GET_FIELD_CONFIGURATION_SCHEMES_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have permission to view field configuration schemes',
               },
@@ -356,7 +357,7 @@ export async function registerFieldConfigurationTools(server: McpServer, apiClie
               success: false,
               error: {
                 code: error.code || 'CREATE_FIELD_CONFIGURATION_SCHEME_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have Jira Administrator permissions and valid field configuration IDs',
               },

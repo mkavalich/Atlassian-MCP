@@ -155,7 +155,12 @@ function createHookedToolRegistrar(
 
         try {
           // Execute original handler
-          let result = await handler(params);
+          // Security: strip the optimization-only 'responseFormat' param before the handler's
+          // strict input validation runs, so .strict() schemas don't reject it. The original
+          // params (incl. responseFormat) are still passed to transformResponse below.
+          const handlerParams: Record<string, unknown> = { ...(params ?? {}) };
+          delete handlerParams.responseFormat;
+          let result = await handler(handlerParams);
 
           // Post-execution hook (transform response, pass params for context)
           if (hooks.transformResponse) {

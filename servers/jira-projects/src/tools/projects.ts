@@ -15,7 +15,7 @@ import {
   searchProjectsInputSchema,
 } from '../validation/input-schemas.js';
 import { JiraProject, CreateProjectInput } from '../types/index.js';
-import { ValidationError } from '../utils/errors.js';
+import { ValidationError, sanitizeErrorMessage } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
 
 
@@ -123,7 +123,7 @@ export async function registerProjectTools(server: McpServer, apiClient: JiraApi
               success: false,
               error: {
                 code: error.code || 'SEARCH_PROJECTS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 workflow_guidance: nextSteps.length > 0 ? 'The proper workflow is: Discovery → Validation → Action' : undefined,
@@ -253,7 +253,7 @@ export async function registerProjectTools(server: McpServer, apiClient: JiraApi
               success: false,
               error: {
                 code: error.code || 'CREATE_PROJECT_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 workflow_guidance: nextSteps.length > 0 ? 'Ensure unique naming and proper permissions before creation' : undefined,
@@ -342,7 +342,7 @@ export async function registerProjectTools(server: McpServer, apiClient: JiraApi
               success: false,
               error: {
                 code: error.code || 'GET_PROJECT_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 // workflow_guidance: workflowGuidance, // Removed unused variable
@@ -444,7 +444,7 @@ export async function registerProjectTools(server: McpServer, apiClient: JiraApi
               success: false,
               error: {
                 code: error.code || 'UPDATE_PROJECT_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 // workflow_guidance: workflowGuidance, // Removed unused variable
@@ -533,7 +533,7 @@ export async function registerProjectTools(server: McpServer, apiClient: JiraApi
               success: false,
               error: {
                 code: error.code || 'DELETE_PROJECT_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 // workflow_guidance: workflowGuidance, // Removed unused variable

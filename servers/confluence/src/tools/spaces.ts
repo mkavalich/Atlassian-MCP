@@ -34,6 +34,7 @@ import {
   CursorPaginatedResponse,
 } from '../types/index.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
 
 export async function registerSpaceTools(server: McpServer, apiClient: ConfluenceApiClient) {
   // =====================
@@ -147,7 +148,7 @@ export async function registerSpaceTools(server: McpServer, apiClient: Confluenc
               success: false,
               error: {
                 code: error.code || 'SEARCH_SPACES_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Check your search parameters and try again',
                 related_tools: ['search_tools', 'search_cql'],
               },
@@ -238,7 +239,7 @@ export async function registerSpaceTools(server: McpServer, apiClient: Confluenc
               success: false,
               error: {
                 code: error.code || 'GET_SPACE_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion,
                 related_tools: ['search_spaces'],
               },
@@ -336,7 +337,7 @@ export async function registerSpaceTools(server: McpServer, apiClient: Confluenc
               success: false,
               error: {
                 code: error.code || 'CREATE_SPACE_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion,
               },
             }, null, 2),
@@ -423,7 +424,7 @@ export async function registerSpaceTools(server: McpServer, apiClient: Confluenc
               success: false,
               error: {
                 code: error.code || 'UPDATE_SPACE_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Confluence Cloud does not support updating space properties via REST API. Use Confluence UI (Space Settings) to update space name, description, or homepage.',
                 knownLimitation: true,
               },
@@ -489,7 +490,7 @@ export async function registerSpaceTools(server: McpServer, apiClient: Confluenc
               success: false,
               error: {
                 code: error.code || 'DELETE_SPACE_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the space exists and you have admin permissions. Space ID can be the numeric ID or the space key.',
               },
             }, null, 2),
@@ -558,7 +559,7 @@ export async function registerSpaceTools(server: McpServer, apiClient: Confluenc
               success: false,
               error: {
                 code: error.code || 'ARCHIVE_SPACE_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the space exists and you have admin permissions',
               },
             }, null, 2),
@@ -621,7 +622,7 @@ export async function registerSpaceTools(server: McpServer, apiClient: Confluenc
               success: false,
               error: {
                 code: error.code || 'RESTORE_SPACE_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the space is archived and you have admin permissions',
               },
             }, null, 2),
@@ -714,7 +715,7 @@ export async function registerSpaceTools(server: McpServer, apiClient: Confluenc
               success: false,
               error: {
                 code: error.code || 'GET_SPACE_CONTENT_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the space ID is correct',
               },
             }, null, 2),
@@ -778,7 +779,7 @@ export async function registerSpaceTools(server: McpServer, apiClient: Confluenc
               success: false,
               error: {
                 code: error.code || 'GET_SPACE_SETTINGS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the space key is correct and you have admin permissions',
               },
             }, null, 2),
@@ -846,7 +847,7 @@ export async function registerSpaceTools(server: McpServer, apiClient: Confluenc
               success: false,
               error: {
                 code: error.code || 'UPDATE_SPACE_SETTINGS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify you have admin permissions for this space',
               },
             }, null, 2),
@@ -908,7 +909,7 @@ export async function registerSpaceTools(server: McpServer, apiClient: Confluenc
               success: false,
               error: {
                 code: error.code || 'GET_SPACE_THEME_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the space key is correct',
               },
             }, null, 2),
@@ -976,7 +977,7 @@ export async function registerSpaceTools(server: McpServer, apiClient: Confluenc
               success: false,
               error: {
                 code: error.code || 'SET_SPACE_THEME_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the theme key is valid and you have admin permissions',
               },
             }, null, 2),

@@ -11,27 +11,27 @@ import { z } from 'zod';
 
 export const createCustomFieldInputSchema = z.object({
   name: z.string().min(1).max(255).describe('The name of the custom field'),
-  description: z.string().optional().describe('The description of the custom field'),
-  type: z.string().describe('The type of the custom field (e.g., com.atlassian.jira.plugin.system.customfieldtypes:textfield)'),
-  searcherKey: z.string().optional()
+  description: z.string().max(32768).optional().describe('The description of the custom field'),
+  type: z.string().max(255).describe('The type of the custom field (e.g., com.atlassian.jira.plugin.system.customfieldtypes:textfield)'),
+  searcherKey: z.string().max(255).optional()
     .describe('The searcher key for the custom field'),
 }).passthrough();
 
 export const updateCustomFieldInputSchema = z.object({
-  fieldId: z.string().describe('The ID of the custom field to update'),
+  fieldId: z.string().max(255).describe('The ID of the custom field to update'),
   name: z.string().min(1).max(255).optional().describe('The new name of the custom field'),
-  description: z.string().optional().describe('The new description of the custom field'),
+  description: z.string().max(32768).optional().describe('The new description of the custom field'),
 }).passthrough();
 
 export const deleteCustomFieldInputSchema = z.object({
-  fieldId: z.string().describe('The ID of the custom field to delete'),
+  fieldId: z.string().max(255).describe('The ID of the custom field to delete'),
 }).passthrough();
 
 export const getFieldsPaginatedInputSchema = z.object({
-  query: z.string().optional().describe('String to search for in field names'),
+  query: z.string().max(10000).optional().describe('String to search for in field names'),
   type: z.array(z.enum(['custom', 'system'])).optional().describe('Types of fields to search (can include multiple)'),
-  orderBy: z.string().optional().describe('Field to order results by'),
-  expand: z.string().optional().describe('Additional data to include'),
+  orderBy: z.string().max(255).optional().describe('Field to order results by'),
+  expand: z.string().max(255).optional().describe('Additional data to include'),
   startAt: z.number().optional().default(0).describe('Starting index for pagination'),
   maxResults: z.number().max(100).optional().default(50).describe('Maximum results to return (max 100)'),
 }).passthrough();
@@ -43,13 +43,13 @@ export const getPermissionSchemesInputSchema = z.object({
 
 export const createPermissionSchemeInputSchema = z.object({
   name: z.string().min(1).max(255).describe('The name of the permission scheme'),
-  description: z.string().optional().describe('The description of the permission scheme'),
+  description: z.string().max(32768).optional().describe('The description of the permission scheme'),
   permissions: z.array(z.object({
-    permission: z.string().describe('The permission type'),
+    permission: z.string().max(255).describe('The permission type'),
     holder: z.object({
       type: z.enum(['anyone', 'assignee', 'reporter', 'user', 'group', 'projectRole', 'applicationRole'])
         .describe('The type of permission holder'),
-      parameter: z.string().optional().describe('The parameter for the permission holder'),
+      parameter: z.string().max(255).optional().describe('The parameter for the permission holder'),
     }),
   })).optional().describe('The permissions to include in the scheme'),
 }).passthrough();
@@ -62,7 +62,7 @@ export const assignPermissionSchemeToProjectInputSchema = z.object({
 export const updatePermissionSchemeInputSchema = z.object({
   schemeId: z.coerce.number().describe('The ID of the permission scheme to update'),
   name: z.string().min(1).max(255).optional().describe('The new name of the permission scheme'),
-  description: z.string().optional().describe('The new description of the permission scheme'),
+  description: z.string().max(32768).optional().describe('The new description of the permission scheme'),
 }).passthrough();
 
 export const deletePermissionSchemeInputSchema = z.object({
@@ -76,11 +76,11 @@ export const getPermissionGrantsInputSchema = z.object({
 
 export const createPermissionGrantInputSchema = z.object({
   schemeId: z.coerce.number().describe('The ID of the permission scheme'),
-  permission: z.string().describe('The permission key (e.g., BROWSE_PROJECTS, CREATE_ISSUES, etc.)'),
+  permission: z.string().max(255).describe('The permission key (e.g., BROWSE_PROJECTS, CREATE_ISSUES, etc.)'),
   holder: z.object({
     type: z.enum(['anyone', 'assignee', 'reporter', 'group', 'projectRole', 'user', 'applicationRole'])
       .describe('The type of permission holder'),
-    parameter: z.string().optional().describe('The parameter for the holder type'),
+    parameter: z.string().max(255).optional().describe('The parameter for the holder type'),
   }),
 }).passthrough();
 
@@ -96,11 +96,11 @@ export const getGlobalPermissionsInputSchema = z.object({
 }).passthrough();
 
 export const getMyPermissionsInputSchema = z.object({
-  projectKey: z.string().optional().describe('The project key to check permissions for'),
-  projectId: z.string().optional().describe('The project ID to check permissions for'),
-  issueKey: z.string().optional().describe('The issue key to check permissions for'),
-  issueId: z.string().optional().describe('The issue ID to check permissions for'),
-  permissions: z.string().optional()
+  projectKey: z.string().max(255).optional().describe('The project key to check permissions for'),
+  projectId: z.string().max(255).optional().describe('The project ID to check permissions for'),
+  issueKey: z.string().max(255).optional().describe('The issue key to check permissions for'),
+  issueId: z.string().max(255).optional().describe('The issue ID to check permissions for'),
+  permissions: z.string().max(10000).optional()
     .describe('Comma-separated list of permission keys to check (e.g., BROWSE_PROJECTS,CREATE_ISSUES)'),
 }).passthrough();
 
@@ -599,47 +599,47 @@ export const updateScreenSchemeInputSchema = z.object({
 
 // Custom Field Context input schemas
 export const getCustomFieldContextsInputSchema = z.object({
-  fieldId: z.string().describe('The ID of the custom field'),
+  fieldId: z.string().max(255).describe('The ID of the custom field'),
   startAt: z.number().optional().default(0).describe('The starting index for results'),
   maxResults: z.number().max(100).optional().default(50)
     .describe('The maximum number of results to return'),
 }).passthrough();
 
 export const createCustomFieldContextInputSchema = z.object({
-  fieldId: z.string().describe('The ID of the custom field'),
+  fieldId: z.string().max(255).describe('The ID of the custom field'),
   name: z.string().min(1).max(255).describe('The name of the context'),
-  description: z.string().optional().describe('The description of the context'),
-  projectIds: z.array(z.string()).optional()
+  description: z.string().max(32768).optional().describe('The description of the context'),
+  projectIds: z.array(z.string().max(255)).optional()
     .describe('Array of project IDs to scope this context to (empty for global)'),
-  issueTypeIds: z.array(z.string()).optional()
+  issueTypeIds: z.array(z.string().max(255)).optional()
     .describe('Array of issue type IDs to scope this context to (empty for all issue types)'),
 }).passthrough();
 
 export const updateCustomFieldContextInputSchema = z.object({
-  fieldId: z.string().describe('The ID of the custom field'),
-  contextId: z.string().describe('The ID of the context to update'),
+  fieldId: z.string().max(255).describe('The ID of the custom field'),
+  contextId: z.string().max(255).describe('The ID of the context to update'),
   name: z.string().min(1).max(255).optional().describe('The new name of the context'),
-  description: z.string().optional().describe('The new description of the context'),
+  description: z.string().max(32768).optional().describe('The new description of the context'),
 }).passthrough();
 
 export const deleteCustomFieldContextInputSchema = z.object({
-  fieldId: z.string().describe('The ID of the custom field'),
-  contextId: z.string().describe('The ID of the context to delete'),
+  fieldId: z.string().max(255).describe('The ID of the custom field'),
+  contextId: z.string().max(255).describe('The ID of the context to delete'),
 }).passthrough();
 
 export const getCustomFieldOptionsInputSchema = z.object({
-  fieldId: z.string().describe('The ID of the custom field'),
-  contextId: z.string().describe('The ID of the context'),
+  fieldId: z.string().max(255).describe('The ID of the custom field'),
+  contextId: z.string().max(255).describe('The ID of the context'),
   startAt: z.number().optional().default(0).describe('The starting index for results'),
   maxResults: z.number().max(100).optional().default(50)
     .describe('The maximum number of results to return'),
 }).passthrough();
 
 export const createCustomFieldOptionsInputSchema = z.object({
-  fieldId: z.string().describe('The ID of the custom field'),
-  contextId: z.string().describe('The ID of the context'),
+  fieldId: z.string().max(255).describe('The ID of the custom field'),
+  contextId: z.string().max(255).describe('The ID of the context'),
   options: z.array(z.object({
-    value: z.string().min(1).describe('The value of the option'),
+    value: z.string().min(1).max(255).describe('The value of the option'),
     disabled: z.boolean().optional().default(false).describe('Whether the option is disabled'),
   })).min(1).describe('Array of options to create'),
 }).passthrough();
@@ -657,13 +657,13 @@ export const getFieldConfigurationsInputSchema = z.object({
 
 export const createFieldConfigurationInputSchema = z.object({
   name: z.string().min(1).max(255).describe('The name of the field configuration'),
-  description: z.string().optional().describe('The description of the field configuration'),
+  description: z.string().max(32768).optional().describe('The description of the field configuration'),
 }).passthrough();
 
 export const updateFieldConfigurationInputSchema = z.object({
   id: z.coerce.number().describe('The ID of the field configuration to update'),
   name: z.string().min(1).max(255).optional().describe('The new name of the field configuration'),
-  description: z.string().optional().describe('The new description of the field configuration'),
+  description: z.string().max(32768).optional().describe('The new description of the field configuration'),
 }).passthrough();
 
 export const getFieldConfigurationSchemesInputSchema = z.object({
@@ -674,9 +674,9 @@ export const getFieldConfigurationSchemesInputSchema = z.object({
 
 export const createFieldConfigurationSchemeInputSchema = z.object({
   name: z.string().min(1).max(255).describe('The name of the field configuration scheme'),
-  description: z.string().optional().describe('The description of the field configuration scheme'),
+  description: z.string().max(32768).optional().describe('The description of the field configuration scheme'),
   fieldConfigurationMappings: z.array(z.object({
-    issueTypeId: z.string().describe('The ID of the issue type'),
+    issueTypeId: z.string().max(255).describe('The ID of the issue type'),
     fieldConfigurationId: z.coerce.number().describe('The ID of the field configuration'),
   })).optional().describe('Mappings between issue types and field configurations'),
 }).passthrough();
@@ -692,15 +692,15 @@ export const getNotificationSchemesInputSchema = z.object({
 
 export const createNotificationSchemeInputSchema = z.object({
   name: z.string().min(1).max(255).describe('The name of the notification scheme'),
-  description: z.string().optional().describe('The description of the notification scheme'),
+  description: z.string().max(32768).optional().describe('The description of the notification scheme'),
   notificationSchemeEvents: z.array(z.object({
     event: z.object({
-      id: z.string().describe('The ID of the event'),
+      id: z.string().max(255).describe('The ID of the event'),
     }).describe('The event details'),
     notifications: z.array(z.object({
       type: z.enum(['CurrentAssignee', 'Reporter', 'CurrentUser', 'ProjectLead', 'ComponentLead', 'User', 'Group', 'ProjectRole', 'EmailAddress'])
         .describe('The type of notification'),
-      parameter: z.string().optional()
+      parameter: z.string().max(255).optional()
         .describe('The parameter for the notification type (e.g., user ID, group name, role ID, email address)'),
     })).describe('Array of notifications for this event'),
   })).optional().describe('Array of event notifications for the scheme'),
@@ -717,19 +717,19 @@ export const getScreensInputSchema = z.object({
 
 export const createScreenInputSchema = z.object({
   name: z.string().min(1).max(255).describe('The name of the screen'),
-  description: z.string().optional().describe('The description of the screen'),
+  description: z.string().max(32768).optional().describe('The description of the screen'),
   tabs: z.array(z.object({
-    name: z.string().min(1).describe('The name of the tab'),
+    name: z.string().min(1).max(255).describe('The name of the tab'),
     fields: z.array(z.object({
-      id: z.string().describe('The ID of the field to add to the tab'),
+      id: z.string().max(255).describe('The ID of the field to add to the tab'),
     })).optional().describe('Array of fields for this tab'),
   })).optional().describe('Array of tabs for the screen'),
 }).passthrough();
 
 export const addFieldToScreenInputSchema = z.object({
-  screenId: z.string().describe('The ID of the screen'),
-  tabId: z.string().describe('The ID of the tab'),
-  fieldId: z.string().describe('The ID of the field to add'),
+  screenId: z.string().max(255).describe('The ID of the screen'),
+  tabId: z.string().max(255).describe('The ID of the tab'),
+  fieldId: z.string().max(255).describe('The ID of the field to add'),
 }).passthrough();
 
 // Dashboard input schemas

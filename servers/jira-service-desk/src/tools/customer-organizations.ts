@@ -8,6 +8,15 @@ import {
   getProjectCustomerOrganizationsInputSchema,
   analyzeCustomerVisibilityInputSchema,
 } from '../validation/input-schemas.js';
+import {
+  getCustomerOrganizationsSchema,
+  getOrganizationCustomersSchema,
+  getCustomerOrganizationMembershipSchema,
+  getProjectCustomerOrganizationsSchema,
+  analyzeCustomerVisibilitySchema,
+} from '../validation/schemas.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
+import { wrapUserContent } from '../utils/sanitize.js';
 
 /**
  * Register Customer Organization Analysis Tools
@@ -36,7 +45,8 @@ export async function registerCustomerOrganizationTools(server: McpServer, apiCl
     },
     async (params: any) => {
       try {
-        const { limit = 50, start = 0 } = params;
+        const validated = getCustomerOrganizationsSchema.parse(params);
+        const { limit = 50, start = 0 } = validated;
 
         // Get organizations using Jira Service Management API
         const response = await apiClient.makeServiceDeskRequest<any>({
@@ -56,7 +66,7 @@ export async function registerCustomerOrganizationTools(server: McpServer, apiCl
               type: 'text',
               text: JSON.stringify({
                 success: true,
-                organizations,
+                organizations: wrapUserContent(organizations),
                 pagination: {
                   start,
                   limit,
@@ -84,7 +94,7 @@ export async function registerCustomerOrganizationTools(server: McpServer, apiCl
               success: false,
               error: {
                 code: error.code || 'GET_CUSTOMER_ORGANIZATIONS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have service desk permissions to view organizations',
               },
@@ -110,7 +120,8 @@ export async function registerCustomerOrganizationTools(server: McpServer, apiCl
     },
     async (params: any) => {
       try {
-        const { organizationId, limit = 50, start = 0 } = params;
+        const validated = getOrganizationCustomersSchema.parse(params);
+        const { organizationId, limit = 50, start = 0 } = validated;
 
         // Get customers in organization using Jira Service Management API
         const response = await apiClient.makeServiceDeskRequest<any>({
@@ -144,7 +155,7 @@ export async function registerCustomerOrganizationTools(server: McpServer, apiCl
               type: 'text',
               text: JSON.stringify({
                 success: true,
-                customers: customerAnalysis,
+                customers: wrapUserContent(customerAnalysis),
                 organizationId,
                 pagination: {
                   start,
@@ -178,7 +189,7 @@ export async function registerCustomerOrganizationTools(server: McpServer, apiCl
               success: false,
               error: {
                 code: error.code || 'GET_ORGANIZATION_CUSTOMERS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure organization ID is valid and you have permissions',
               },
@@ -204,7 +215,8 @@ export async function registerCustomerOrganizationTools(server: McpServer, apiCl
     },
     async (params: any) => {
       try {
-        const { accountId, email } = params;
+        const validated = getCustomerOrganizationMembershipSchema.parse(params);
+        const { accountId, email } = validated;
 
         if (!accountId && !email) {
           throw new Error('Either accountId or email must be provided');
@@ -267,7 +279,7 @@ export async function registerCustomerOrganizationTools(server: McpServer, apiCl
             text: JSON.stringify({
               success: true,
               customer: { accountId, email },
-              memberships,
+              memberships: wrapUserContent(memberships),
               analysis: {
                 totalMemberships: memberships.length,
                 organizationCount: organizations.length,
@@ -293,7 +305,7 @@ export async function registerCustomerOrganizationTools(server: McpServer, apiCl
               success: false,
               error: {
                 code: error.code || 'GET_CUSTOMER_MEMBERSHIP_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure customer identifier is valid and you have permissions',
               },
@@ -319,7 +331,8 @@ export async function registerCustomerOrganizationTools(server: McpServer, apiCl
     },
     async (params: any) => {
       try {
-        const { projectKey, serviceDeskId } = params;
+        const validated = getProjectCustomerOrganizationsSchema.parse(params);
+        const { projectKey, serviceDeskId } = validated;
 
         if (!projectKey && !serviceDeskId) {
           throw new Error('Either projectKey or serviceDeskId must be provided');
@@ -386,7 +399,7 @@ export async function registerCustomerOrganizationTools(server: McpServer, apiCl
               type: 'text',
               text: JSON.stringify({
                 success: true,
-                organizations: organizationsWithDetails,
+                organizations: wrapUserContent(organizationsWithDetails),
                 project: { projectKey, serviceDeskId: deskId },
                 analysis: {
                   totalOrganizations: organizationsWithDetails.length,
@@ -416,7 +429,7 @@ export async function registerCustomerOrganizationTools(server: McpServer, apiCl
               success: false,
               error: {
                 code: error.code || 'GET_PROJECT_ORGANIZATIONS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure project exists and you have service desk permissions',
               },
@@ -442,7 +455,8 @@ export async function registerCustomerOrganizationTools(server: McpServer, apiCl
     },
     async (params: any) => {
       try {
-        const { projectKey, customerAccountId } = params;
+        const validated = analyzeCustomerVisibilitySchema.parse(params);
+        const { projectKey, customerAccountId } = validated;
 
         // This is a comprehensive analysis tool that would check multiple factors
         const analysis = {
@@ -534,7 +548,7 @@ export async function registerCustomerOrganizationTools(server: McpServer, apiCl
               success: false,
               error: {
                 code: error.code || 'ANALYZE_CUSTOMER_VISIBILITY_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: 'This analysis tool provides diagnostic guidance - check actual settings manually',
               },

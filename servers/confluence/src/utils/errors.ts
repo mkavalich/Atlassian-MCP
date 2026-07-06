@@ -16,6 +16,9 @@ export function sanitizeErrorMessage(message: string): string {
   sanitized = sanitized.replace(/[A-Za-z]:\\[^\s:]+/g, '[path]');
   sanitized = sanitized.replace(/\/[^\s:]+\.(ts|js|json)/g, '[path]');
 
+  // Remove HTTP/HTTPS URLs (Atlassian API errors sometimes echo the site URL)
+  sanitized = sanitized.replace(/https?:\/\/[^\s]+/gi, '[url]');
+
   // Remove line/column numbers
   sanitized = sanitized.replace(/:\d+:\d+/g, '');
 
@@ -280,4 +283,28 @@ export function analyzeConfluenceError(error: any): { code: string; suggestion: 
     code: error.code || 'UNKNOWN_ERROR',
     suggestion: error.suggestion || 'Check the error details and try again'
   };
+}
+
+/**
+ * Normalizes any thrown value into a sanitized, client-safe error payload.
+ * Guarantees the message and details pass through sanitization.
+ */
+export function formatToolError(error: unknown): {
+  code: string;
+  message: string;
+  details?: any;
+  suggestion?: string;
+} {
+  if (error instanceof ConfluenceApiError) {
+    // ConfluenceApiError already sanitized message + details in its constructor
+    return {
+      code: error.code,
+      message: error.message,
+      details: error.details,
+      suggestion: error.suggestion,
+    };
+  }
+  const message =
+    error instanceof Error ? sanitizeErrorMessage(error.message) : 'An unknown error occurred';
+  return { code: 'UNKNOWN_ERROR', message };
 }

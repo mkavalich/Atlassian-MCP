@@ -40,6 +40,7 @@ import {
   ContentLike,
 } from '../types/index.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
 import { wrapUserContent, sanitizePageBody } from '../utils/sanitize.js';
 import { toolExamples } from '../validation/tool-examples.js';
 
@@ -153,7 +154,7 @@ export async function registerPageTools(server: McpServer, apiClient: Confluence
               success: false,
               error: {
                 code: error.code || 'SEARCH_PAGES_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Check your search parameters and try again',
                 related_tools: ['search_spaces', 'search_cql'],
               },
@@ -247,7 +248,7 @@ export async function registerPageTools(server: McpServer, apiClient: Confluence
               success: false,
               error: {
                 code: error.code || 'GET_PAGE_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion,
                 related_tools: ['search_pages', 'search_cql'],
               },
@@ -413,7 +414,7 @@ export async function registerPageTools(server: McpServer, apiClient: Confluence
               success: false,
               error: {
                 code: error.code || 'CREATE_PAGE_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 workflow_guidance: 'Proper workflow: search_spaces → (optionally search_pages for parent) → create_page',
@@ -532,7 +533,7 @@ export async function registerPageTools(server: McpServer, apiClient: Confluence
               success: false,
               error: {
                 code: error.code || 'UPDATE_PAGE_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion,
                 workflow_guidance: 'Use "get_page" first to get the current version number',
               },
@@ -609,7 +610,7 @@ export async function registerPageTools(server: McpServer, apiClient: Confluence
               success: false,
               error: {
                 code: error.code || 'DELETE_PAGE_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the page exists and you have delete permissions',
               },
             }, null, 2),
@@ -699,7 +700,7 @@ export async function registerPageTools(server: McpServer, apiClient: Confluence
               success: false,
               error: {
                 code: error.code || 'GET_PAGE_VERSIONS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the page ID is correct',
               },
             }, null, 2),
@@ -776,7 +777,7 @@ export async function registerPageTools(server: McpServer, apiClient: Confluence
               success: false,
               error: {
                 code: error.code || 'GET_PAGE_VERSION_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the page ID and version number are correct',
               },
             }, null, 2),
@@ -866,7 +867,7 @@ export async function registerPageTools(server: McpServer, apiClient: Confluence
               success: false,
               error: {
                 code: error.code || 'GET_PAGE_CHILDREN_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the page ID is correct',
               },
             }, null, 2),
@@ -941,7 +942,7 @@ export async function registerPageTools(server: McpServer, apiClient: Confluence
               success: false,
               error: {
                 code: error.code || 'GET_PAGE_ANCESTORS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the page ID is correct',
               },
             }, null, 2),
@@ -1009,7 +1010,7 @@ export async function registerPageTools(server: McpServer, apiClient: Confluence
               success: false,
               error: {
                 code: error.code || 'MOVE_PAGE_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify both page IDs are correct and you have move permissions',
               },
             }, null, 2),
@@ -1134,7 +1135,7 @@ export async function registerPageTools(server: McpServer, apiClient: Confluence
               success: false,
               error: {
                 code: error.code || 'COPY_PAGE_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion,
               },
             }, null, 2),
@@ -1201,7 +1202,7 @@ export async function registerPageTools(server: McpServer, apiClient: Confluence
               success: false,
               error: {
                 code: error.code || 'GET_PAGE_RESTRICTIONS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the page ID is correct',
               },
             }, null, 2),
@@ -1286,7 +1287,7 @@ export async function registerPageTools(server: McpServer, apiClient: Confluence
               success: false,
               error: {
                 code: error.code || 'SET_PAGE_RESTRICTIONS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify you have permission to modify restrictions on this page',
               },
             }, null, 2),
@@ -1390,7 +1391,7 @@ export async function registerPageTools(server: McpServer, apiClient: Confluence
               success: false,
               error: {
                 code: error.code || 'GET_PAGE_LIKES_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the page ID is correct',
               },
             }, null, 2),

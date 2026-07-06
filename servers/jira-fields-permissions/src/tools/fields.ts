@@ -14,6 +14,7 @@ import {
 } from '../validation/input-schemas.js';
 import { JiraField } from '../types/index.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
 
 
 export async function registerFieldTools(server: McpServer, apiClient: JiraApiClient) {
@@ -103,7 +104,7 @@ export async function registerFieldTools(server: McpServer, apiClient: JiraApiCl
               success: false,
               error: {
                 code: error.code || 'GET_FIELDS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Check your query parameters and ensure you have proper Jira permissions',
               },
@@ -170,7 +171,7 @@ export async function registerFieldTools(server: McpServer, apiClient: JiraApiCl
               success: false,
               error: {
                 code: error.code || 'CREATE_CUSTOM_FIELD_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have Jira Administrator permissions and the field type is valid',
               },
@@ -236,7 +237,7 @@ export async function registerFieldTools(server: McpServer, apiClient: JiraApiCl
               success: false,
               error: {
                 code: error.code || 'UPDATE_CUSTOM_FIELD_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion,
               },
@@ -300,7 +301,7 @@ export async function registerFieldTools(server: McpServer, apiClient: JiraApiCl
               success: false,
               error: {
                 code: error.code || 'DELETE_CUSTOM_FIELD_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Verify the field exists and is not a system field',
               },

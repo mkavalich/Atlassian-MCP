@@ -6,6 +6,7 @@ import { getIdeaScoringInputSchema } from '../validation/input-schemas.js';
 import { GET_IDEA_SCORING } from '../graphql/queries.js';
 import { JpdScoringData, JpdScore } from '../types/index.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
 
 export async function registerScoringTools(
   server: McpServer,
@@ -36,7 +37,7 @@ export async function registerScoringTools(
         if (issueId.includes('-')) {
           const issueResponse = await restClient.makeRequest<{ id: string }>({
             method: 'GET',
-            path: `/issue/${validatedParams.ideaId}`,
+            path: `/issue/${encodeURIComponent(validatedParams.ideaId)}`,
             params: { fields: 'id' },
           });
           if (issueResponse.success && issueResponse.data) {
@@ -112,7 +113,7 @@ export async function registerScoringTools(
             fields: Record<string, any>;
           }>({
             method: 'GET',
-            path: `/issue/${validatedParams.ideaId}`,
+            path: `/issue/${encodeURIComponent(validatedParams.ideaId)}`,
             params: { fields: '*all' },
           });
 
@@ -187,7 +188,7 @@ export async function registerScoringTools(
               success: false,
               error: {
                 code: error.code || 'GET_SCORING_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 related_tools: ['get_ideas', 'get_idea'],
               },

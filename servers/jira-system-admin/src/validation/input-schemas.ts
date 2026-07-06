@@ -221,11 +221,11 @@ export const getAuditRecordsInputSchema = z.object({
   offset: z.number().optional().default(0).describe('The starting index for results'),
   limit: z.number().max(1000).optional().default(100)
     .describe('The maximum number of audit records to return'),
-  filter: z.string().optional()
+  filter: z.string().max(10000).optional()
     .describe('The filter for audit records (e.g., created > -1d)'),
-  from: z.string().optional()
+  from: z.string().max(255).optional()
     .describe('The start date for audit records (ISO 8601 format)'),
-  to: z.string().optional()
+  to: z.string().max(255).optional()
     .describe('The end date for audit records (ISO 8601 format)'),
 }).passthrough();
 
@@ -252,21 +252,21 @@ export const createWorkflowInputSchema = z.object({
 // Filter input schemas
 export const createFilterInputSchema = z.object({
   name: z.string().min(1).max(255).describe('The name of the filter'),
-  description: z.string().optional().describe('The description of the filter'),
-  jql: z.string().describe('The JQL query for the filter'),
+  description: z.string().max(32768).optional().describe('The description of the filter'),
+  jql: z.string().max(10000).describe('The JQL query for the filter'),
   favourite: z.boolean().optional().describe('Whether the filter is marked as favourite'),
   sharePermissions: z.array(z.object({
     type: z.enum(['global', 'project', 'group', 'authenticated', 'user'])
       .describe('The type of share permission'),
     project: z.object({
-      id: z.string().optional(),
-      key: z.string().optional(),
+      id: z.string().max(255).optional(),
+      key: z.string().max(255).optional(),
     }).optional().describe('Project details for project type permissions'),
     group: z.object({
-      name: z.string(),
+      name: z.string().max(255),
     }).optional().describe('Group details for group type permissions'),
     user: z.object({
-      accountId: z.string(),
+      accountId: z.string().max(255),
     }).optional().describe('User details for user type permissions'),
   })).optional().describe('Share permissions for the filter'),
 }).passthrough();
@@ -293,9 +293,9 @@ export const searchProjectsInputSchema = z.object({
 
 // Advanced Search & Lookup input schemas
 export const searchUsersInputSchema = z.object({
-  query: z.string().optional().describe('Search query for users (name, email, or username)'),
-  username: z.string().optional().describe('Exact username to search for'),
-  accountId: z.string().optional().describe('Specific account ID to search for'),
+  query: z.string().max(10000).optional().describe('Search query for users (name, email, or username)'),
+  username: z.string().max(255).optional().describe('Exact username to search for'),
+  accountId: z.string().max(255).regex(/^[a-zA-Z0-9:._\-]+$/, 'invalid accountId').optional().describe('Specific account ID to search for'),
   startAt: z.number().optional().default(0).describe('The starting index for results'),
   maxResults: z.number().max(1000).optional().default(50)
     .describe('The maximum number of results to return'),
@@ -304,36 +304,36 @@ export const searchUsersInputSchema = z.object({
 }).passthrough();
 
 export const searchGroupsInputSchema = z.object({
-  query: z.string().optional().describe('Search query for groups (group name)'),
-  exclude: z.array(z.string()).optional().describe('Group names to exclude from results'),
+  query: z.string().max(10000).optional().describe('Search query for groups (group name)'),
+  exclude: z.array(z.string().max(255)).optional().describe('Group names to exclude from results'),
   maxResults: z.number().max(1000).optional().default(20)
     .describe('The maximum number of results to return'),
 }).passthrough();
 
 export const getUserGroupsInputSchema = z.object({
-  accountId: z.string().describe('The account ID of the user'),
+  accountId: z.string().max(255).regex(/^[a-zA-Z0-9:._\-]+$/, 'invalid accountId').describe('The account ID of the user'),
 }).passthrough();
 
 export const getApplicationRolesInputSchema = z.object({
-  key: z.string().optional().describe('Specific application role key to retrieve'),
+  key: z.string().max(255).optional().describe('Specific application role key to retrieve'),
 }).passthrough();
 
 export const getBulkPermissionsInputSchema = z.object({
   projectIds: z.array(z.union([z.string(), z.number()])).min(1).max(100)
     .describe('Array of project IDs (numeric) to check permissions for. Use search_projects to find project IDs.'),
-  permissions: z.array(z.string()).min(1)
+  permissions: z.array(z.string().max(255)).min(1)
     .describe('Array of permission keys to check (e.g., BROWSE_PROJECTS, CREATE_ISSUES, EDIT_ISSUES)'),
 }).passthrough();
 
 // System Configuration input schemas
 export const getApplicationPropertiesInputSchema = z.object({
-  key: z.string().optional().describe('Specific property key to retrieve'),
-  keyFilter: z.string().optional().describe('Filter properties by key pattern'),
+  key: z.string().max(255).optional().describe('Specific property key to retrieve'),
+  keyFilter: z.string().max(255).optional().describe('Filter properties by key pattern'),
 }).passthrough();
 
 export const setApplicationPropertyInputSchema = z.object({
-  id: z.string().describe('The property key/ID'),
-  value: z.string().describe('The property value to set'),
+  id: z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id').describe('The property key/ID'),
+  value: z.string().max(10000).describe('The property value to set'),
 }).passthrough();
 
 export const getSystemAvatarsInputSchema = z.object({
@@ -359,7 +359,7 @@ export const getSystemWebhooksInputSchema = z.object({
 
 // Integration & Migration input schemas
 export const exportProjectDataInputSchema = z.object({
-  projectKey: z.string().describe('The project key to export data for'),
+  projectKey: z.string().max(255).regex(/^[A-Za-z][A-Za-z0-9_]{1,255}$/, 'invalid project key').describe('The project key to export data for'),
   includeIssues: z.boolean().optional().default(true).describe('Include issues in export'),
   includeWorkflows: z.boolean().optional().default(true).describe('Include workflow configurations'),
   includePermissions: z.boolean().optional().default(true).describe('Include permission schemes'),
@@ -368,7 +368,7 @@ export const exportProjectDataInputSchema = z.object({
 }).passthrough();
 
 export const exportUserDataInputSchema = z.object({
-  accountId: z.string().describe('The account ID of the user to export data for'),
+  accountId: z.string().max(255).regex(/^[a-zA-Z0-9:._\-]+$/, 'invalid accountId').describe('The account ID of the user to export data for'),
   includeGroups: z.boolean().optional().default(true).describe('Include user group memberships'),
   includePermissions: z.boolean().optional().default(true).describe('Include user permissions'),
   includeActivity: z.boolean().optional().default(false).describe('Include user activity and issue history'),
@@ -406,8 +406,8 @@ export const generateSystemReportInputSchema = z.object({
 export const generateUsageAnalyticsInputSchema = z.object({
   period: z.enum(['week', 'month', 'quarter', 'year']).optional()
     .describe('Predefined time period for analytics'),
-  startDate: z.string().optional().describe('Start date for custom period (ISO 8601)'),
-  endDate: z.string().optional().describe('End date for custom period (ISO 8601)'),
+  startDate: z.string().max(255).optional().describe('Start date for custom period (ISO 8601)'),
+  endDate: z.string().max(255).optional().describe('End date for custom period (ISO 8601)'),
   includeAuditData: z.boolean().optional().default(false)
     .describe('Include audit log data in analytics'),
 }).passthrough();

@@ -26,6 +26,7 @@ import {
   CursorPaginatedResponse,
 } from '../types/index.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
 
 export async function registerAttachmentTools(server: McpServer, apiClient: ConfluenceApiClient) {
   // =====================
@@ -116,7 +117,7 @@ export async function registerAttachmentTools(server: McpServer, apiClient: Conf
               success: false,
               error: {
                 code: error.code || 'GET_ATTACHMENTS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the page ID is correct',
               },
             }, null, 2),
@@ -192,7 +193,7 @@ export async function registerAttachmentTools(server: McpServer, apiClient: Conf
               success: false,
               error: {
                 code: error.code || 'GET_ATTACHMENT_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the attachment ID is correct',
               },
             }, null, 2),
@@ -314,7 +315,7 @@ export async function registerAttachmentTools(server: McpServer, apiClient: Conf
               success: false,
               error: {
                 code: error.code || 'UPLOAD_ATTACHMENT_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion,
                 knownLimitation: isMediaTypeError
                   ? 'Multipart/form-data file uploads have limited support. Use Confluence UI or: curl -X POST -H "X-Atlassian-Token: no-check" -F "file=@filename" "https://your-site.atlassian.net/wiki/rest/api/content/{pageId}/child/attachment"'
@@ -423,7 +424,7 @@ export async function registerAttachmentTools(server: McpServer, apiClient: Conf
               success: false,
               error: {
                 code: error.code || 'UPDATE_ATTACHMENT_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the attachment ID is correct',
               },
             }, null, 2),
@@ -503,7 +504,7 @@ export async function registerAttachmentTools(server: McpServer, apiClient: Conf
               success: false,
               error: {
                 code: error.code || 'DELETE_ATTACHMENT_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the attachment ID is correct',
               },
             }, null, 2),
@@ -571,7 +572,7 @@ export async function registerAttachmentTools(server: McpServer, apiClient: Conf
               success: false,
               error: {
                 code: error.code || 'DOWNLOAD_ATTACHMENT_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the attachment ID is correct',
               },
             }, null, 2),
@@ -654,7 +655,7 @@ export async function registerAttachmentTools(server: McpServer, apiClient: Conf
               success: false,
               error: {
                 code: error.code || 'GET_ATTACHMENT_VERSIONS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify the attachment ID is correct',
               },
             }, null, 2),
@@ -761,7 +762,7 @@ export async function registerAttachmentTools(server: McpServer, apiClient: Conf
               success: false,
               error: {
                 code: error.code || 'COPY_ATTACHMENT_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: 'Verify both the attachment ID and destination page ID are correct',
               },
             }, null, 2),

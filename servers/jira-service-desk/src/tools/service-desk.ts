@@ -9,6 +9,15 @@ import {
   getRequestTypeFieldsInputSchema,
   // REMOVED: updateRequestTypeFieldsInputSchema - Cloud API limitation
 } from '../validation/input-schemas.js';
+import {
+  getServiceDesksSchema,
+  getRequestTypesSchema,
+  createRequestTypeSchema,
+  getRequestTypeFieldsSchema,
+  configureRequestTypeWorkflowSchema,
+} from '../validation/schemas.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
+import { wrapUserContent } from '../utils/sanitize.js';
 
 // Additional input schemas for tools not in input-schemas.ts
 const configureRequestTypeWorkflowInputSchema = {
@@ -36,7 +45,8 @@ export async function registerServiceDeskTools(server: McpServer, apiClient: Jir
     },
     async (params: any) => {
       try {
-        const { start = 0, limit = 50 } = params;
+        const validated = getServiceDesksSchema.parse(params);
+        const { start = 0, limit = 50 } = validated;
 
         const response = await apiClient.makeServiceDeskRequest<any>({
           method: 'GET',
@@ -56,7 +66,7 @@ export async function registerServiceDeskTools(server: McpServer, apiClient: Jir
               type: 'text',
               text: JSON.stringify({
                 success: true,
-                serviceDesks,
+                serviceDesks: wrapUserContent(serviceDesks),
                 size: response.data.size || count,
                 start: response.data.start || 0,
                 limit: response.data.limit || limit,
@@ -108,7 +118,7 @@ export async function registerServiceDeskTools(server: McpServer, apiClient: Jir
               success: false,
               error: {
                 code: error.code || 'GET_SERVICE_DESKS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 workflow_guidance: nextSteps.length > 0 ? 'Resolve permissions first, then retry service desk discovery' : undefined,
@@ -139,7 +149,8 @@ export async function registerServiceDeskTools(server: McpServer, apiClient: Jir
     },
     async (params: any) => {
       try {
-        const { serviceDeskId, start = 0, limit = 50, searchQuery } = params;
+        const validated = getRequestTypesSchema.parse(params);
+        const { serviceDeskId, start = 0, limit = 50, searchQuery } = validated;
 
         // First verify service desk exists
         try {
@@ -202,7 +213,7 @@ export async function registerServiceDeskTools(server: McpServer, apiClient: Jir
               type: 'text',
               text: JSON.stringify({
                 success: true,
-                requestTypes,
+                requestTypes: wrapUserContent(requestTypes),
                 serviceDeskId: serviceDeskId,
                 size: response.data.size || count,
                 start: response.data.start || 0,
@@ -256,7 +267,7 @@ export async function registerServiceDeskTools(server: McpServer, apiClient: Jir
               success: false,
               error: {
                 code: error.code || 'GET_REQUEST_TYPES_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 service_desk_id: params.serviceDeskId,
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
@@ -284,8 +295,9 @@ export async function registerServiceDeskTools(server: McpServer, apiClient: Jir
     },
     async (params: any) => {
       try {
-        const { serviceDeskId, name, description, issueTypeId, helpText } = params;
-        
+        const validated = createRequestTypeSchema.parse(params);
+        const { serviceDeskId, name, description, issueTypeId, helpText } = validated;
+
         // Validate service desk exists first
         try {
           const serviceDeskResponse = await apiClient.makeServiceDeskRequest<any>({
@@ -351,7 +363,7 @@ export async function registerServiceDeskTools(server: McpServer, apiClient: Jir
               type: 'text',
               text: JSON.stringify({
                 success: true,
-                requestType: response.data,
+                requestType: wrapUserContent(response.data),
                 message: `Request type '${name}' created successfully in service desk ${serviceDeskId}`,
                 usage_guidance: `Request type ID ${response.data.id} can now be used with other request type tools.`,
                 suggested_next_steps: [
@@ -410,7 +422,7 @@ export async function registerServiceDeskTools(server: McpServer, apiClient: Jir
               success: false,
               error: {
                 code: error.code || 'CREATE_REQUEST_TYPE_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 service_desk_id: params.serviceDeskId,
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
@@ -443,8 +455,9 @@ export async function registerServiceDeskTools(server: McpServer, apiClient: Jir
     },
     async (params: any) => {
       try {
-        const { serviceDeskId, requestTypeId } = params;
-        
+        const validated = getRequestTypeFieldsSchema.parse(params);
+        const { serviceDeskId, requestTypeId } = validated;
+
         // Validate both service desk and request type exist
         let serviceDeskExists = false;
         let requestTypeExists = false;
@@ -533,7 +546,7 @@ export async function registerServiceDeskTools(server: McpServer, apiClient: Jir
               type: 'text',
               text: JSON.stringify({
                 success: true,
-                fields: fields,
+                fields: wrapUserContent(fields),
                 serviceDeskId: serviceDeskId,
                 requestTypeId: requestTypeId,
                 count: count,
@@ -571,7 +584,7 @@ export async function registerServiceDeskTools(server: McpServer, apiClient: Jir
               success: false,
               error: {
                 code: error.code || 'GET_REQUEST_TYPE_FIELDS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 service_desk_id: params.serviceDeskId,
                 request_type_id: params.requestTypeId,
                 suggestion: enhancedSuggestion,
@@ -602,8 +615,9 @@ export async function registerServiceDeskTools(server: McpServer, apiClient: Jir
     },
     async (params: any) => {
       try {
-        const { serviceDeskId, requestTypeId, workflowId, approvalConfig } = params;
-        
+        const validated = configureRequestTypeWorkflowSchema.parse(params);
+        const { serviceDeskId, requestTypeId, workflowId, approvalConfig } = validated;
+
         // This is a complex operation that would validate multiple dependencies
         // in a real implementation. For now, we'll simulate the validation logic.
         
@@ -717,7 +731,7 @@ export async function registerServiceDeskTools(server: McpServer, apiClient: Jir
               success: false,
               error: {
                 code: error.code || 'CONFIGURE_WORKFLOW_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 service_desk_id: params.serviceDeskId,
                 request_type_id: params.requestTypeId,
                 workflow_id: params.workflowId,

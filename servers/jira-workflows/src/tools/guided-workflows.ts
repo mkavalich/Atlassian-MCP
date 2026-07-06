@@ -1,6 +1,8 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { JiraApiClient } from '../api/client.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
+import { setupWorkflowGuidedSchema } from '../validation/schemas.js';
 import { z } from 'zod';
 import { toolExamples } from '../validation/tool-examples.js';
 import { randomUUID } from 'node:crypto';
@@ -305,17 +307,21 @@ AUTOMATED STEPS: Checks name uniqueness, generates template, creates workflow vi
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
+        openWorldHint: false,
       },
       examples: toolExamples['setup_workflow_guided'],
     },
     async (params: any) => {
       try {
-        const workflowName = params.name;
-        const workflowDescription = params.description;
-        const workflowType = params.workflowType;
-        const projectKey = params.projectKey;
+        const validated = setupWorkflowGuidedSchema.parse(params);
+        const workflowName = validated.name;
+        const workflowDescription = validated.description;
+        const workflowType = validated.workflowType;
+        const projectKey = validated.projectKey;
+        // customStatuses is validated above; read from params to preserve the
+        // exact shape getWorkflowTemplate expects (required name/category fields)
         const customStatuses = params.customStatuses;
-        const issueTypes = params.issueTypes;
+        const issueTypes = validated.issueTypes;
 
         if (!workflowName) {
           return {
@@ -520,7 +526,7 @@ AUTOMATED STEPS: Checks name uniqueness, generates template, creates workflow vi
               success: false,
               error: {
                 code: error.code || 'GUIDED_WORKFLOW_SETUP_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 workflow_guidance: workflowGuidance || 'Guided workflow setup automates complex workflow creation',

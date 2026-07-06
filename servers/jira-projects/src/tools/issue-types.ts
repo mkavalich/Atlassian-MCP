@@ -31,6 +31,7 @@ import {
   getIssueCreatemetaIssuetypesInputSchema,
 } from '../validation/input-schemas.js';
 import { JiraIssueType, JiraIssueTypeScheme } from '../types/index.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
 import { toolExamples } from '../validation/tool-examples.js';
 
@@ -119,7 +120,7 @@ export async function registerIssueTypeTools(server: McpServer, apiClient: JiraA
               success: false,
               error: {
                 code: error.code || 'GET_ISSUE_TYPES_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 workflow_guidance: nextSteps.length > 0 ? 'Issue types are fundamental to Jira - ensure proper access' : undefined,
@@ -215,7 +216,7 @@ export async function registerIssueTypeTools(server: McpServer, apiClient: JiraA
               success: false,
               error: {
                 code: error.code || 'CREATE_ISSUE_TYPE_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 workflow_guidance: nextSteps.length > 0 ? 'Ensure unique naming and system admin permissions' : undefined,
@@ -313,7 +314,7 @@ export async function registerIssueTypeTools(server: McpServer, apiClient: JiraA
               success: false,
               error: {
                 code: error.code || 'UPDATE_ISSUE_TYPE_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 // workflow_guidance: workflowGuidance, // Removed unused variable
@@ -414,7 +415,7 @@ export async function registerIssueTypeTools(server: McpServer, apiClient: JiraA
               success: false,
               error: {
                 code: error.code || 'DELETE_ISSUE_TYPE_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 // workflow_guidance: workflowGuidance, // Removed unused variable
@@ -525,7 +526,7 @@ export async function registerIssueTypeTools(server: McpServer, apiClient: JiraA
               success: false,
               error: {
                 code: error.code || 'GET_ISSUE_TYPE_SCHEMES_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 workflow_guidance: nextSteps.length > 0 ? 'Issue type schemes organize issue types for projects' : undefined,
@@ -622,7 +623,7 @@ export async function registerIssueTypeTools(server: McpServer, apiClient: JiraA
               success: false,
               error: {
                 code: error.code || 'CREATE_ISSUE_TYPE_SCHEME_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 workflow_guidance: nextSteps.length > 0 ? 'Ensure unique naming and valid issue type references' : undefined,
@@ -721,7 +722,7 @@ export async function registerIssueTypeTools(server: McpServer, apiClient: JiraA
               success: false,
               error: {
                 code: error.code || 'UPDATE_ISSUE_TYPE_SCHEME_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 // workflow_guidance: workflowGuidance, // Removed unused variable
@@ -816,7 +817,7 @@ export async function registerIssueTypeTools(server: McpServer, apiClient: JiraA
               success: false,
               error: {
                 code: error.code || 'DELETE_ISSUE_TYPE_SCHEME_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 // workflow_guidance: workflowGuidance, // Removed unused variable
@@ -928,7 +929,7 @@ Use this tool to verify current scheme assignments before modifying them.`,
               success: false,
               error: {
                 code: error.code || 'GET_ISSUE_TYPE_SCHEME_MAPPINGS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 related_tools: ['get_issue_type_schemes', 'assign_issue_type_scheme_to_project']
@@ -1030,7 +1031,7 @@ Note: This adds issue types without removing existing ones. The default issue ty
               success: false,
               error: {
                 code: error.code || 'ADD_ISSUE_TYPES_TO_SCHEME_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 related_tools: ['get_issue_type_schemes', 'get_issue_types']
@@ -1134,7 +1135,7 @@ Note: This adds issue types without removing existing ones. The default issue ty
               success: false,
               error: {
                 code: error.code || 'ASSIGN_ISSUE_TYPE_SCHEME_TO_PROJECT_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 related_tools: ['get_issue_type_schemes', 'search_projects', 'get_issue_type_scheme_mappings']
@@ -1244,7 +1245,7 @@ Note: This adds issue types without removing existing ones. The default issue ty
               success: false,
               error: {
                 code: error.code || 'GET_CREATEMETA_ISSUETYPES_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion,
                 related_tools: ['search_projects', 'get_issue_types'],
               },
@@ -1378,7 +1379,7 @@ Note: This adds issue types without removing existing ones. The default issue ty
               success: false,
               error: {
                 code: error.code || 'GET_CREATEMETA_FIELDS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion,
                 related_tools: ['get_issue_createmeta_issuetypes', 'search_projects'],
               },

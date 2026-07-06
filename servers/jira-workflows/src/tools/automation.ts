@@ -22,6 +22,7 @@ import {
   JiraAutomationTemplate,
 } from '../types/index.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
 import {
   resolveComponentType,
   getDefaultValue,
@@ -45,6 +46,7 @@ export async function registerAutomationTools(server: McpServer, apiClient: Jira
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -106,10 +108,10 @@ export async function registerAutomationTools(server: McpServer, apiClient: Jira
           }],
         };
       } catch (error) {
-        logger.error('Failed to get automation rules', { error, params });
+        logger.error('Failed to get automation rules', { error: error instanceof Error ? error.message : String(error) });
 
         // Enhanced error handling for permission issues
-        let errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        let errorMessage = error instanceof Error ? sanitizeErrorMessage(error.message) : 'Unknown error occurred';
         let userGuidance = '';
 
         if (errorMessage.includes('403') || errorMessage.includes('Forbidden')) {
@@ -143,6 +145,7 @@ export async function registerAutomationTools(server: McpServer, apiClient: Jira
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -185,10 +188,10 @@ export async function registerAutomationTools(server: McpServer, apiClient: Jira
           }],
         };
       } catch (error) {
-        logger.error('Failed to get automation rule details', { error, params });
+        logger.error('Failed to get automation rule details', { error: error instanceof Error ? error.message : String(error) });
 
         // Enhanced error handling for specific issues
-        let errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        let errorMessage = error instanceof Error ? sanitizeErrorMessage(error.message) : 'Unknown error occurred';
         let userGuidance = '';
 
         if (errorMessage.includes('404') || errorMessage.includes('Not Found')) {
@@ -221,6 +224,7 @@ export async function registerAutomationTools(server: McpServer, apiClient: Jira
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -267,13 +271,13 @@ export async function registerAutomationTools(server: McpServer, apiClient: Jira
           }],
         };
       } catch (error) {
-        logger.error('Failed to get automation templates', { error, params });
+        logger.error('Failed to get automation templates', { error: error instanceof Error ? error.message : String(error) });
         return {
           content: [{
             type: 'text',
             text: JSON.stringify({
               success: false,
-              error: error instanceof Error ? error.message : 'Unknown error occurred',
+              error: error instanceof Error ? sanitizeErrorMessage(error.message) : 'Unknown error occurred',
               templates: [],
               count: 0,
             }, null, 2),
@@ -293,6 +297,7 @@ export async function registerAutomationTools(server: McpServer, apiClient: Jira
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -339,13 +344,13 @@ export async function registerAutomationTools(server: McpServer, apiClient: Jira
           }],
         };
       } catch (error) {
-        logger.error('Failed to get automation component types', { error, params });
+        logger.error('Failed to get automation component types', { error: error instanceof Error ? error.message : String(error) });
         return {
           content: [{
             type: 'text',
             text: JSON.stringify({
               success: false,
-              error: error instanceof Error ? error.message : 'Unknown error occurred',
+              error: error instanceof Error ? sanitizeErrorMessage(error.message) : 'Unknown error occurred',
             }, null, 2),
           }],
         };
@@ -363,6 +368,7 @@ export async function registerAutomationTools(server: McpServer, apiClient: Jira
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
+        openWorldHint: false,
       },
       examples: toolExamples['create_automation_rule'],
     },
@@ -542,7 +548,7 @@ export async function registerAutomationTools(server: McpServer, apiClient: Jira
           }],
         };
       } catch (error: any) {
-        logger.error('Failed to create automation rule', { error, params });
+        logger.error('Failed to create automation rule', { error: error instanceof Error ? error.message : String(error) });
 
         // Enhanced error extraction for JiraApiError and other error types
         let errorMessage = 'Unknown error occurred';
@@ -564,7 +570,7 @@ export async function registerAutomationTools(server: McpServer, apiClient: Jira
             type: 'text',
             text: JSON.stringify({
               success: false,
-              error: errorMessage,
+              error: sanitizeErrorMessage(errorMessage),
               errorCode,
               suggestion: suggestion || 'Check your permissions and rule configuration',
             }, null, 2),
@@ -584,6 +590,7 @@ export async function registerAutomationTools(server: McpServer, apiClient: Jira
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
+        openWorldHint: false,
       },
       examples: toolExamples['update_automation_rule'],
     },
@@ -718,7 +725,7 @@ export async function registerAutomationTools(server: McpServer, apiClient: Jira
           }],
         };
       } catch (error: any) {
-        logger.error('Failed to update automation rule', { error, params });
+        logger.error('Failed to update automation rule', { error: error instanceof Error ? error.message : String(error) });
 
         // Enhanced error extraction for JiraApiError and other error types
         let errorMessage = 'Unknown error occurred';
@@ -766,7 +773,7 @@ export async function registerAutomationTools(server: McpServer, apiClient: Jira
             type: 'text',
             text: JSON.stringify({
               success: false,
-              error: errorMessage + userGuidance,
+              error: sanitizeErrorMessage(errorMessage) + userGuidance,
               errorCode,
             }, null, 2),
           }],
@@ -785,6 +792,7 @@ export async function registerAutomationTools(server: McpServer, apiClient: Jira
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -827,10 +835,10 @@ export async function registerAutomationTools(server: McpServer, apiClient: Jira
           }],
         };
       } catch (error) {
-        logger.error('Failed to enable/disable automation rule', { error, params });
+        logger.error('Failed to enable/disable automation rule', { error: error instanceof Error ? error.message : String(error) });
 
         // Enhanced error handling for enable/disable issues
-        let errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+        let errorMessage = error instanceof Error ? sanitizeErrorMessage(error.message) : 'Unknown error occurred';
         let userGuidance = '';
 
         if (errorMessage.includes('404') || errorMessage.includes('Not Found')) {

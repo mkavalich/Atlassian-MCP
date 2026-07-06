@@ -44,6 +44,7 @@ import {
 } from '../validation/input-schemas.js';
 import { JiraScreenScheme } from '../types/index.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
 
 export async function registerScreenTools(server: McpServer, apiClient: JiraApiClient) {
   // Tool: getScreenSchemes
@@ -56,6 +57,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -126,7 +128,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'SCREEN_SCHEME_DISCOVERY_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 workflow_guidance: workflowGuidance,
@@ -150,6 +152,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -194,7 +197,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'CREATE_SCREEN_SCHEME_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have Jira Administrator permissions and valid screen IDs',
               },
@@ -219,6 +222,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -256,7 +260,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'DELETE_SCREEN_SCHEME_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure the screen scheme exists, is not in use, and you have admin permissions',
               },
@@ -278,6 +282,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -326,7 +331,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'GET_SCREENS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have permission to view screens',
               },
@@ -348,6 +353,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -398,7 +404,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'CREATE_SCREEN_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have Jira Administrator permissions',
               },
@@ -420,6 +426,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -469,7 +476,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'UPDATE_SCREEN_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure the screen exists and you have admin permissions',
               },
@@ -491,6 +498,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -528,7 +536,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'DELETE_SCREEN_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure the screen exists, is not in use by screen schemes, and you have admin permissions',
               },
@@ -550,6 +558,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -591,7 +600,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'GET_SCREEN_TABS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have appropriate permissions and the screen ID is valid',
               },
@@ -613,6 +622,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -656,7 +666,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'CREATE_SCREEN_TAB_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have Jira Administrator permissions and the screen exists',
               },
@@ -678,6 +688,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -721,7 +732,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'UPDATE_SCREEN_TAB_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure the screen and tab exist and you have admin permissions',
               },
@@ -743,6 +754,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -781,7 +793,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'DELETE_SCREEN_TAB_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure the screen and tab exist, the tab is not the last tab, and you have admin permissions',
               },
@@ -803,6 +815,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -845,7 +858,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'GET_SCREEN_TAB_FIELDS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have appropriate permissions and the screen/tab IDs are valid',
               },
@@ -867,6 +880,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
       annotations: {
         readOnlyHint: false,
         destructiveHint: true,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -906,7 +920,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'REMOVE_FIELD_FROM_SCREEN_TAB_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure the screen, tab, and field exist and you have admin permissions',
               },
@@ -928,6 +942,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -983,7 +998,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'MOVE_SCREEN_TAB_FIELD_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure the screen, tab, and field exist and you have admin permissions',
               },
@@ -1005,6 +1020,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -1048,7 +1064,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'ADD_FIELD_TO_SCREEN_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure the screen, tab, and field exist and you have admin permissions',
               },
@@ -1070,6 +1086,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -1108,7 +1125,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'ADD_FIELD_TO_DEFAULT_SCREEN_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure the field exists and you have admin permissions',
               },
@@ -1130,6 +1147,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -1165,7 +1183,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'GET_SCREEN_AVAILABLE_FIELDS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure the screen exists and you have appropriate permissions',
               },
@@ -1187,6 +1205,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -1266,7 +1285,7 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
               success: false,
               error: {
                 code: error.code || 'ASSIGN_ISSUE_TYPE_SCREEN_SCHEME_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,

@@ -1141,23 +1141,27 @@ export const updateRequestTypeGroupsSchema = z.object({
   groupNames: z.array(z.string()).describe('Array of customer group names to grant access to this request type'),
 }).strict();
 
+// Shared regex constraints for organization ID/key fields (F-005 injection defense)
+const orgIdField = z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id');
+const accountIdField = z.string().max(255).regex(/^[a-zA-Z0-9:._\-]+$/, 'invalid accountId');
+
 // User Management & Permissions schemas (Group 2 endpoints)
 export const getUserManageSchema = z.object({
-  account_id: z.string().describe('User account ID to get management permissions for'),
+  account_id: accountIdField.describe('User account ID to get management permissions for'),
 }).strict();
 
 export const getUserManageProfileSchema = z.object({
-  account_id: z.string().describe('User account ID to get detailed profile information for'),
+  account_id: accountIdField.describe('User account ID to get detailed profile information for'),
 }).strict();
 
 export const getUserManageApiTokensSchema = z.object({
-  account_id: z.string().describe('User account ID to get API tokens for'),
+  account_id: accountIdField.describe('User account ID to get API tokens for'),
 }).strict();
 
 // Usage Analytics schemas (Group 2 endpoints)
 export const getOrgUserStatsSchema = z.object({
-  orgId: z.string().describe('Organization ID to get user statistics for'),
-  directoryId: z.string().describe('Directory ID to get user statistics for'),
+  orgId: orgIdField.describe('Organization ID to get user statistics for'),
+  directoryId: orgIdField.describe('Directory ID to get user statistics for'),
   includeInactive: z.boolean().optional().default(false)
     .describe('Whether to include inactive users in statistics'),
   timeframe: z.enum(['7d', '30d', '90d', '1y']).optional().default('30d')
@@ -1165,10 +1169,151 @@ export const getOrgUserStatsSchema = z.object({
 }).strict();
 
 export const getOrgGroupStatsSchema = z.object({
-  orgId: z.string().describe('Organization ID to get group statistics for'),
-  directoryId: z.string().describe('Directory ID to get group statistics for'),
+  orgId: orgIdField.describe('Organization ID to get group statistics for'),
+  directoryId: orgIdField.describe('Directory ID to get group statistics for'),
   includeEmpty: z.boolean().optional().default(false)
     .describe('Whether to include empty groups in statistics'),
   timeframe: z.enum(['7d', '30d', '90d', '1y']).optional().default('30d')
     .describe('Timeframe for group activity statistics'),
+}).strict();
+
+// ---------------------------------------------------------------------------
+// F-001 strict validation schemas for previously-unvalidated organization tools
+// Mirror the corresponding *InputSchema field sets, with .strict() enforcement,
+// F-005 regex constraints on ID fields, and F-006 length bounds on strings.
+// ---------------------------------------------------------------------------
+
+// Global Organization
+export const getOrganizationEventsSchema = z.object({
+  limit: z.number().min(1).max(1000).optional().default(50)
+    .describe('Maximum number of events to return (default: 50, max: 1000)'),
+  from: z.string().max(64).optional()
+    .describe('Start date for events (ISO 8601 format)'),
+  to: z.string().max(64).optional()
+    .describe('End date for events (ISO 8601 format)'),
+}).strict();
+
+// Identity Providers / Directories
+export const getDirectoryInfoSchema = z.object({
+  directoryId: orgIdField.describe('Directory ID to get information for'),
+}).strict();
+
+export const getDirectorySyncStatusSchema = z.object({
+  directoryId: orgIdField.optional()
+    .describe('Directory ID to check sync status for (optional - checks all if not specified)'),
+}).strict();
+
+export const getDirectorySyncSettingsSchema = z.object({
+  directoryId: orgIdField.describe('Directory ID to get sync settings for'),
+}).strict();
+
+export const getDirectoryUsersSchema = z.object({
+  directoryId: orgIdField.optional()
+    .describe('Directory ID to get users from (optional - gets from all directories if not specified)'),
+  limit: z.number().min(1).max(1000).optional().default(100)
+    .describe('Maximum number of users to return (default: 100, max: 1000)'),
+  cursor: z.string().max(4096).optional()
+    .describe('Pagination cursor for large result sets'),
+}).strict();
+
+export const getUserLastActiveSchema = z.object({
+  accountId: accountIdField.describe('User account ID to get last active dates for'),
+}).strict();
+
+// Global User Analysis
+export const getOrganizationUsersSchema = z.object({
+  limit: z.number().min(1).max(1000).optional().default(100)
+    .describe('Maximum number of users to return (default: 100, max: 1000)'),
+  accountType: z.enum(['atlassian', 'customer', 'app']).optional()
+    .describe('Filter by account type'),
+  status: z.enum(['active', 'inactive', 'suspended']).optional()
+    .describe('Filter by account status'),
+}).strict();
+
+export const searchOrganizationUsersSchema = z.object({
+  query: z.string().max(10000).optional()
+    .describe('Search query for user name, email, or display name'),
+  domain: z.string().max(255).optional()
+    .describe('Filter by email domain (useful for Azure AD analysis)'),
+  accountType: z.enum(['atlassian', 'customer', 'app']).optional()
+    .describe('Filter by account type'),
+  lastActiveAfter: z.string().max(64).optional()
+    .describe('Filter users active after this date (ISO 8601 format)'),
+  limit: z.number().min(1).max(1000).optional().default(50)
+    .describe('Maximum number of users to return (default: 50, max: 1000)'),
+}).strict();
+
+export const getUserRoleAssignmentsSchema = z.object({
+  accountId: accountIdField.describe('User account ID to get role assignments for'),
+}).strict();
+
+export const getUserGroupMembershipsSchema = z.object({
+  accountId: accountIdField.describe('User account ID to get group memberships for'),
+}).strict();
+
+export const analyzeUserAccessSchema = z.object({
+  accountId: accountIdField.optional().describe('User account ID to analyze'),
+  email: z.string().max(255).optional().describe('User email to analyze (alternative to accountId)'),
+}).strict();
+
+// Organization Management
+export const getOrganizationsSchema = z.object({
+  limit: z.number().min(1).max(200).optional().default(50)
+    .describe('Maximum number of organizations to return (default: 50, max: 200)'),
+  page: z.number().min(1).optional().default(1)
+    .describe('Page number for pagination (default: 1)'),
+  status: z.enum(['active', 'suspended', 'deleted']).optional()
+    .describe('Filter organizations by status'),
+  type: z.enum(['standard', 'enterprise']).optional()
+    .describe('Filter organizations by type'),
+}).strict();
+
+export const getOrganizationDetailsSchema = z.object({
+  orgId: orgIdField.describe('Organization ID to get detailed information for'),
+  includeStatistics: z.boolean().optional().default(false)
+    .describe('Include usage statistics in the response'),
+  includeAudit: z.boolean().optional().default(false)
+    .describe('Include audit configuration details'),
+  includeCompliance: z.boolean().optional().default(false)
+    .describe('Include compliance certification status'),
+}).strict();
+
+// Directory Health / Enhanced Analytics
+export const getDirectoryHealthStatusSchema = z.object({
+  directoryId: orgIdField.optional()
+    .describe('Directory ID to check health for (optional - checks all if not specified)'),
+  includeSync: z.boolean().optional().default(true)
+    .describe('Include synchronization status and metrics'),
+  includeErrors: z.boolean().optional().default(true)
+    .describe('Include recent error logs and issues'),
+  includePerformance: z.boolean().optional().default(false)
+    .describe('Include performance metrics and sync speeds'),
+}).strict();
+
+export const getProvisioningInsightsSchema = z.object({
+  directoryId: orgIdField.optional()
+    .describe('Directory ID to analyze provisioning for'),
+  timeframe: z.enum(['7d', '30d', '90d', '1y']).optional().default('30d')
+    .describe('Timeframe for provisioning analysis'),
+  includeFailures: z.boolean().optional().default(true)
+    .describe('Include failed provisioning attempts'),
+  includePerformance: z.boolean().optional().default(false)
+    .describe('Include provisioning performance metrics'),
+  groupBy: z.enum(['day', 'week', 'month']).optional().default('day')
+    .describe('Group provisioning data by time period'),
+}).strict();
+
+export const getCrossProductUserActivitySchema = z.object({
+  accountId: accountIdField.optional()
+    .describe('User account ID to analyze activity across products'),
+  email: z.string().max(255).optional()
+    .describe('User email to analyze (alternative to accountId)'),
+  startDate: z.string().max(64).optional()
+    .describe('Start date for activity analysis (ISO 8601 format)'),
+  endDate: z.string().max(64).optional()
+    .describe('End date for activity analysis (ISO 8601 format)'),
+  products: z.array(z.enum(['jira', 'confluence', 'bitbucket', 'trello'])).optional()
+    .describe('Specific products to include in activity analysis'),
+  includeDetails: z.boolean().optional().default(false)
+    .describe('Include detailed activity breakdown by product'),
 }).strict();

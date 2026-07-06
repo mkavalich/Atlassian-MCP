@@ -19,6 +19,7 @@ import {
   JiraScreenDetailed
 } from '../types/index.js';
 import { logger } from '../utils/logger.js';
+import { sanitizeErrorMessage } from '../utils/errors.js';
 
 export async function registerNotificationScreenTools(server: McpServer, apiClient: JiraApiClient) {
   // Tool: getNotificationSchemes
@@ -78,7 +79,7 @@ export async function registerNotificationScreenTools(server: McpServer, apiClie
               success: false,
               error: {
                 code: error.code || 'GET_NOTIFICATION_SCHEMES_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have permission to view notification schemes',
               },
@@ -152,7 +153,7 @@ export async function registerNotificationScreenTools(server: McpServer, apiClie
               success: false,
               error: {
                 code: error.code || 'CREATE_NOTIFICATION_SCHEME_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have Jira Administrator permissions and valid event/notification configurations',
               },
@@ -221,7 +222,7 @@ export async function registerNotificationScreenTools(server: McpServer, apiClie
               success: false,
               error: {
                 code: error.code || 'GET_SCREENS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have permission to view screens',
               },
@@ -295,7 +296,7 @@ export async function registerNotificationScreenTools(server: McpServer, apiClie
               success: false,
               error: {
                 code: error.code || 'CREATE_SCREEN_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure you have Jira Administrator permissions and valid tab/field configurations',
               },
@@ -360,7 +361,7 @@ export async function registerNotificationScreenTools(server: McpServer, apiClie
               success: false,
               error: {
                 code: error.code || 'ADD_FIELD_TO_SCREEN_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure the screen, tab, and field exist and you have admin permissions',
               },

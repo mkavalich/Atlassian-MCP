@@ -15,7 +15,7 @@ import {
   deleteWorkflowInputSchema,
 } from '../validation/input-schemas.js';
 import { JiraWorkflow } from '../types/index.js';
-import { ValidationError } from '../utils/errors.js';
+import { ValidationError, sanitizeErrorMessage } from '../utils/errors.js';
 import { logger } from '../utils/logger.js';
 import { toolExamples } from '../validation/tool-examples.js';
 
@@ -136,7 +136,7 @@ Use this tool to find valid status IDs before creating workflows. The status cat
               success: false,
               error: {
                 code: error.code || 'GET_STATUSES_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 related_tools: ['get_workflows', 'create_workflow']
@@ -159,6 +159,7 @@ Use this tool to find valid status IDs before creating workflows. The status cat
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -229,7 +230,7 @@ Use this tool to find valid status IDs before creating workflows. The status cat
               success: false,
               error: {
                 code: error.code || 'GET_WORKFLOWS_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 workflow_guidance: nextSteps.length > 0 ? 'Workflows define how issues move through statuses - ensure proper access' : undefined,
@@ -279,6 +280,7 @@ CRITICAL: Must have at least one INITIAL transition (from: []) that creates issu
       annotations: {
         readOnlyHint: false,
         destructiveHint: false,
+        openWorldHint: false,
       },
       examples: toolExamples['create_workflow'],
     },
@@ -506,7 +508,7 @@ CRITICAL: Must have at least one INITIAL transition (from: []) that creates issu
               success: false,
               error: {
                 code: error.code || 'CREATE_WORKFLOW_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 workflow_guidance: 'Ensure unique naming, proper permissions, and valid workflow structure',
@@ -530,6 +532,7 @@ CRITICAL: Must have at least one INITIAL transition (from: []) that creates issu
       annotations: {
         readOnlyHint: true,
         destructiveHint: false,
+        openWorldHint: false,
       },
     },
     async (params) => {
@@ -594,7 +597,7 @@ CRITICAL: Must have at least one INITIAL transition (from: []) that creates issu
               success: false,
               error: {
                 code: error.code || 'GET_WORKFLOW_SCHEMES_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 workflow_guidance: nextSteps.length > 0 ? 'Workflow schemes organize workflows for project configuration' : undefined,
@@ -683,7 +686,7 @@ CRITICAL: Must have at least one INITIAL transition (from: []) that creates issu
               success: false,
               error: {
                 code: error.code || 'DELETE_WORKFLOW_ERROR',
-                message: error.message,
+                message: sanitizeErrorMessage(error.message),
                 suggestion: enhancedSuggestion,
                 next_steps: nextSteps.length > 0 ? nextSteps : undefined,
                 related_tools: ['get_workflows', 'get_workflow_schemes_detailed'],
