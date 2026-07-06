@@ -50,6 +50,16 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    networks:
+      - mcp-internal
+      - mcp-egress
+    mem_limit: 512m
+    cpus: 0.5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
 
   # Jira Workflows MCP Server
   jira-workflows:
@@ -78,6 +88,16 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    networks:
+      - mcp-internal
+      - mcp-egress
+    mem_limit: 512m
+    cpus: 0.5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
 
   # Jira Fields & Permissions MCP Server
   jira-fields-permissions:
@@ -104,6 +124,16 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    networks:
+      - mcp-internal
+      - mcp-egress
+    mem_limit: 512m
+    cpus: 0.5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
 
   # Jira Service Desk MCP Server
   jira-service-desk:
@@ -130,6 +160,16 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    networks:
+      - mcp-internal
+      - mcp-egress
+    mem_limit: 512m
+    cpus: 0.5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
 
   # Jira Organization MCP Server
   jira-organization:
@@ -158,6 +198,16 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    networks:
+      - mcp-internal
+      - mcp-egress
+    mem_limit: 512m
+    cpus: 0.5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
 
   # Jira System Admin MCP Server
   jira-system-admin:
@@ -186,6 +236,16 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    networks:
+      - mcp-internal
+      - mcp-egress
+    mem_limit: 512m
+    cpus: 0.5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
 
   # Jira Product Discovery MCP Server
   jira-product-discovery:
@@ -212,6 +272,16 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    networks:
+      - mcp-internal
+      - mcp-egress
+    mem_limit: 512m
+    cpus: 0.5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
 
   # Confluence MCP Server
   confluence:
@@ -238,3 +308,23 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    networks:
+      - mcp-internal
+      - mcp-egress
+    mem_limit: 512m
+    cpus: 0.5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+
+networks:
+  # Isolated network for inter-container traffic (no external egress).
+  mcp-internal:
+    name: mcp-internal
+    internal: true
+  # Bridge network providing outbound access to the Atlassian Cloud API.
+  mcp-egress:
+    name: mcp-egress
+    driver: bridge
