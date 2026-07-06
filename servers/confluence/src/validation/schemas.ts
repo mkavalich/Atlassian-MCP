@@ -150,20 +150,20 @@ export const getSpaceContentSchema = paginationSchema.extend({
 }).strict();
 
 export const getSpaceSettingsSchema = z.object({
-  spaceKey: z.string().min(1).max(255).regex(/^[\w.\-:]+$/, 'invalid key'),
+  spaceKey: z.string().min(1).max(255).regex(/^~?[\w.\-:]+$/, 'invalid key'),
 }).strict();
 
 export const updateSpaceSettingsSchema = z.object({
-  spaceKey: z.string().min(1).max(255).regex(/^[\w.\-:]+$/, 'invalid key'),
+  spaceKey: z.string().min(1).max(255).regex(/^~?[\w.\-:]+$/, 'invalid key'),
   routeOverrideEnabled: z.boolean().optional(),
 }).strict();
 
 export const getSpaceThemeSchema = z.object({
-  spaceKey: z.string().min(1).max(255).regex(/^[\w.\-:]+$/, 'invalid key'),
+  spaceKey: z.string().min(1).max(255).regex(/^~?[\w.\-:]+$/, 'invalid key'),
 }).strict();
 
 export const setSpaceThemeSchema = z.object({
-  spaceKey: z.string().min(1).max(255).regex(/^[\w.\-:]+$/, 'invalid key'),
+  spaceKey: z.string().min(1).max(255).regex(/^~?[\w.\-:]+$/, 'invalid key'),
   themeKey: z.string().max(255),
 }).strict();
 
@@ -189,7 +189,7 @@ export const removeSpacePermissionSchema = z.object({
 }).strict();
 
 export const getSpacePermissionUsersSchema = paginationSchema.extend({
-  spaceKey: z.string().min(1).max(255).regex(/^[\w.\-:]+$/, 'invalid key'),
+  spaceKey: z.string().min(1).max(255).regex(/^~?[\w.\-:]+$/, 'invalid key'),
   permissionKey: z.string().min(1).max(255).regex(/^[\w.\-:]+$/, 'invalid key'),
 }).strict();
 
@@ -395,7 +395,7 @@ export const searchCqlSchema = paginationSchema.extend({
 
 export const searchContentSchema = paginationSchema.extend({
   query: z.string().min(1).max(10000),
-  spaceKey: z.string().regex(/^[A-Za-z0-9_]{1,255}$/).optional(),
+  spaceKey: z.string().regex(/^~?[A-Za-z0-9:._-]{1,255}$/).optional(),
   type: z.enum(['page', 'blogpost', 'attachment', 'comment']).optional(),
 }).strict();
 

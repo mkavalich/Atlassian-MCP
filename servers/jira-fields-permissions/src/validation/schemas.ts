@@ -225,7 +225,7 @@ export const createFilterSchema = z.object({
       name: z.string(),
     }).strict().optional().describe('Group details for group type permissions'),
     user: z.object({
-      accountId: z.string(),
+      accountId: z.string().max(255).regex(/^[a-zA-Z0-9:._-]+$/, 'invalid accountId'),
     }).strict().optional().describe('User details for user type permissions'),
   }).strict()).optional().describe('Share permissions for the filter'),
 }).strict();
@@ -473,7 +473,7 @@ export const createDashboardSchema = z.object({
       name: z.string(),
     }).strict().optional().describe('Group details for group type permissions'),
     user: z.object({
-      accountId: z.string(),
+      accountId: z.string().max(255).regex(/^[a-zA-Z0-9:._-]+$/, 'invalid accountId'),
     }).strict().optional().describe('User details for user type permissions'),
   }).strict()).optional().describe('Share permissions for the dashboard'),
 }).strict();
@@ -650,7 +650,7 @@ export const deleteScreenSchema = z.object({
 
 export const getScreenTabsSchema = z.object({
   screenId: z.string().describe('The ID of the screen'),
-  projectKey: z.string().optional().describe('The project key for context'),
+  projectKey: z.string().max(255).regex(/^[A-Za-z][A-Za-z0-9_]{1,255}$/, 'invalid project key').optional().describe('The project key for context'),
 }).strict();
 
 export const createScreenTabSchema = z.object({
@@ -672,7 +672,7 @@ export const deleteScreenTabSchema = z.object({
 export const getScreenTabFieldsSchema = z.object({
   screenId: z.string().describe('The ID of the screen'),
   tabId: z.string().describe('The ID of the tab'),
-  projectKey: z.string().optional().describe('The project key for context'),
+  projectKey: z.string().max(255).regex(/^[A-Za-z][A-Za-z0-9_]{1,255}$/, 'invalid project key').optional().describe('The project key for context'),
 }).strict();
 
 export const removeFieldFromScreenTabSchema = z.object({
@@ -718,7 +718,7 @@ export const updateDashboardSchema = z.object({
       name: z.string(),
     }).strict().optional().describe('Group details for group type permissions'),
     user: z.object({
-      accountId: z.string(),
+      accountId: z.string().max(255).regex(/^[a-zA-Z0-9:._-]+$/, 'invalid accountId'),
     }).strict().optional().describe('User details for user type permissions'),
   }).strict()).optional().describe('Share permissions for the dashboard'),
 }).strict();
@@ -742,7 +742,7 @@ export const copyDashboardSchema = z.object({
       name: z.string(),
     }).strict().optional().describe('Group details for group type permissions'),
     user: z.object({
-      accountId: z.string(),
+      accountId: z.string().max(255).regex(/^[a-zA-Z0-9:._-]+$/, 'invalid accountId'),
     }).strict().optional().describe('User details for user type permissions'),
   }).strict()).optional().describe('Share permissions for the new dashboard'),
 }).strict();
@@ -783,7 +783,7 @@ export const updateDashboardSharePermissionsSchema = z.object({
       name: z.string(),
     }).strict().optional().describe('Group details for group type permissions'),
     user: z.object({
-      accountId: z.string(),
+      accountId: z.string().max(255).regex(/^[a-zA-Z0-9:._-]+$/, 'invalid accountId'),
     }).strict().optional().describe('User details for user type permissions'),
   }).strict()).describe('The new share permissions for the dashboard'),
 }).strict();
@@ -795,7 +795,7 @@ export const getGlobalPermissionsSchema = z.object({
 }).strict();
 
 export const getMyPermissionsSchema = z.object({
-  projectKey: z.string().max(255).optional().describe('The project key to check permissions for'),
+  projectKey: z.string().regex(/^[A-Za-z][A-Za-z0-9_]{1,255}$/, 'invalid project key').max(255).optional().describe('The project key to check permissions for'),
   projectId: z.string().max(255).optional().describe('The project ID to check permissions for'),
   issueKey: z.string().max(255).optional().describe('The issue key to check permissions for'),
   issueId: z.string().max(255).optional().describe('The issue ID to check permissions for'),
@@ -804,8 +804,8 @@ export const getMyPermissionsSchema = z.object({
 }).strict();
 
 export const getUserPermissionsSchema = z.object({
-  accountId: z.string().describe('The account ID of the user to check permissions for'),
-  projectKey: z.string().optional().describe('The project key to check permissions for'),
+  accountId: z.string().max(255).regex(/^[a-zA-Z0-9:._-]+$/, 'invalid accountId').describe('The account ID of the user to check permissions for'),
+  projectKey: z.string().max(255).regex(/^[A-Za-z][A-Za-z0-9_]{1,255}$/, 'invalid project key').optional().describe('The project key to check permissions for'),
   projectId: z.string().optional().describe('The project ID to check permissions for'),
   issueKey: z.string().optional().describe('The issue key to check permissions for'),
   issueId: z.string().optional().describe('The issue ID to check permissions for'),
@@ -844,7 +844,7 @@ export const getPermissionSchemeUsersSchema = z.object({
 }).strict();
 
 export const getProjectPermissionsSchema = z.object({
-  projectKey: z.string().describe('The project key to get permissions for'),
+  projectKey: z.string().max(255).regex(/^[A-Za-z][A-Za-z0-9_]{1,255}$/, 'invalid project key').describe('The project key to get permissions for'),
   permissions: z.string().optional()
     .describe('Comma-separated list of permission keys to check'),
   expand: z.string().optional()
@@ -855,7 +855,7 @@ export const getProjectPermissionsSchema = z.object({
 export const searchUsersSchema = z.object({
   query: z.string().optional().describe('Search query for users (name, email, or username)'),
   username: z.string().optional().describe('Exact username to search for'),
-  accountId: z.string().optional().describe('Specific account ID to search for'),
+  accountId: z.string().max(255).regex(/^[a-zA-Z0-9:._-]+$/, 'invalid accountId').optional().describe('Specific account ID to search for'),
   startAt: z.number().optional().default(0).describe('The starting index for results'),
   maxResults: z.number().max(1000).optional().default(50)
     .describe('The maximum number of results to return'),
@@ -871,7 +871,7 @@ export const searchGroupsSchema = z.object({
 }).strict();
 
 export const getUserGroupsSchema = z.object({
-  accountId: z.string().describe('The account ID of the user'),
+  accountId: z.string().max(255).regex(/^[a-zA-Z0-9:._-]+$/, 'invalid accountId').describe('The account ID of the user'),
 }).strict();
 
 export const getApplicationRolesSchema = z.object({
@@ -923,7 +923,7 @@ export const getSystemWebhooksSchema = z.object({
 
 // Integration & Migration schemas
 export const exportProjectDataSchema = z.object({
-  projectKey: z.string().describe('The project key to export data for'),
+  projectKey: z.string().max(255).regex(/^[A-Za-z][A-Za-z0-9_]{1,255}$/, 'invalid project key').describe('The project key to export data for'),
   includeIssues: z.boolean().optional().default(true).describe('Include issues in export'),
   includeWorkflows: z.boolean().optional().default(true).describe('Include workflow configurations'),
   includePermissions: z.boolean().optional().default(true).describe('Include permission schemes'),
@@ -932,7 +932,7 @@ export const exportProjectDataSchema = z.object({
 }).strict();
 
 export const exportUserDataSchema = z.object({
-  accountId: z.string().describe('The account ID of the user to export data for'),
+  accountId: z.string().max(255).regex(/^[a-zA-Z0-9:._-]+$/, 'invalid accountId').describe('The account ID of the user to export data for'),
   includeGroups: z.boolean().optional().default(true).describe('Include user group memberships'),
   includePermissions: z.boolean().optional().default(true).describe('Include user permissions'),
   includeActivity: z.boolean().optional().default(false).describe('Include user activity and issue history'),
@@ -952,7 +952,7 @@ export const importProjectDataSchema = z.object({
 
 export const importUserDataSchema = z.object({
   userData: z.object({
-    accountId: z.string().describe('User account ID'),
+    accountId: z.string().max(255).regex(/^[a-zA-Z0-9:._-]+$/, 'invalid accountId').describe('User account ID'),
     emailAddress: z.string().email().describe('User email address'),
     displayName: z.string().describe('User display name'),
   }).strict().describe('User data to import'),
