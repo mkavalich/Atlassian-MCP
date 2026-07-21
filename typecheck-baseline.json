@@ -1,10 +1,10 @@
 {
   "_comment": "Per-workspace TypeScript error-count baseline. Only errorCount gates pass/fail; byCode and byFile are informational diff context. Regenerate with: npm run typecheck:baseline",
-  "generatedAtCommit": "59f2171dd365aa407216c26dbac5f8f303b9f9cb",
+  "generatedAtCommit": "a89abbaeda807028f5061f5ae34e3022784a9bc0",
   "invocation": "NODE_OPTIONS=--max-old-space-size=8192 node <repo>/node_modules/typescript/bin/tsc -p <config> --outDir <tmp> --declarationDir <tmp>",
   "countedAs": "lines matching /error TS\\d+:/ on stdout+stderr",
   "blindSpot": "Server workspaces are measured with their tsconfig.declarations.json, which sets strict:false / noImplicitAny:false / strictNullChecks:false. This gate is therefore structurally BLIND to the null/undefined defect class. See strictFlags per workspace.",
-  "total": 23,
+  "total": 21,
   "workspaces": {
     "packages/optimizations": {
       "config": "tsconfig.json",
@@ -50,19 +50,14 @@
     "servers/jira-fields-permissions": {
       "config": "tsconfig.declarations.json",
       "tscVersion": "5.9.3",
-      "errorCount": 2,
+      "errorCount": 0,
       "strictFlags": {
         "strict": false,
         "noImplicitAny": false,
         "strictNullChecks": false
       },
-      "byCode": {
-        "TS2339": 2
-      },
-      "byFile": {
-        "src/tools/field-contexts.ts": 1,
-        "src/tools/permissions.ts": 1
-      }
+      "byCode": {},
+      "byFile": {}
     },
     "servers/jira-organization": {
       "config": "tsconfig.declarations.json",
