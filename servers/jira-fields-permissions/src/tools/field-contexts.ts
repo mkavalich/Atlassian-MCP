@@ -52,8 +52,57 @@ export async function registerFieldContextTools(server: McpServer, apiClient: Ji
         });
 
         if (response.success && response.data) {
-          const contexts = response.data.values || response.data;
-          const count = contexts.length || 0;
+          // The API returns EITHER a bare array of contexts OR a paginated
+          // envelope { values, total, startAt, maxResults }. Resolve the union
+          // explicitly and handle both arms.
+          //
+          // The previous `response.data.values || response.data` was wrong in
+          // two ways. (a) When the envelope arrives WITHOUT `values`, the
+          // fallback handed back the envelope object, `.length` was undefined
+          // and `|| 0` reported `count: 0` -- an absent property rendered
+          // indistinguishable from a genuine empty list. (b) On the bare-array
+          // arm, `data.values` resolves to Array.prototype.values (the
+          // iterator METHOD, which is truthy), so `contexts` became a function
+          // with `.length === 0` that JSON.stringify drops entirely: the tool
+          // returned success:true, count:0 and no contexts at all while the
+          // API had returned rows. Array.isArray is therefore checked FIRST.
+          const raw: unknown = response.data;
+          let contexts: JiraCustomFieldContext[] | null = null;
+          if (Array.isArray(raw)) {
+            contexts = raw as JiraCustomFieldContext[];
+          } else if (
+            raw !== null &&
+            typeof raw === 'object' &&
+            Array.isArray((raw as { values?: unknown }).values)
+          ) {
+            contexts = (raw as { values: JiraCustomFieldContext[] }).values;
+          }
+
+          if (contexts === null) {
+            // Unknown is NOT zero. Fail loudly rather than fabricate a count.
+            const receivedKeys =
+              raw !== null && typeof raw === 'object' ? Object.keys(raw as object) : [];
+            return {
+              content: [{
+                type: 'text',
+                text: JSON.stringify({
+                  success: false,
+                  partialFailure: true,
+                  customFieldContexts: null,
+                  count: null,
+                  pagination: null,
+                  error: {
+                    code: 'GET_CUSTOM_FIELD_CONTEXTS_UNRECOGNIZED_SHAPE',
+                    message: `Jira returned a response for /field/${validatedParams.fieldId}/context that is neither an array of contexts nor an envelope with an array "values" property. The number of contexts is UNKNOWN and is NOT zero. Top-level keys received: ${receivedKeys.length > 0 ? receivedKeys.join(', ') : '(none)'}.`,
+                    suggestion: 'Retry the request. If this persists, the Jira API response shape has changed and this tool must be updated. Do not treat this result as an empty context list.',
+                  },
+                }, null, 2),
+              }],
+              isError: true,
+            };
+          }
+
+          const count = contexts.length;
 
           return {
             content: [{
