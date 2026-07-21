@@ -16,15 +16,25 @@
  * SCOPE
  * -----
  * Baseline half only. It does NOT make build.mjs fail on tsc error, and it does
- * NOT require any pre-existing error to be fixed. It fails on INCREASE only.
+ * NOT require any pre-existing error to be fixed. It fails on an INCREASE in a
+ * workspace's error count, and also on a NET-ZERO SWAP (same count, a different
+ * error code introduced) so a strictNullChecks error cannot ride in behind a
+ * removed benign one.
  *
- * KNOWN BLIND SPOT (disclosed, not hidden)
- * ----------------------------------------
- * Every server's tsconfig.declarations.json sets strict:false,
- * noImplicitAny:false, strictNullChecks:false. Under those settings tsc cannot
- * see the null/undefined defect class that produces fabricated zeros. The
- * effective flags are recorded per workspace in the baseline file so this
- * limitation is visible rather than implied.
+ * CONFIG (was: KNOWN BLIND SPOT)
+ * -----------------------------
+ * Workspaces are measured with their STRICT tsconfig.json (see pickConfig), not
+ * the lenient tsconfig.declarations.json that build.mjs emits with. The gate
+ * therefore SEES the null/undefined defect class (strictNullChecks) that
+ * produces fabricated zeros -- that is the whole point of the strict config. The
+ * effective strict flags are recorded per workspace in the baseline file. Any
+ * workspace whose full tsconfig opts out of strict would be blind there; confirm
+ * via strictFlags (all are strict:true today).
+ *
+ * Note: both npm scripts build packages/* first, because every server resolves
+ * @atlassian-mcp/optimizations and @atlassian-mcp/shared types from their emitted
+ * dist/*.d.ts. Without that, a clean checkout has no dist and every server import
+ * fails TS2307 -- an inflated count that is not a real regression.
  *
  * USAGE
  *   node scripts/typecheck-baseline.mjs --write   # record baseline
@@ -347,6 +357,24 @@ function checkBaseline() {
       );
     } else if (delta < 0) {
       decreases.push(`${ws}: ${prev.errorCount} -> ${cur.errorCount} (${delta})`);
+    } else {
+      // delta === 0. Same total is NOT the same errors. A net-zero swap --
+      // removing one benign error (e.g. TS6133 unused-var) while introducing one
+      // strictNullChecks error (TS2322/TS18048) in the same workspace -- keeps
+      // errorCount constant, and a count-only ratchet would pass it silently:
+      // the exact loud->quiet-wrong trade this gate exists to prevent. The
+      // per-code data is already in hand, so compare byCode at equal totals and
+      // fail if any code rose.
+      const rose = Object.entries(cur.byCode)
+        .filter(([c, n]) => n > (prev.byCode?.[c] || 0))
+        .map(([c, n]) => `${c} ${prev.byCode?.[c] || 0}->${n}`);
+      if (rose.length) {
+        problems.push(
+          `${ws}: NET-ZERO SWAP -- errorCount unchanged at ${cur.errorCount}, but a different error ` +
+            `code was introduced while another was removed. A new error must not hide behind a fixed one.` +
+            `\n      codes up: ${rose.join(', ')}\n      Re-baseline deliberately if this swap is intended.`
+        );
+      }
     }
   }
 
