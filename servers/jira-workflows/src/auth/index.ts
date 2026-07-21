@@ -28,22 +28,16 @@ export class AuthManager {
     }
   }
 
-  getAuthHeaders(useOrgAdmin = false): Record<string, string> {
+  getAuthHeaders(): Record<string, string> {
     // Validate config when authentication is actually needed
     this.validateConfig();
 
     if (this.config.type === 'basic') {
-      // Org admin endpoints (api.atlassian.com) use Bearer token authentication
-      // Regular Jira endpoints use Basic auth with email:apiToken
-      if (useOrgAdmin && this.config.orgAdminToken) {
-        return {
-          'Authorization': `Bearer ${this.config.orgAdminToken}`,
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-        };
-      }
-
-      // Regular Jira REST API uses Basic auth
+      // This server is site-scoped: every request it makes targets the tenant host, so Basic auth
+      // with email:apiToken is the only correct credential. There is deliberately NO org-admin
+      // Bearer branch here -- an admin.atlassian.com org token must not be attachable to a tenant
+      // request, and removing the parameter makes that structurally impossible rather than merely
+      // unreachable.
       const auth = Buffer.from(`${this.config.email}:${this.config.apiToken}`).toString('base64');
       return {
         'Authorization': `Basic ${auth}`,
@@ -63,10 +57,6 @@ export class AuthManager {
 
   getBaseUrl(): string {
     return this.config.baseUrl.replace(/\/$/, '');
-  }
-
-  hasOrgAdminToken(): boolean {
-    return Boolean(this.config.orgAdminToken);
   }
 
   async refreshOAuthToken(): Promise<void> {

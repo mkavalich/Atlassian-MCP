@@ -196,7 +196,7 @@ export class JiraApiClient {
       // /instance/ or /organization path silently attach a high-privilege org token to a tenant
       // request. jira-organization and jira-system-admin are the only servers that legitimately
       // use ATLASSIAN_ORG_ADMIN_TOKEN.
-      const authHeaders: Record<string, string> = this.authManager.getAuthHeaders(false);
+      const authHeaders: Record<string, string> = this.authManager.getAuthHeaders();
       
       const baseURL = `${this.authManager.getBaseUrl()}/rest/api/3`;
       
@@ -346,8 +346,9 @@ export class JiraApiClient {
       // IMPORTANT: Automation API only supports Basic Auth (email + API token)
       // According to Atlassian docs: https://support.atlassian.com/cloud-automation/docs/jira-cloud-automation-rest-api/
       // OAuth and Bearer tokens are NOT supported for Automation API
-      // Always use Basic auth regardless of orgAdminToken presence
-      const authHeaders = this.authManager.getAuthHeaders(false);
+      // Basic auth is the only scheme AuthManager can produce for this server, so this is
+      // enforced structurally rather than by convention.
+      const authHeaders = this.authManager.getAuthHeaders();
 
       // Use the global Atlassian API endpoint with cloud ID
       // Format: https://api.atlassian.com/automation/public/{product}/{cloudid}/rest/v1
