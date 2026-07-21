@@ -4,7 +4,6 @@ export interface AuthConfig {
   baseUrl: string;
   email?: string;
   apiToken?: string;
-  orgAdminToken?: string;
   clientId?: string;
   clientSecret?: string;
   accessToken?: string;

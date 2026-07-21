@@ -164,7 +164,7 @@ export class JiraApiClient {
     const startTime = Date.now();
 
     try {
-      const authHeaders = this.authManager.getAuthHeaders(false);
+      const authHeaders = this.authManager.getAuthHeaders();
       const baseURL = `${this.authManager.getBaseUrl()}/rest/api/3`;
 
       const axiosConfig: AxiosConfigWithMetadata = {
