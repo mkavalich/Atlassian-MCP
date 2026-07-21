@@ -225,7 +225,22 @@ function collectFieldNames(items: Record<string, unknown>[]): string[] {
       const type = typeof value;
       if (type === 'string' || type === 'number' || type === 'boolean') {
         names.add(key);
-      } else if (type === 'object' && !Array.isArray(value)) {
+      } else if (Array.isArray(value)) {
+        // An array value can never be selected as a scalar table column, so it
+        // is never in `fields` and, before this branch existed, matched neither
+        // the scalar nor the nested-object case below -- it was registered
+        // NOWHERE. It then vanished from the table AND from
+        // _formatterOmitted.columns, so a row with >=4 scalars produced an
+        // omitted-columns list of ONLY the scalars: the response affirmatively
+        // asserted nothing else was dropped while dropping an array column.
+        // Real cases: nonScalarScreenOperations (string[]) on a screen-scheme
+        // row, categories[].key, and expand:permissions.
+        //
+        // Additive and symmetric with the non-renderable-object branch below:
+        // this only adds a name to the dropped-columns disclosure. It never
+        // makes the array a rendered column and removes nothing from output.
+        names.add(key);
+      } else if (type === 'object') {
         const nested = value as Record<string, unknown>;
         const renderable =
           typeof nested.name === 'string' || typeof nested.key === 'string';

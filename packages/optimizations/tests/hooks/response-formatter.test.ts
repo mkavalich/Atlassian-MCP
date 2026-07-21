@@ -257,4 +257,21 @@ describe('identifier column selection and nested-object disclosure', () => {
     // response implied nothing had been omitted.
     expect(omitted.columns as string[]).toContain('schema');
   });
+
+  it('discloses an array-valued column rather than implying only scalars were dropped', async () => {
+    // An array value matched neither the scalar branch nor the nested-object
+    // branch, so it was registered nowhere. With >=4 scalars present the
+    // omitted-columns list already exists and named the dropped scalars, so the
+    // response affirmatively asserted nothing ELSE was dropped while dropping an
+    // array column. Real case: nonScalarScreenOperations (string[]) on a
+    // get_screen_schemes row; also categories[].key and expand:permissions.
+    const rows = [
+      { id: '1', name: 'Default', description: 'd1', screenAssignments: 'default=1', createdVia: 'api', nonScalarScreenOperations: ['create', 'edit'] },
+      { id: '10034', name: 'IHD', description: 'd2', screenAssignments: 'default=10034', createdVia: 'ui', nonScalarScreenOperations: ['view'] },
+    ];
+    const meta = metadataOf(await run({ success: true, screenSchemes: rows }));
+    const omitted = meta._formatterOmitted as Record<string, unknown>;
+
+    expect(omitted.columns as string[]).toContain('nonScalarScreenOperations');
+  });
 });
