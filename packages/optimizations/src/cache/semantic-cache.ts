@@ -42,6 +42,14 @@ export interface CacheMetrics {
   maxSize: number;
   /** Number of expired entries evicted */
   evictions: number;
+  /**
+   * Number of requests that could not be keyed and were therefore NOT cached.
+   *
+   * The failure mode of a fail-closed cache is silent slowness. This counter
+   * exists so a systematic keyability rejection is visible rather than
+   * masquerading as normal operation. In normal operation it should read 0.
+   */
+  uncacheableKeys: number;
 }
 
 /**
@@ -74,6 +82,7 @@ export class SemanticCache<T extends {}> {
   private hitCount = 0;
   private missCount = 0;
   private evictionCount = 0;
+  private uncacheableKeyCount = 0;
 
   constructor(options: SemanticCacheOptions = {}) {
     this.maxEntries = options.maxEntries ?? 500;
@@ -89,9 +98,18 @@ export class SemanticCache<T extends {}> {
 
   /**
    * Build a cache key from request configuration.
+   *
+   * Returns `null` when a key cannot be derived from the inputs, in which case
+   * the caller MUST bypass the cache entirely (no get, no set). `null` is
+   * falsy, so a naive `if (!key)` reader also fails safe.
    */
-  buildKey(config: CacheKeyConfig): string {
-    return buildCacheKey(config);
+  buildKey(config: CacheKeyConfig): string | null {
+    const key = buildCacheKey(config);
+    if (key === null) {
+      this.uncacheableKeyCount++;
+      this.log(`UNCACHEABLE KEY: ${config.method} ${config.path} (params not enumerable)`);
+    }
+    return key;
   }
 
   /**
@@ -186,6 +204,7 @@ export class SemanticCache<T extends {}> {
       size: this.cache.size,
       maxSize: this.maxEntries,
       evictions: this.evictionCount,
+      uncacheableKeys: this.uncacheableKeyCount,
     };
   }
 
@@ -196,6 +215,7 @@ export class SemanticCache<T extends {}> {
     this.hitCount = 0;
     this.missCount = 0;
     this.evictionCount = 0;
+    this.uncacheableKeyCount = 0;
   }
 
   /**
