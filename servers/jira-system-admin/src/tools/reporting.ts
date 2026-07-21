@@ -18,6 +18,76 @@ import { JiraFieldListItem } from '../types/index.js';
 import { logger } from '../utils/logger.js';
 import { sanitizeErrorMessage } from '../utils/errors.js';
 
+/** Page size for the /users/search walk. Deliberately below the documented ceiling. */
+const USERS_PAGE_SIZE = 200;
+/** Hard stop at 5,000 rows. Hitting it is reported, never silently accepted. */
+const USERS_MAX_PAGES = 25;
+
+export interface PaginatedUsers {
+  rows: any[];
+  /** True when the walk stopped at the page cap rather than at the end of the data. */
+  truncated: boolean;
+  /** True when a page failed mid-walk, so `rows` is an incomplete prefix. */
+  partialFailure: boolean;
+}
+
+/**
+ * Walk GET /rest/api/3/users/search to exhaustion.
+ *
+ * This endpoint returns a BARE JSON array: no total, no isLast, no Link header
+ * and no X-* pagination header. `startAt` is a row offset (verified: startAt=50
+ * returns 5 rows on a 55-account tenant, startAt=55 returns 0). A single
+ * request with maxResults:1000 therefore silently caps the enumeration on any
+ * instance larger than the ceiling, and there is no signal that it did.
+ *
+ * Termination is on an EMPTY page, not a short one. Treating a short page as
+ * the end would let a short-but-non-final page truncate the walk silently --
+ * the same defect class, authored by the repair.
+ *
+ * Returns null only when the FIRST page fails, which is "could not determine".
+ * A failure after the first page returns the prefix with partialFailure set, so
+ * an incomplete count can never be presented as a complete one.
+ */
+async function fetchAllUsers(
+  requestFn: (startAt: number) => Promise<any>
+): Promise<PaginatedUsers | null> {
+  const rows: any[] = [];
+
+  for (let page = 0; page < USERS_MAX_PAGES; page++) {
+    let response: any;
+    try {
+      response = await requestFn(page * USERS_PAGE_SIZE);
+    } catch (error: any) {
+      logger.warn('users/search walk failed mid-pagination', {
+        page,
+        rowsSoFar: rows.length,
+        error: error?.message,
+      });
+      if (page === 0) return null;
+      return { rows, truncated: false, partialFailure: true };
+    }
+
+    const pageRows = Array.isArray(response?.data) ? response.data : null;
+    if (pageRows === null) {
+      // A non-array body is not an empty result set.
+      if (page === 0) return null;
+      return { rows, truncated: false, partialFailure: true };
+    }
+
+    if (pageRows.length === 0) {
+      return { rows, truncated: false, partialFailure: false };
+    }
+
+    rows.push(...pageRows);
+  }
+
+  logger.warn('users/search walk hit the page cap', { cap: USERS_MAX_PAGES, rows: rows.length });
+  return { rows, truncated: true, partialFailure: true };
+}
+
+/** Exported for tests. */
+export const __usersPagination = { USERS_PAGE_SIZE, USERS_MAX_PAGES, fetchAllUsers };
+
 
 // Escapes a value interpolated inside a double-quoted JQL string literal so
 // injection characters (" and \) cannot break out of the quotes.
@@ -393,22 +463,22 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
               // which dragged this whole fallback into the catch below and produced an
               // error blaming /serverInfo, which was actually fine. Settled separately so
               // a user-count failure can no longer be misattributed to serverInfo.
-              const userCountRes = await Promise.allSettled([
+              const userPage = await fetchAllUsers((startAt) =>
                 apiClient.makeRequest<any>({
                   method: 'GET',
                   path: '/users/search',
-                  params: { maxResults: 1000 },
-                }),
-              ]);
-              const userRows = userCountRes[0].status === 'fulfilled' && Array.isArray(userCountRes[0].value.data)
-                ? userCountRes[0].value.data
-                : null;
+                  params: { startAt, maxResults: USERS_PAGE_SIZE },
+                })
+              );
+              const userRows = userPage ? userPage.rows : null;
               if (!userRows) {
                 logger.warn('License fallback: user count unavailable');
               }
 
               report.sections.license = {
                 source: 'fallback_serverinfo',
+                ...(userPage?.truncated ? { userCountTruncated: true } : {}),
+                ...(userPage?.partialFailure ? { partialFailure: true } : {}),
                 warning: 'License endpoint unavailable; using serverInfo fallback. This does NOT indicate a missing Organization Admin token -- /instance/license is a tenant endpoint that uses the ordinary site credential. Check that the account behind ATLASSIAN_API_TOKEN holds the Administer Jira global permission.',
                 data: {
                   version: serverInfoResponse.data?.version,
@@ -446,7 +516,13 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
           // real. Apps are excluded; they are not licensed human users.
           const [projectsRes, usersRes, issuesRes] = await Promise.allSettled([
             apiClient.makeRequest<any>({ method: 'GET', path: '/project' }),
-            apiClient.makeRequest<any>({ method: 'GET', path: '/users/search', params: { maxResults: 1000 } }),
+            fetchAllUsers((startAt) =>
+              apiClient.makeRequest<any>({
+                method: 'GET',
+                path: '/users/search',
+                params: { startAt, maxResults: USERS_PAGE_SIZE },
+              })
+            ),
             apiClient.makeRequest<any>({ method: 'POST', path: '/search/jql', data: { jql: 'created >= -30d', maxResults: 1 } }),
           ]);
 
@@ -460,9 +536,8 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
             logger.warn('Usage report: recent issue count unavailable', { error: issuesRes.reason?.message });
           }
 
-          const userRows = usersRes.status === 'fulfilled' && Array.isArray(usersRes.value.data)
-            ? usersRes.value.data
-            : null;
+          const userPage = usersRes.status === 'fulfilled' ? usersRes.value : null;
+          const userRows = userPage ? userPage.rows : null;
 
           // NOTE: Jira removed `total` from POST /search/jql, so recentIssues reads a
           // property that no longer exists on a successful response. That is a separate
@@ -480,9 +555,14 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
             activeUsers: userRows ? userRows.filter((u: any) => u.active && u.accountType !== 'app').length : null,
             appAccounts: userRows ? userRows.filter((u: any) => u.accountType === 'app').length : null,
             recentIssues,
+            // An enumeration that stopped early must never read as a complete
+            // count. Both flags surface when the /users/search walk hit its page
+            // cap or lost a page mid-walk.
+            ...(userPage?.truncated ? { userCountTruncated: true } : {}),
+            ...(userPage?.partialFailure ? { partialFailure: true } : {}),
             dataSources: {
               projects: projectsRes.status === 'fulfilled',
-              activeUsers: userRows !== null,
+              activeUsers: userRows !== null && !userPage?.partialFailure,
               recentIssues: issuesRes.status === 'fulfilled' && issuesRes.value.data?.total !== undefined,
             },
           };
@@ -619,13 +699,24 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
                 return {
                   projectKey: project.key,
                   projectName: project.name,
-                  issueCount: projectIssuesResponse.success ? projectIssuesResponse.data.total : 0,
+                  // null, never 0. A failed or unavailable count rendered as 0 is
+                  // indistinguishable from a project that genuinely has no issues.
+                  // The `?? null` also matters on the success branch: Jira removed
+                  // `total` from POST /search/jql, so `data.total` is undefined and
+                  // JSON.stringify would drop the key entirely rather than report
+                  // it as unknown. Restoring a real count here belongs to the
+                  // separate /search/jql workstream, which needs a naming decision
+                  // (approximate-count is named approximate); this change only
+                  // stops the fabricated zero.
+                  issueCount: projectIssuesResponse.success
+                    ? (projectIssuesResponse.data?.total ?? null)
+                    : null,
                 };
               } catch {
                 return {
                   projectKey: project.key,
                   projectName: project.name,
-                  issueCount: 0,
+                  issueCount: null,
                 };
               }
             })
@@ -771,16 +862,14 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
               // collapsed this fallback into the catch below, flipping overallStatus to
               // unhealthy over a broken helper call rather than a real license problem.
               // Settled separately, and reported as null rather than a confident 0.
-              const userCountRes = await Promise.allSettled([
+              const userPage = await fetchAllUsers((startAt) =>
                 apiClient.makeRequest<any>({
                   method: 'GET',
                   path: '/users/search',
-                  params: { maxResults: 1000 },
-                }),
-              ]);
-              const userRows = userCountRes[0].status === 'fulfilled' && Array.isArray(userCountRes[0].value.data)
-                ? userCountRes[0].value.data
-                : null;
+                  params: { startAt, maxResults: USERS_PAGE_SIZE },
+                })
+              );
+              const userRows = userPage ? userPage.rows : null;
               if (!userRows) {
                 logger.warn('License health check: user count unavailable');
               }
@@ -788,6 +877,8 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
               healthCheck.results.license = {
                 status: 'warning',
                 source: 'serverinfo_fallback',
+                ...(userPage?.truncated ? { userCountTruncated: true } : {}),
+                ...(userPage?.partialFailure ? { partialFailure: true } : {}),
                 message: 'License endpoint requires Organization Admin permissions',
                 data: {
                   version: serverInfoResponse.data?.version,
