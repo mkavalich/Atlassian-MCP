@@ -28,14 +28,18 @@ export class AuthManager {
     }
   }
 
-  getAuthHeaders(useOrgAdmin = false): Record<string, string> {
+  getAuthHeaders(): Record<string, string> {
     // Validate config when authentication is actually needed
     this.validateConfig();
 
     if (this.config.type === 'basic') {
-      // Use org admin token for system-level endpoints if available
-      const token = useOrgAdmin && this.config.orgAdminToken ? this.config.orgAdminToken : this.config.apiToken;
-      const auth = Buffer.from(`${this.config.email}:${token}`).toString('base64');
+      // Every credential this server sends is the TENANT credential (email:apiToken).
+      // Some requests legitimately target api.atlassian.com rather than the site host
+      // (see api/graphql-client.ts) -- that is the correct credential for that host in
+      // this design. There is deliberately NO org-admin branch: an admin.atlassian.com
+      // organization token must not be attachable to any request this server makes, and
+      // taking no parameter makes that structurally impossible rather than merely unused.
+      const auth = Buffer.from(`${this.config.email}:${this.config.apiToken}`).toString('base64');
       return {
         'Authorization': `Basic ${auth}`,
         'Accept': 'application/json',
@@ -54,10 +58,6 @@ export class AuthManager {
 
   getBaseUrl(): string {
     return this.config.baseUrl.replace(/\/$/, '');
-  }
-
-  hasOrgAdminToken(): boolean {
-    return Boolean(this.config.orgAdminToken);
   }
 
   async refreshOAuthToken(): Promise<void> {

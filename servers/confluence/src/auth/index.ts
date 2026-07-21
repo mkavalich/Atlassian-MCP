@@ -33,6 +33,11 @@ export class AuthManager {
     this.validateConfig();
 
     if (this.config.type === 'basic') {
+      // This server is site-scoped: every request it makes targets the tenant host, so
+      // Basic auth with email:apiToken is the only correct credential. There is
+      // deliberately NO org-admin branch here -- an admin.atlassian.com organization
+      // token must not be attachable to a tenant request, and getAuthHeaders takes no
+      // parameter that could select one.
       const auth = Buffer.from(`${this.config.email}:${this.config.apiToken}`).toString('base64');
       return {
         'Authorization': `Basic ${auth}`,
