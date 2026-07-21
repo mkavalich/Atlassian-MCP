@@ -189,4 +189,93 @@ describe('union shape guards (items 2 and 3)', () => {
       expect(payload.count).toBe(13);
     });
   });
+
+  // Pass B item 3c: two more count-of-primary-collection sites in this file,
+  // 300 lines below the item-3 fix. get_permission_grants returns an ARRAY
+  // envelope (verified live: 90 grants); get_global_permissions returns an
+  // OBJECT MAP (verified live: 66 entries), so the two need shape-specific
+  // resolution, not the same array narrowing.
+  describe('get_permission_grants (array envelope)', () => {
+    it('PROOF: envelope with NO permissions array must not report count 0', async () => {
+      mockApiClient.makeRequest.mockResolvedValue({ success: true, data: { expand: 'x' } } as any);
+
+      const tool = registeredTools.get('get_permission_grants');
+      const payload = parse(await tool.handler({ schemeId: '0' }));
+
+      expect(payload.success).toBe(false);
+      expect(payload.count).toBeNull();
+      expect(payload.count).not.toBe(0);
+      expect(payload.permissions).toBeNull();
+    });
+
+    it('PROOF: permissions present but not an array must not yield a string length', async () => {
+      mockApiClient.makeRequest.mockResolvedValue({ success: true, data: { permissions: 'nope' } } as any);
+
+      const tool = registeredTools.get('get_permission_grants');
+      const payload = parse(await tool.handler({ schemeId: '0' }));
+
+      expect(payload.success).toBe(false);
+      expect(payload.count).toBeNull();
+      expect(payload.count).not.toBe(4);
+    });
+
+    it('GUARD: a genuine empty grant list stays success true with count 0', async () => {
+      mockApiClient.makeRequest.mockResolvedValue({ success: true, data: { permissions: [] } } as any);
+
+      const tool = registeredTools.get('get_permission_grants');
+      const payload = parse(await tool.handler({ schemeId: '0' }));
+
+      expect(payload.success).toBe(true);
+      expect(payload.count).toBe(0);
+    });
+
+    it('GUARD: normal envelope of 90 grants counts correctly', async () => {
+      mockApiClient.makeRequest.mockResolvedValue({
+        success: true,
+        data: { permissions: new Array(90).fill(0).map((_, i) => ({ id: i })), expand: 'x' },
+      } as any);
+
+      const tool = registeredTools.get('get_permission_grants');
+      const payload = parse(await tool.handler({ schemeId: '0' }));
+
+      expect(payload.success).toBe(true);
+      expect(payload.count).toBe(90);
+    });
+  });
+
+  describe('get_global_permissions (object map)', () => {
+    const map66 = Object.fromEntries(new Array(66).fill(0).map((_, i) => [`PERM_${i}`, { key: `PERM_${i}` }]));
+
+    it('PROOF: response with NO permissions map must not report count 0', async () => {
+      mockApiClient.makeRequest.mockResolvedValue({ success: true, data: {} } as any);
+
+      const tool = registeredTools.get('get_global_permissions');
+      const payload = parse(await tool.handler({}));
+
+      expect(payload.success).toBe(false);
+      expect(payload.count).toBeNull();
+      expect(payload.count).not.toBe(0);
+      expect(payload.permissions).toBeNull();
+    });
+
+    it('GUARD: a genuine empty map stays success true with count 0', async () => {
+      mockApiClient.makeRequest.mockResolvedValue({ success: true, data: { permissions: {} } } as any);
+
+      const tool = registeredTools.get('get_global_permissions');
+      const payload = parse(await tool.handler({}));
+
+      expect(payload.success).toBe(true);
+      expect(payload.count).toBe(0);
+    });
+
+    it('GUARD: normal map of 66 permissions counts by key, not by absent .length', async () => {
+      mockApiClient.makeRequest.mockResolvedValue({ success: true, data: { permissions: map66 } } as any);
+
+      const tool = registeredTools.get('get_global_permissions');
+      const payload = parse(await tool.handler({}));
+
+      expect(payload.success).toBe(true);
+      expect(payload.count).toBe(66);
+    });
+  });
 });
