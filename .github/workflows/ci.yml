@@ -51,11 +51,14 @@ jobs:
           node-version: 20
       - run: npm ci
       # Fails if any workspace's STRICT (tsconfig.json) error count rises above
-      # the committed typecheck-baseline.json. Deliberately does NOT set
-      # SKIP_DECLARATIONS: the gate typechecks with --noEmit and is the only type
-      # signal in the pipeline, since build.mjs runs no tsc under SKIP_DECLARATIONS.
-      # If Linux and the baseline's Windows measurement ever disagree on a count,
-      # re-record with `npm run typecheck:baseline` on this runner and commit it.
+      # the committed typecheck-baseline.json (or a net-zero code swap occurs).
+      # typecheck:check builds packages/* first (servers resolve their types from
+      # the packages' emitted dist/*.d.ts; without it every server import is a
+      # false TS2307). It does NOT set SKIP_DECLARATIONS: the gate typechecks with
+      # --noEmit and is the only type signal, since build.mjs runs no tsc under it.
+      # The 78 baseline was measured on Windows; tsc is version-pinned via the
+      # lockfile and the gated count is path-separator-independent, but if this
+      # runner disagrees, re-record with `npm run typecheck:baseline` here and commit.
       - run: npm run typecheck:check
 
   mcp-validation:
