@@ -103,10 +103,15 @@ function resolveTsc(workspaceDir) {
 }
 
 function pickConfig(workspaceDir) {
-  // Mirrors build.mjs exactly.
-  if (existsSync(join(workspaceDir, 'tsconfig.declarations.json'))) return 'tsconfig.declarations.json';
+  // Prefer the STRICT tsconfig.json. The gate MUST see the null/undefined defect
+  // class (strictNullChecks) -- the fabricated-zero class this repo is being
+  // cured of. tsconfig.declarations.json sets strict:false and is structurally
+  // blind to it; it deliberately does NOT mirror build.mjs, which emits with the
+  // lenient config. The declarations config is only a fallback for a workspace
+  // that has no full tsconfig.json.
   if (existsSync(join(workspaceDir, 'tsconfig.json'))) return 'tsconfig.json';
-  throw new HardFail(`${workspaceDir} has neither tsconfig.declarations.json nor tsconfig.json`);
+  if (existsSync(join(workspaceDir, 'tsconfig.declarations.json'))) return 'tsconfig.declarations.json';
+  throw new HardFail(`${workspaceDir} has neither tsconfig.json nor tsconfig.declarations.json`);
 }
 
 /** Read the effective strict-family flags so the gate's blind spot is on record. */
@@ -138,10 +143,15 @@ function runTsc(workspaceRel, { inPlace = false } = {}) {
   const args = ['-p', config];
   let scratch = null;
   if (!inPlace) {
-    // Emit into a throwaway dir so dist/ is never touched by the gate.
-    // --noEmit is unusable: these configs set emitDeclarationOnly (TS5069).
-    scratch = mkdtempSync(join(tmpdir(), 'tscbase-'));
-    args.push('--outDir', scratch, '--declarationDir', scratch);
+    if (config === 'tsconfig.json') {
+      // A full tsconfig typechecks cleanly with --noEmit, writing nothing.
+      args.push('--noEmit');
+    } else {
+      // The declarations fallback sets emitDeclarationOnly, which forbids
+      // --noEmit (TS5069); emit into a throwaway dir so dist/ is never touched.
+      scratch = mkdtempSync(join(tmpdir(), 'tscbase-'));
+      args.push('--outDir', scratch, '--declarationDir', scratch);
+    }
   }
 
   const res = spawnSync(process.execPath, [bin, ...args], {
@@ -242,12 +252,17 @@ function writeBaseline() {
       'byCode and byFile are informational diff context. Regenerate with: npm run typecheck:baseline',
     generatedAtCommit: currentCommit(),
     invocation:
-      'NODE_OPTIONS=--max-old-space-size=8192 node <repo>/node_modules/typescript/bin/tsc -p <config> --outDir <tmp> --declarationDir <tmp>',
+      'NODE_OPTIONS=--max-old-space-size=8192 node <repo>/node_modules/typescript/bin/tsc -p <config> ' +
+      '--noEmit (full tsconfig.json) or --outDir <tmp> --declarationDir <tmp> (declarations fallback)',
     countedAs: 'lines matching /error TS\\d+:/ on stdout+stderr',
-    blindSpot:
-      "Server workspaces are measured with their tsconfig.declarations.json, which sets strict:false / " +
-      'noImplicitAny:false / strictNullChecks:false. This gate is therefore structurally BLIND to the ' +
-      'null/undefined defect class. See strictFlags per workspace.',
+    configPolicy:
+      'Workspaces are measured with their STRICT tsconfig.json (strict family enabled), NOT the lenient ' +
+      'tsconfig.declarations.json that build.mjs emits with. The gate therefore sees the null/undefined ' +
+      'defect class (strictNullChecks) -- the fabricated-zero class this repo is being cured of. Confirm ' +
+      'per workspace via strictFlags; any workspace still showing strict:false is a full-tsconfig that ' +
+      'opts out and remains blind there. NOTE: the Docker image and CI both build with ' +
+      'SKIP_DECLARATIONS=true and run NO tsc at all, so this gate is the only type signal in the pipeline ' +
+      'until it is wired into CI.',
     total,
     workspaces: Object.fromEntries(
       Object.entries(measured).sort(([a], [b]) => (a < b ? -1 : 1))
