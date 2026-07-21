@@ -246,7 +246,7 @@ export async function registerAutomationTools(server: McpServer, apiClient: Jira
     'get_automation_templates',
     {
       title: 'Get Automation Templates',
-      description: '🔍 DISCOVERY TOOL: Retrieves available automation rule templates that can be used as starting points for creating new rules. Templates provide pre-configured triggers, conditions, and actions for common automation scenarios.',
+      description: '🔍 DISCOVERY TOOL: Retrieves available automation rule templates that can be used as starting points for creating new rules. Templates provide pre-configured triggers, conditions, and actions for common automation scenarios. Cursor-paginated: pass `cursor` from the previous response\'s `nextCursor`; there is no numeric offset and `startAt` is rejected. Filter with `categories` using a category KEY such as "jira.rovo" (not a display name), one key per call; the older `category` parameter is rejected because the API ignores it and returns the full catalogue.',
       inputSchema: getAutomationTemplatesInputSchema,
       annotations: {
         readOnlyHint: true,
@@ -270,9 +270,15 @@ export async function registerAutomationTools(server: McpServer, apiClient: Jira
         }>({
           method: 'GET',
           path: '/template/search',
+          // `categories` (plural, the key form) is the only filter the API
+          // honours; `category` and `startAt` never reach here because the
+          // schema rejects them. Values are scalars only: an array would be
+          // serialised by axios as `categories[]=`, which the API silently
+          // ignores while still returning 200 and unfiltered rows.
           params: {
-            ...(validatedParams.category !== undefined ? { category: validatedParams.category } : {}),
+            ...(typeof validatedParams.categories === 'string' ? { categories: validatedParams.categories } : {}),
             ...(validatedParams.maxResults !== undefined ? { limit: validatedParams.maxResults } : {}),
+            ...(validatedParams.cursor !== undefined ? { cursor: validatedParams.cursor } : {}),
           },
         });
 
@@ -301,6 +307,7 @@ export async function registerAutomationTools(server: McpServer, apiClient: Jira
           }
 
           const links = response.data.links;
+          const filteredByCategory = typeof validatedParams.categories === 'string';
 
           return {
             content: [{
@@ -312,6 +319,30 @@ export async function registerAutomationTools(server: McpServer, apiClient: Jira
                 count: templates.length,
                 nextCursor: extractCursor(links?.next),
                 hasMore: Boolean(links?.next),
+                // An unrecognised category key and a recognised key with no
+                // templates BOTH return HTTP 200 with an empty data array
+                // (verified live). The tool cannot tell them apart, so it says
+                // so in a machine-readable field rather than letting count:0
+                // stand as a confident zero. null means "cannot be determined";
+                // true means a filter was applied and did match something.
+                ...(filteredByCategory
+                  ? {
+                      categoriesFilter: validatedParams.categories,
+                      categoryKeyRecognized: templates.length > 0 ? true : null,
+                      ...(templates.length === 0
+                        ? {
+                            usage_guidance:
+                              `The API returned no templates for categories="${validatedParams.categories}". ` +
+                              'This is AMBIGUOUS: an unrecognised category key and a valid key with no ' +
+                              'templates produce an identical empty response, so count 0 here does NOT ' +
+                              'establish that the category exists and is empty. Category keys look like ' +
+                              '"jira.rovo"; display names such as "Rovo AI Agents" are not accepted and ' +
+                              'also return empty. Call this tool without `categories` and read the ' +
+                              '`categories[].key` values on the returned templates to obtain valid keys.',
+                          }
+                        : {}),
+                    }
+                  : {}),
               }, null, 2),
             }],
           };

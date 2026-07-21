@@ -1236,11 +1236,87 @@ export const getAutomationRuleDetailsSchema = z.object({
   expand: z.string().max(10000).optional().describe('Comma-separated list of fields to expand (e.g., trigger,conditions,actions,executions)'),
 }).strict();
 
+/**
+ * get_automation_templates
+ *
+ * Two parameters were advertised and silently discarded or ignored.
+ *
+ * `startAt` was forwarded nowhere at all, and because it carried .default(0) it
+ * was ALWAYS defined after parse -- so a caller passing startAt:25 validated
+ * cleanly and the value simply vanished. Forwarding it instead would not help:
+ * the API ignores it too (verified live -- limit=5 and limit=5&startAt=25
+ * return byte-identical rows). /template/search is cursor-paginated with an
+ * opaque token, which cannot express an arbitrary offset. Honouring startAt is
+ * therefore impossible, and forwarding it would only move the same silent
+ * discard one layer down where it is harder to find. It is rejected instead,
+ * and `cursor` is offered as the working alternative.
+ *
+ * `category` (singular) WAS forwarded, and is inert: verified live, a real
+ * category key, a display name and pure nonsense all return the identical
+ * 281-template id list, byte-identical to an unfiltered walk and to a
+ * `bogusParam=1` control. The tool advertised a filter, got HTTP 200, and
+ * returned the entire catalogue as though it had been filtered.
+ *
+ * The API's real filter is `categories` (plural), matched on the category KEY.
+ * Verified live: categories=jsm.team-type.information-technology returns 39 of
+ * 281, exactly equal to the client-side match set.
+ *
+ * `categories` is a single string, NOT an array, deliberately. The API does
+ * support OR via repeated query params, but the shared axios instance sets no
+ * paramsSerializer, so axios v1 emits an array as `categories[]=a&categories[]=b`
+ * -- and the API SILENTLY IGNORES the bracket form, returning 200 with the
+ * unfiltered page (verified live: bracket 50 rows vs bare 39). Accepting an
+ * array here would produce confidently unfiltered results under success:true.
+ * Enabling it needs a paramsSerializer on a shared client method used by six
+ * tools, which is out of scope for this repair.
+ *
+ * The unsupported keys are RETAINED in this .strict() object rather than
+ * removed, so they can be rejected by NAME with a message that points at the
+ * working alternative. Removing them would emit a generic "unrecognized key"
+ * error, which was already learned to be unhelpful when get_automation_rules
+ * was fixed.
+ */
+const AUTOMATION_TEMPLATES_UNSUPPORTED = ['startAt', 'category'] as const;
+
 export const getAutomationTemplatesSchema = z.object({
-  category: z.string().max(10000).optional().describe('Filter by template category'),
-  startAt: z.number().min(0).optional().default(0).describe('The starting index for results'),
-  maxResults: z.number().min(1).max(100).optional().default(50).describe('The maximum number of results to return'),
-}).strict();
+  category: z.string().max(10000).optional().describe('NOT SUPPORTED - the API ignores it and returns the full catalogue. Use `categories` with a category key.'),
+  startAt: z.number().min(0).optional().describe('NOT SUPPORTED - /template/search is cursor-paginated and ignores offsets. Use `cursor`.'),
+  categories: z.union([z.string().max(255), z.array(z.string().max(255))]).optional()
+    .describe('Filter by a single category KEY (e.g. "jira.rovo"), not a display name. One key per call.'),
+  maxResults: z.number().min(1).max(100).optional().default(50).describe('Page size, sent to the API as `limit`.'),
+  cursor: z.string().max(10000).optional().describe('Opaque continuation token taken from `nextCursor` of a previous response.'),
+}).strict().superRefine((val, ctx) => {
+  const supplied = AUTOMATION_TEMPLATES_UNSUPPORTED.filter(
+    (k) => (val as Record<string, unknown>)[k] !== undefined
+  );
+  for (const key of supplied) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: [key],
+      message:
+        key === 'startAt'
+          ? 'startAt is not supported. /template/search uses opaque cursor pagination, ' +
+            'which cannot express an arbitrary offset, and the API ignores startAt when ' +
+            'sent. Page through results with `cursor`, using the `nextCursor` value from ' +
+            'the previous response.'
+          : 'category is not supported: the Automation API ignores it and returns the ' +
+            'full unfiltered catalogue, so honouring it would silently return every ' +
+            'template as though it had been filtered. Use `categories` instead, with a ' +
+            'category KEY such as "jira.rovo" (not a display name), one key per call.',
+    });
+  }
+  if (Array.isArray(val.categories)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['categories'],
+      message:
+        'categories must be a single category key, not an array. The API expresses OR ' +
+        'via repeated query parameters, but this client has no paramsSerializer and ' +
+        'axios emits arrays as `categories[]=`, which the API silently ignores -- ' +
+        'returning unfiltered results under HTTP 200. Issue one call per category key.',
+    });
+  }
+});
 
 export const getRuleExecutionsSchema = z.object({
   ruleId: z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id').describe('The ID of the automation rule'),
