@@ -335,7 +335,9 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
         // License Info - Use serverInfo as primary source, fallback for license endpoint
         if (validatedParams.reportType === 'full' || validatedParams.sections?.includes('license')) {
           try {
-            // Try the license endpoint first (requires organization admin permissions)
+            // /instance/license is a TENANT endpoint, served by makeRequest with the ordinary site
+            // credential. It does NOT require an organization admin token -- attaching one is
+            // precisely what used to make this call fail.
             const licenseResponse = await apiClient.makeRequest<any>({
               method: 'GET',
               path: '/instance/license',
@@ -363,7 +365,7 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
 
               report.sections.license = {
                 source: 'fallback_serverinfo',
-                warning: 'License endpoint requires Organization Admin permissions. Using serverInfo fallback.',
+                warning: 'License endpoint unavailable; using serverInfo fallback. This does NOT indicate a missing Organization Admin token -- /instance/license is a tenant endpoint that uses the ordinary site credential. Check that the account behind ATLASSIAN_API_TOKEN holds the Administer Jira global permission.',
                 data: {
                   version: serverInfoResponse.data?.version,
                   deploymentType: serverInfoResponse.data?.deploymentType,
