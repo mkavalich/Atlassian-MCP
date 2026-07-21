@@ -466,13 +466,17 @@ export async function registerIdentityProviderTools(server: McpServer, apiClient
           };
         }
 
+        // Query values belong in `params` (forwarded to axios), never in `path`.
+        // sanitizePath percent-encodes any segment containing '?', so an inline query
+        // string becomes part of the path and the request 404s.
+        // Must be a PLAIN OBJECT: the shared cache key is built from Object.keys(params),
+        // and a URLSearchParams exposes none, which would collapse every distinct query
+        // onto a single cache entry.
         const queryParams: Record<string, any> = { limit };
         if (cursor) queryParams.cursor = cursor;
+        if (directoryId) queryParams.directoryId = directoryId;
 
-        // Use directory-filtered users endpoint or general users endpoint
-        const path = directoryId
-          ? `/v1/orgs/${orgId}/directory/users?directoryId=${encodeURIComponent(directoryId)}`
-          : `/v1/orgs/${orgId}/directory/users`;
+        const path = `/v1/orgs/${orgId}/directory/users`;
 
         const response = await apiClient.makeOrganizationApiRequest<{
           data: Array<{

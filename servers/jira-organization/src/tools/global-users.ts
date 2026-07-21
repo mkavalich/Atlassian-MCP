@@ -449,24 +449,34 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
         const orgId = apiClient.getOrgId();
         const { accountId } = validated;
 
-        // Get Jira groups
+        // Get Jira groups.
+        // NOTE: makeRequest already sets baseURL to `${getBaseUrl()}/rest/api/3`, so the
+        // path here must be site-relative. Prefixing it with /rest/api/3 produced
+        // /rest/api/3/rest/api/3/user/groups, which 404s.
         let jiraGroups: any[] = [];
+        let jiraGroupsObserved = false;
         try {
           const jiraResponse = await apiClient.makeRequest<any>({
             method: 'GET',
-            path: `/rest/api/3/user/groups`,
+            path: '/user/groups',
             params: { accountId },
           });
 
           if (jiraResponse.success && jiraResponse.data) {
             jiraGroups = jiraResponse.data;
+            jiraGroupsObserved = true;
           }
-        } catch (jiraError) {
-          // Jira groups API may not be available
+        } catch (jiraError: any) {
+          // Do not silently present an unobserved source as an empty result: log it and
+          // let jiraGroupsObserved stay false so the response can say so explicitly.
+          logger.warn('Failed to retrieve Jira groups for user', {
+            error: jiraError?.message,
+          });
         }
 
         // If we have org ID, try to get organization-level groups
         let orgGroups: any[] = [];
+        let orgGroupsObserved = false;
         if (orgId) {
           try {
             // First find the user in the organization to get their directory groups
@@ -504,11 +514,14 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
 
                 if (groupsResponse.success && groupsResponse.data) {
                   orgGroups = groupsResponse.data.data || [];
+                  orgGroupsObserved = true;
                 }
               }
             }
-          } catch (orgError) {
-            // Organization API access may not be available
+          } catch (orgError: any) {
+            logger.warn('Failed to retrieve organization groups for user', {
+              error: orgError?.message,
+            });
           }
         }
 
@@ -530,10 +543,19 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
                 memberCount: g.attributes?.memberCount,
               })),
               summary: {
-                jiraGroupCount: jiraGroups.length,
-                orgGroupCount: orgGroups.length,
+                // A count is only reported when the source was actually observed.
+                // null means "could not be determined", which is materially different
+                // from 0 ("determined to be none") - conflating the two is what made
+                // this tool answer a confident zero for data that plainly existed.
+                jiraGroupCount: jiraGroupsObserved ? jiraGroups.length : null,
+                orgGroupCount: orgGroupsObserved ? orgGroups.length : null,
                 hasOrgAccess: Boolean(orgId),
               },
+              dataSources: {
+                jiraGroups: jiraGroupsObserved,
+                orgGroups: orgGroupsObserved,
+              },
+              partialFailure: !jiraGroupsObserved || (Boolean(orgId) && !orgGroupsObserved),
               orgId,
             }, null, 2),
           }],
@@ -586,13 +608,20 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
         let orgUserInfo: any = null;
         let jiraGroups: any[] = [];
         let actualAccountId = accountId;
+        // Track which sources were actually observed, so an unreachable source is never
+        // rendered as an affirmative claim about the user.
+        let jiraUserObserved = false;
+        let jiraGroupsObserved = false;
+        let orgUsersObserved = false;
 
-        // Get Jira user info
+        // Get Jira user info.
+        // NOTE: makeRequest's baseURL already ends in /rest/api/3; these paths are
+        // site-relative. Re-prefixing them yielded /rest/api/3/rest/api/3/... -> 404.
         if (email && !accountId) {
           try {
             const searchResponse = await apiClient.makeRequest<any>({
               method: 'GET',
-              path: '/rest/api/3/user/search',
+              path: '/user/search',
               params: { query: email },
             });
 
@@ -604,23 +633,28 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
                 jiraUserInfo = user;
                 actualAccountId = user.accountId;
               }
+              jiraUserObserved = true;
             }
-          } catch (searchError) {
-            // Search failed
+          } catch (searchError: any) {
+            // A swallowed failure here also leaves actualAccountId unset, which silently
+            // suppresses the group lookup below - one hidden error cascading into two
+            // empty sections. Log it and record that the source was never observed.
+            logger.warn('Jira user search failed', { error: searchError?.message });
           }
         } else if (accountId) {
           try {
             const userResponse = await apiClient.makeRequest<any>({
               method: 'GET',
-              path: '/rest/api/3/user',
+              path: '/user',
               params: { accountId },
             });
 
             if (userResponse.success && userResponse.data) {
               jiraUserInfo = userResponse.data;
+              jiraUserObserved = true;
             }
-          } catch (userError) {
-            // User not accessible
+          } catch (userError: any) {
+            logger.warn('Jira user lookup failed', { error: userError?.message });
           }
         }
 
@@ -629,15 +663,16 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
           try {
             const groupsResponse = await apiClient.makeRequest<any>({
               method: 'GET',
-              path: `/rest/api/3/user/groups`,
+              path: '/user/groups',
               params: { accountId: actualAccountId },
             });
 
             if (groupsResponse.success && groupsResponse.data) {
               jiraGroups = groupsResponse.data;
+              jiraGroupsObserved = true;
             }
-          } catch (groupsError) {
-            // Groups not accessible
+          } catch (groupsError: any) {
+            logger.warn('Jira group lookup failed', { error: groupsError?.message });
           }
         }
 
@@ -672,9 +707,10 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
                 u.email === email ||
                 u.email === jiraUserInfo?.emailAddress
               );
+              orgUsersObserved = true;
             }
-          } catch (orgError) {
-            // Organization API not accessible
+          } catch (orgError: any) {
+            logger.warn('Organization user lookup failed', { error: orgError?.message });
           }
         }
 
@@ -686,13 +722,17 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
             email: userEmail,
             displayName: jiraUserInfo?.displayName || orgUserInfo?.name,
             accountType: orgUserInfo?.account_type || jiraUserInfo?.accountType,
-            accountStatus: orgUserInfo?.account_status || (jiraUserInfo?.active ? 'active' : 'inactive'),
+            // 'inactive' is only claimed when a source actually reported on the account.
+            // Previously an unreachable API produced a confident 'inactive' for live users.
+            accountStatus: orgUserInfo?.account_status
+              ?? (jiraUserObserved ? (jiraUserInfo?.active ? 'active' : 'inactive') : null),
           },
           jiraAccess: {
-            hasJiraAccess: jiraUserInfo !== null,
+            // null = could not determine, false = determined to have no access.
+            hasJiraAccess: jiraUserObserved ? jiraUserInfo !== null : null,
             active: jiraUserInfo?.active,
             avatarUrl: jiraUserInfo?.avatarUrls?.['48x48'],
-            groupCount: jiraGroups.length,
+            groupCount: jiraGroupsObserved ? jiraGroups.length : null,
           },
           organizationAccess: orgUserInfo ? {
             hasOrgData: true,
@@ -707,11 +747,15 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
             lastActive: orgUserInfo.last_active,
           } : {
             hasOrgData: false,
-            note: orgId ? 'User not found in organization' : 'Organization ID not configured',
+            note: !orgId
+              ? 'Organization ID not configured'
+              : orgUsersObserved
+              ? 'User not found in organization'
+              : 'Organization user directory could not be reached - membership is unknown, not absent',
           },
           groups: {
             jiraGroups: jiraGroups.map((g: any) => g.name),
-            totalGroups: jiraGroups.length,
+            totalGroups: jiraGroupsObserved ? jiraGroups.length : null,
           },
           analysis: {
             isAzureADSynced: userEmail?.includes('@') && !userEmail?.endsWith('.atlassian.net'),
@@ -751,9 +795,15 @@ export async function registerGlobalUserTools(server: McpServer, apiClient: Jira
               success: true,
               analysis,
               dataSources: {
-                jiraApi: jiraUserInfo !== null,
-                organizationApi: orgUserInfo !== null,
+                // These report whether each source was successfully QUERIED, not whether
+                // it happened to contain the user. orgUserInfo comes from Array#find,
+                // which returns undefined on no-match - the old `orgUserInfo !== null`
+                // was therefore always true, so this flag contradicted hasOrgData.
+                jiraApi: jiraUserObserved,
+                jiraGroups: jiraGroupsObserved,
+                organizationApi: orgUsersObserved,
               },
+              partialFailure: !jiraUserObserved || !jiraGroupsObserved || (Boolean(orgId) && !orgUsersObserved),
               orgId,
             }, null, 2),
           }],
