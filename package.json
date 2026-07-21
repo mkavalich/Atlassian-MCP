@@ -14,6 +14,8 @@
     "build:all": "npm run build:packages && npm run build:servers",
     "test:all": "npm run test --workspaces --if-present",
     "clean:all": "npm run clean --workspaces --if-present",
+    "typecheck:baseline": "node scripts/typecheck-baseline.mjs --write",
+    "typecheck:check": "node scripts/typecheck-baseline.mjs --check",
     "generate:tool-catalog": "node scripts/generate-tool-catalog.js",
     "validate:skills": "node scripts/validate-skills.js",
     "validate:all": "npm run generate:tool-catalog && npm run validate:skills",

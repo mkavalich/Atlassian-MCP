@@ -1,0 +1,153 @@
+{
+  "_comment": "Per-workspace TypeScript error-count baseline. Only errorCount gates pass/fail; byCode and byFile are informational diff context. Regenerate with: npm run typecheck:baseline",
+  "generatedAtCommit": "59f2171dd365aa407216c26dbac5f8f303b9f9cb",
+  "invocation": "NODE_OPTIONS=--max-old-space-size=8192 node <repo>/node_modules/typescript/bin/tsc -p <config> --outDir <tmp> --declarationDir <tmp>",
+  "countedAs": "lines matching /error TS\\d+:/ on stdout+stderr",
+  "blindSpot": "Server workspaces are measured with their tsconfig.declarations.json, which sets strict:false / noImplicitAny:false / strictNullChecks:false. This gate is therefore structurally BLIND to the null/undefined defect class. See strictFlags per workspace.",
+  "total": 23,
+  "workspaces": {
+    "packages/optimizations": {
+      "config": "tsconfig.json",
+      "tscVersion": "5.9.3",
+      "errorCount": 0,
+      "strictFlags": {
+        "strict": true
+      },
+      "byCode": {},
+      "byFile": {}
+    },
+    "packages/shared": {
+      "config": "tsconfig.json",
+      "tscVersion": "5.9.3",
+      "errorCount": 0,
+      "strictFlags": {
+        "strict": true
+      },
+      "byCode": {},
+      "byFile": {}
+    },
+    "servers/confluence": {
+      "config": "tsconfig.declarations.json",
+      "tscVersion": "5.9.3",
+      "errorCount": 8,
+      "strictFlags": {
+        "strict": false,
+        "noImplicitAny": false,
+        "strictNullChecks": false
+      },
+      "byCode": {
+        "TS2300": 2,
+        "TS2353": 5,
+        "TS2459": 1
+      },
+      "byFile": {
+        "src/exports.ts": 3,
+        "src/tools/content.ts": 1,
+        "src/tools/pages.ts": 2,
+        "src/validation/tool-examples.ts": 2
+      }
+    },
+    "servers/jira-fields-permissions": {
+      "config": "tsconfig.declarations.json",
+      "tscVersion": "5.9.3",
+      "errorCount": 2,
+      "strictFlags": {
+        "strict": false,
+        "noImplicitAny": false,
+        "strictNullChecks": false
+      },
+      "byCode": {
+        "TS2339": 2
+      },
+      "byFile": {
+        "src/tools/field-contexts.ts": 1,
+        "src/tools/permissions.ts": 1
+      }
+    },
+    "servers/jira-organization": {
+      "config": "tsconfig.declarations.json",
+      "tscVersion": "5.9.3",
+      "errorCount": 0,
+      "strictFlags": {
+        "strict": false,
+        "noImplicitAny": false,
+        "strictNullChecks": false
+      },
+      "byCode": {},
+      "byFile": {}
+    },
+    "servers/jira-product-discovery": {
+      "config": "tsconfig.declarations.json",
+      "tscVersion": "5.9.3",
+      "errorCount": 0,
+      "strictFlags": {
+        "strict": false,
+        "noImplicitAny": false,
+        "strictNullChecks": false
+      },
+      "byCode": {},
+      "byFile": {}
+    },
+    "servers/jira-projects": {
+      "config": "tsconfig.declarations.json",
+      "tscVersion": "5.9.3",
+      "errorCount": 9,
+      "strictFlags": {
+        "strict": false,
+        "noImplicitAny": false,
+        "strictNullChecks": false
+      },
+      "byCode": {
+        "TS2353": 9
+      },
+      "byFile": {
+        "src/tools/agile.ts": 1,
+        "src/tools/issue-types.ts": 1,
+        "src/tools/issues.ts": 6,
+        "src/tools/reporting.ts": 1
+      }
+    },
+    "servers/jira-service-desk": {
+      "config": "tsconfig.declarations.json",
+      "tscVersion": "5.9.3",
+      "errorCount": 0,
+      "strictFlags": {
+        "strict": false,
+        "noImplicitAny": false,
+        "strictNullChecks": false
+      },
+      "byCode": {},
+      "byFile": {}
+    },
+    "servers/jira-system-admin": {
+      "config": "tsconfig.declarations.json",
+      "tscVersion": "5.9.3",
+      "errorCount": 0,
+      "strictFlags": {
+        "strict": false,
+        "noImplicitAny": false,
+        "strictNullChecks": false
+      },
+      "byCode": {},
+      "byFile": {}
+    },
+    "servers/jira-workflows": {
+      "config": "tsconfig.declarations.json",
+      "tscVersion": "5.9.3",
+      "errorCount": 4,
+      "strictFlags": {
+        "strict": false,
+        "noImplicitAny": false,
+        "strictNullChecks": false
+      },
+      "byCode": {
+        "TS2353": 4
+      },
+      "byFile": {
+        "src/tools/automation.ts": 2,
+        "src/tools/guided-workflows.ts": 1,
+        "src/tools/workflows.ts": 1
+      }
+    }
+  }
+}
