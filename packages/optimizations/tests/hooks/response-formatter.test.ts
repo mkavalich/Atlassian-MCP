@@ -202,3 +202,59 @@ describe('over-budget metadata', () => {
     }
   });
 });
+
+
+describe('identifier column selection and nested-object disclosure', () => {
+  /**
+   * A JiraProject-shaped row. `uuid` is declared optional on JiraProject in six
+   * servers and real rows carry id, key and uuid together, so projects are the
+   * regression surface for any change to identifier ranking.
+   */
+  const projectRows = [
+    { id: '10066', key: 'AM', name: 'Atlassian MCP', projectTypeKey: 'software', style: 'classic', isPrivate: false, entityId: 'e-1', uuid: 'aaaaaaaa-1111-2222-3333-444444444444' },
+    { id: '10364', key: 'DEMO', name: 'AI Toolkit Demo', projectTypeKey: 'service_desk', style: 'next-gen', isPrivate: false, entityId: 'e-2', uuid: 'bbbbbbbb-1111-2222-3333-444444444444' },
+    { id: '10331', key: 'DSMNT', name: 'Disinterment', projectTypeKey: 'service_desk', style: 'classic', isPrivate: true, entityId: 'e-3', uuid: 'cccccccc-1111-2222-3333-444444444444' },
+  ];
+
+  /** Automation rules are identified ONLY by uuid -- no id, no key. */
+  const ruleRows = [
+    { uuid: 'aaaa-1', name: 'Rule A', state: 'ENABLED', actorAccountId: 'acc-1', authorAccountId: 'acc-1', created: 1771337000000, updated: 1771337000001, description: 'first' },
+    { uuid: 'bbbb-2', name: 'Rule B', state: 'DISABLED', actorAccountId: 'acc-1', authorAccountId: 'acc-1', created: 1771337000002, updated: 1771337000003, description: 'second' },
+  ];
+
+  function headerOf(text: string): string[] {
+    const m = /\{([^}]*)\}:/.exec(text);
+    return m && m[1] ? m[1].split(',') : [];
+  }
+
+  it('surfaces uuid as the identifier when there is no id or key', async () => {
+    const text = await run({ success: true, rules: ruleRows });
+    // Without this, uuid sorts into the alphabetical remainder behind
+    // actorAccountId/authorAccountId and never survives the 4-column concise
+    // budget -- severing the get_automation_rule_details lookup chain.
+    expect(headerOf(text)).toContain('uuid');
+  });
+
+  it('does NOT displace a project column set by promoting uuid', async () => {
+    const text = await run({ success: true, projects: projectRows });
+    // Asserting the FULL column set, not merely that `id` still ranks first:
+    // an unconditional tier-1 uuid keeps id first while injecting a 36-char
+    // opaque column and evicting a useful one, so a first-position assertion
+    // would pass on the very regression it exists to catch.
+    expect(headerOf(text)).toEqual(['id', 'key', 'name', 'entityId']);
+  });
+
+  it('discloses a nested object that has no renderable name or key', async () => {
+    const fieldRows = [
+      { id: 'customfield_10001', name: 'Story Points', schema: { type: 'number', custom: 'com.x:float', customId: 10001 } },
+      { id: 'customfield_10002', name: 'Sprint', schema: { type: 'array', custom: 'com.x:sprint', customId: 10002 } },
+    ];
+    const meta = metadataOf(await run({ success: true, fields: fieldRows }));
+    const omitted = meta._formatterOmitted as Record<string, unknown>;
+
+    // `schema` carries the ONLY custom-field discriminator on /field/search.
+    // It was dropped from the table AND absent from the omitted list, so the
+    // response implied nothing had been omitted.
+    expect(omitted.columns as string[]).toContain('schema');
+  });
+});

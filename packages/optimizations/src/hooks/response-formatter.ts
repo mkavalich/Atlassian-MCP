@@ -87,6 +87,24 @@ function autoDetectFields(
 
   // Sort by priority tiers
   const sorted: string[] = [];
+
+  // `uuid` is an entity's primary key ONLY when there is no id/key to prefer.
+  // The Jira Automation API identifies rules solely by `uuid`, and with no tier
+  // placement it fell into the alphabetical remainder behind actorAccountId and
+  // authorAccountId -- so under the default `concise` format (4 columns) the
+  // identifier needed to call get_automation_rule_details never reached the
+  // caller, severing the discovery chain.
+  //
+  // This is deliberately CONDITIONAL. Adding 'uuid' to tier 1 unconditionally
+  // would inject a 36-character opaque column into every project listing in the
+  // fleet -- JiraProject declares an optional `uuid` in six servers, and real
+  // rows carry id, key and uuid together -- displacing a useful column inside
+  // the layer whose whole purpose is reducing tokens.
+  if (consistentFields.has('uuid') && !consistentFields.has('id') && !consistentFields.has('key')) {
+    sorted.push('uuid');
+    consistentFields.delete('uuid');
+  }
+
   for (const tier of FIELD_PRIORITY) {
     for (const field of tier) {
       if (consistentFields.has(field)) {
@@ -209,8 +227,22 @@ function collectFieldNames(items: Record<string, unknown>[]): string[] {
         names.add(key);
       } else if (type === 'object' && !Array.isArray(value)) {
         const nested = value as Record<string, unknown>;
+        const renderable =
+          typeof nested.name === 'string' || typeof nested.key === 'string';
         if (typeof nested.name === 'string') names.add(`${key}.name`);
         if (typeof nested.key === 'string') names.add(`${key}.key`);
+        // A nested object with no renderable .name/.key was registered nowhere,
+        // so it vanished from the table AND from _formatterOmitted.columns --
+        // the response asserted that nothing else was present. `schema` on a
+        // Jira field row is exactly this shape ({type, custom, customId}) and it
+        // carries the ONLY custom-field discriminator available on
+        // /field/search, so the formatter was deleting the evidence a caller
+        // would need to audit a custom/system classification while reporting no
+        // omission. Register the bare key so it is at least disclosed.
+        //
+        // Additive: this adds a name to an omitted-columns list. It does not
+        // make the object a rendered column and removes nothing from output.
+        if (!renderable) names.add(key);
       }
     }
   }

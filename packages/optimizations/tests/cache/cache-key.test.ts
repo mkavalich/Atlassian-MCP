@@ -150,3 +150,32 @@ describe('buildCacheKey scope discriminator', () => {
     expect(a).not.toBe(b);
   });
 });
+
+
+describe('documented "never throws" contract', () => {
+  /**
+   * KNOWN DEFECT, deliberately skipped so the baseline stays green.
+   *
+   * buildCacheKey's doc comment (src/cache/cache-key.ts: "This function never
+   * throws: it sits on the hot request path of eight servers") is a false
+   * confident claim. A params object carrying a throwing getter propagates the
+   * throw out of buildCacheKey and onto that hot path.
+   *
+   * This is NOT the confident-wrong-answer defect class the surrounding work
+   * targets -- it fails loudly rather than returning a plausible wrong key --
+   * so it is recorded here rather than repaired. The fix is a maintainer
+   * decision: either honour the contract (wrap the enumeration in try/catch and
+   * return null, consistent with the existing fail-closed behaviour) or correct
+   * the comment. Un-skip this test with whichever is chosen.
+   */
+  it.skip('does not throw when a params getter throws', () => {
+    const evil = { get boom(): string { throw new Error('nope'); } };
+    let threw = false;
+    try {
+      buildCacheKey({ method: 'GET', path: '/p', params: evil as any });
+    } catch {
+      threw = true;
+    }
+    expect(threw).toBe(false);
+  });
+});
