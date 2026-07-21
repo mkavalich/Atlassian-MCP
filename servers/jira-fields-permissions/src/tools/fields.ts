@@ -34,29 +34,39 @@ export async function registerFieldTools(server: McpServer, apiClient: JiraApiCl
       try {
         const validatedParams = getFieldsPaginatedSchema.parse(params);
 
-        // Build query parameters
-        const queryParams = new URLSearchParams();
+        // Build query parameters as a plain object and let axios serialize them.
+        // These MUST NOT be concatenated into `path`: makeRequest runs the path
+        // through sanitizePath, which percent-encodes any segment containing '?',
+        // '=' or '&', producing /field/search%3FstartAt%3D0 -- a path Jira routes
+        // as /field/{fieldId}, which has no GET handler and returns HTTP 405.
+        // A plain object (not URLSearchParams) is also required by the shared
+        // response cache, whose key normalizer enumerates params with Object.keys;
+        // a URLSearchParams exposes no own enumerable keys, so every distinct
+        // query would collapse onto one cache entry and serve another query's rows.
+        const queryParams: Record<string, string | number | string[]> = {};
 
         if (validatedParams.query) {
-          queryParams.append('query', validatedParams.query);
+          queryParams.query = validatedParams.query;
         }
 
         if (validatedParams.type && validatedParams.type.length > 0) {
-          validatedParams.type.forEach(type => {
-            queryParams.append('type', type);
-          });
+          // `type` is z.enum(['custom','system']), so a single value serializes as
+          // type=custom and the only multi-value case is both, which is equivalent
+          // to omitting the filter.
+          queryParams.type =
+            validatedParams.type.length === 1 ? validatedParams.type[0]! : validatedParams.type;
         }
 
         if (validatedParams.orderBy) {
-          queryParams.append('orderBy', validatedParams.orderBy);
+          queryParams.orderBy = validatedParams.orderBy;
         }
 
         if (validatedParams.expand) {
-          queryParams.append('expand', validatedParams.expand);
+          queryParams.expand = validatedParams.expand;
         }
 
-        queryParams.append('startAt', validatedParams.startAt.toString());
-        queryParams.append('maxResults', validatedParams.maxResults.toString());
+        queryParams.startAt = validatedParams.startAt;
+        queryParams.maxResults = validatedParams.maxResults;
 
         const response = await apiClient.makeRequest<{
           startAt: number;
@@ -65,7 +75,8 @@ export async function registerFieldTools(server: McpServer, apiClient: JiraApiCl
           values: JiraField[];
         }>({
           method: 'GET',
-          path: `/field/search?${queryParams.toString()}`,
+          path: '/field/search',
+          params: queryParams,
         });
 
         if (response.success && response.data) {
