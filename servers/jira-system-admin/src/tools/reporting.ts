@@ -40,9 +40,18 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
         const validatedParams = exportProjectDataSchema.parse(params);
 
         // Get project data
+        // Query values belong in `params` (forwarded to axios), never in `path`.
+        // sanitizePath percent-encodes any path segment containing '?', so an inline
+        // query string became part of the path and the request 404'd.
+        // `params` must be a PLAIN OBJECT: the shared cache key is built from
+        // Object.keys(params), which is empty for a URLSearchParams, so using one would
+        // collapse every distinct query onto a single cache entry.
         const projectResponse = await apiClient.makeRequest<any>({
           method: 'GET',
-          path: `/project/${encodeURIComponent(validatedParams.projectKey)}?expand=description,lead,url,projectKeys,permissions,issueTypes,issueTypeHierarchy`,
+          path: `/project/${encodeURIComponent(validatedParams.projectKey)}`,
+          params: {
+            expand: 'description,lead,url,projectKeys,permissions,issueTypes,issueTypeHierarchy',
+          },
         });
 
         if (!projectResponse.success) {
@@ -181,9 +190,16 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
         const validatedParams = exportUserDataSchema.parse(params);
 
         // Get user data
+        // Query values go in `params` as a plain object - see the note in
+        // export_project_data above for why an inline query string 404s and why a
+        // URLSearchParams must not be used here.
         const userResponse = await apiClient.makeRequest<any>({
           method: 'GET',
-          path: `/user?accountId=${encodeURIComponent(validatedParams.accountId)}&expand=groups,applicationRoles`,
+          path: '/user',
+          params: {
+            accountId: validatedParams.accountId,
+            expand: 'groups,applicationRoles',
+          },
         });
 
         if (!userResponse.success) {
@@ -204,7 +220,8 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
         if (validatedParams.includeGroups) {
           const groupsResponse = await apiClient.makeRequest<any>({
             method: 'GET',
-            path: `/user/groups?accountId=${encodeURIComponent(validatedParams.accountId)}`,
+            path: '/user/groups',
+            params: { accountId: validatedParams.accountId },
           });
 
           if (groupsResponse.success) {
@@ -220,12 +237,15 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
             // Get user's group memberships which determine permissions
             const groupsResponse = await apiClient.makeRequest<any>({
               method: 'GET',
-              path: `/user/groups?accountId=${encodeURIComponent(validatedParams.accountId)}`,
+              path: '/user/groups',
+              params: { accountId: validatedParams.accountId },
             });
 
             exportData.permissions = {
               note: 'Jira Cloud API does not support per-user permission enumeration',
               source: 'group_memberships',
+              // `groupsRetrieved` distinguishes "no groups" from "groups not read".
+              groupsRetrieved: Boolean(groupsResponse.success),
               groups: groupsResponse.success ? groupsResponse.data : [],
               guidance: 'User permissions are determined by group memberships and project roles. Use jira-fields-permissions server for permission scheme analysis.',
             };
@@ -357,11 +377,24 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
                 path: '/serverInfo',
               });
 
-              // Get user count as license usage indicator
-              const userCountResponse = await apiClient.makeRequest<any>({
-                method: 'GET',
-                path: '/user/picker?maxResults=1',
-              });
+              // Get user count as license usage indicator.
+              // Previously '/user/picker?maxResults=1': the inline query string 404'd,
+              // which dragged this whole fallback into the catch below and produced an
+              // error blaming /serverInfo, which was actually fine. Settled separately so
+              // a user-count failure can no longer be misattributed to serverInfo.
+              const userCountRes = await Promise.allSettled([
+                apiClient.makeRequest<any>({
+                  method: 'GET',
+                  path: '/users/search',
+                  params: { maxResults: 1000 },
+                }),
+              ]);
+              const userRows = userCountRes[0].status === 'fulfilled' && Array.isArray(userCountRes[0].value.data)
+                ? userCountRes[0].value.data
+                : null;
+              if (!userRows) {
+                logger.warn('License fallback: user count unavailable');
+              }
 
               report.sections.license = {
                 source: 'fallback_serverinfo',
@@ -371,7 +404,9 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
                   deploymentType: serverInfoResponse.data?.deploymentType,
                   serverTitle: serverInfoResponse.data?.serverTitle,
                   buildNumber: serverInfoResponse.data?.buildNumber,
-                  userCount: userCountResponse.data?.total || 'Unknown',
+                  userCount: userRows
+                    ? userRows.filter((u: any) => u.active && u.accountType !== 'app').length
+                    : 'Unknown',
                 },
                 authError: {
                   endpoint: '/instance/license',
@@ -393,17 +428,52 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
         // Usage Statistics
         if (validatedParams.reportType === 'full' || validatedParams.sections?.includes('usage')) {
           // Use new /search/jql endpoint (old /search deprecated Aug 2025)
+          // activeUsers previously came from `/user/picker?maxResults=1`. That was wrong
+          // twice over: the inline query string made the path 404, and /user/picker's
+          // `total` counts users MATCHING the query, not users on the instance - with an
+          // empty query it answers 0. /users/search enumerates accounts, so the count is
+          // real. Apps are excluded; they are not licensed human users.
           const [projectsRes, usersRes, issuesRes] = await Promise.allSettled([
             apiClient.makeRequest<any>({ method: 'GET', path: '/project' }),
-            apiClient.makeRequest<any>({ method: 'GET', path: '/user/picker?maxResults=1' }),
+            apiClient.makeRequest<any>({ method: 'GET', path: '/users/search', params: { maxResults: 1000 } }),
             apiClient.makeRequest<any>({ method: 'POST', path: '/search/jql', data: { jql: 'created >= -30d', maxResults: 1 } }),
           ]);
 
+          if (projectsRes.status === 'rejected') {
+            logger.warn('Usage report: project count unavailable', { error: projectsRes.reason?.message });
+          }
+          if (usersRes.status === 'rejected') {
+            logger.warn('Usage report: user count unavailable', { error: usersRes.reason?.message });
+          }
+          if (issuesRes.status === 'rejected') {
+            logger.warn('Usage report: recent issue count unavailable', { error: issuesRes.reason?.message });
+          }
+
+          const userRows = usersRes.status === 'fulfilled' && Array.isArray(usersRes.value.data)
+            ? usersRes.value.data
+            : null;
+
+          // NOTE: Jira removed `total` from POST /search/jql, so recentIssues reads a
+          // property that no longer exists on a successful response. That is a separate
+          // defect class (not a malformed URL) and is deliberately left for its own
+          // change; it is reported rather than silently patched here.
+          const recentIssues = issuesRes.status === 'fulfilled'
+            ? (issuesRes.value.data?.total ?? null)
+            : null;
+
+          // null means "could not determine", never 0. A rejected request that reports 0
+          // is indistinguishable from a genuine zero, which is the whole bug being fixed.
           report.sections.usage = {
             projects: projectsRes.status === 'fulfilled' ?
-              (Array.isArray(projectsRes.value.data) ? projectsRes.value.data.length : projectsRes.value.data?.total || 0) : 0,
-            activeUsers: usersRes.status === 'fulfilled' ? usersRes.value.data?.total || 0 : 0,
-            recentIssues: issuesRes.status === 'fulfilled' ? issuesRes.value.data?.total || 0 : 0,
+              (Array.isArray(projectsRes.value.data) ? projectsRes.value.data.length : projectsRes.value.data?.total ?? null) : null,
+            activeUsers: userRows ? userRows.filter((u: any) => u.active && u.accountType !== 'app').length : null,
+            appAccounts: userRows ? userRows.filter((u: any) => u.accountType === 'app').length : null,
+            recentIssues,
+            dataSources: {
+              projects: projectsRes.status === 'fulfilled',
+              activeUsers: userRows !== null,
+              recentIssues: issuesRes.status === 'fulfilled' && issuesRes.value.data?.total !== undefined,
+            },
           };
         }
 
@@ -686,10 +756,23 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
                 path: '/serverInfo',
               });
 
-              const userCountResponse = await apiClient.makeRequest<any>({
-                method: 'GET',
-                path: '/user/picker?maxResults=1',
-              });
+              // Previously '/user/picker?maxResults=1': the inline query string 404'd and
+              // collapsed this fallback into the catch below, flipping overallStatus to
+              // unhealthy over a broken helper call rather than a real license problem.
+              // Settled separately, and reported as null rather than a confident 0.
+              const userCountRes = await Promise.allSettled([
+                apiClient.makeRequest<any>({
+                  method: 'GET',
+                  path: '/users/search',
+                  params: { maxResults: 1000 },
+                }),
+              ]);
+              const userRows = userCountRes[0].status === 'fulfilled' && Array.isArray(userCountRes[0].value.data)
+                ? userCountRes[0].value.data
+                : null;
+              if (!userRows) {
+                logger.warn('License health check: user count unavailable');
+              }
 
               healthCheck.results.license = {
                 status: 'warning',
@@ -698,7 +781,9 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
                 data: {
                   version: serverInfoResponse.data?.version,
                   deploymentType: serverInfoResponse.data?.deploymentType,
-                  userCount: userCountResponse.data?.total || 0,
+                  userCount: userRows
+                    ? userRows.filter((u: any) => u.active && u.accountType !== 'app').length
+                    : null,
                 },
                 authIssue: {
                   endpoint: '/instance/license',

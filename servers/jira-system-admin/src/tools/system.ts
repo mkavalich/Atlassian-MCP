@@ -469,7 +469,12 @@ export async function registerSystemTools(server: McpServer, apiClient: JiraApiC
 
         const response = await apiClient.makeRequest<any>({
           method: 'GET',
-          path: `/user/groups?accountId=${encodeURIComponent(validatedParams.accountId)}`,
+          // Query values go in `params` as a PLAIN OBJECT. sanitizePath percent-encodes
+          // any segment containing '?', so an inline query string became part of the
+          // path and returned 404. A URLSearchParams must not be used: the shared cache
+          // key enumerates Object.keys(params), which is empty for one.
+          path: '/user/groups',
+          params: { accountId: validatedParams.accountId },
         });
 
         if (response.success && response.data) {
