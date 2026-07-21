@@ -41,6 +41,23 @@ jobs:
       - run: npm run validate:all
         if: matrix.node-version == 20
 
+  typecheck:
+    name: Typecheck Gate (no strict-error increase)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      # Fails if any workspace's STRICT (tsconfig.json) error count rises above
+      # the committed typecheck-baseline.json. Deliberately does NOT set
+      # SKIP_DECLARATIONS: the gate typechecks with --noEmit and is the only type
+      # signal in the pipeline, since build.mjs runs no tsc under SKIP_DECLARATIONS.
+      # If Linux and the baseline's Windows measurement ever disagree on a count,
+      # re-record with `npm run typecheck:baseline` on this runner and commit it.
+      - run: npm run typecheck:check
+
   mcp-validation:
     name: MCP Validation
     runs-on: ubuntu-latest
