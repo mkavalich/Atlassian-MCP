@@ -160,23 +160,33 @@ describe('users/search bounded pagination', () => {
       return { data: [] };
     });
 
-    // Unfixed: one request, count capped at a single page.
+    // The walk advances by rows RECEIVED, so after the 55-row final page the
+    // next (empty) probe is at offset 455, not the stride-aligned 600. Under the
+    // old fixed-stride code this asserted [0, 200, 400, 600]; that passed only
+    // because this scenario's short page was the LAST one, so the stride skip
+    // lost nothing. The contiguous offsets are the correct characterization.
     expect(result!.rows.length).toBe(USERS_PAGE_SIZE * 2 + 55);
-    expect(starts).toEqual([0, 200, 400, 600]);
+    expect(starts).toEqual([0, 200, 400, 455]);
     expect(result!.truncated).toBe(false);
     expect(result!.partialFailure).toBe(false);
   });
 
   it('does not treat a short page as the end of the data', async () => {
-    // A short-but-non-final page must not terminate the walk: doing so would
-    // silently truncate the enumeration, which is the defect class itself.
+    // A short-but-non-final page must not terminate the walk, AND the walk must
+    // resume at a contiguous offset. The mock only has data at offsets 0 and 7;
+    // fixed-stride code would probe offset 200 after the 7-row page, get [], and
+    // stop at 7 rows -- skipping rows 7..9 silently while reporting truncated:false.
+    const starts: number[] = [];
     const result = await fetchAllUsers(async (startAt: number) => {
+      starts.push(startAt);
       if (startAt === 0) return { data: page(7) };
-      if (startAt === USERS_PAGE_SIZE) return { data: page(3) };
+      if (startAt === 7) return { data: page(3) };
       return { data: [] };
     });
 
     expect(result!.rows.length).toBe(10);
+    expect(starts).toEqual([0, 7, 10]);
+    expect(result!.truncated).toBe(false);
     expect(result!.partialFailure).toBe(false);
   });
 

@@ -56,7 +56,16 @@ async function fetchAllUsers(
   for (let page = 0; page < USERS_MAX_PAGES; page++) {
     let response: any;
     try {
-      response = await requestFn(page * USERS_PAGE_SIZE);
+      // Advance by rows ACTUALLY received, not by a fixed page stride. A fixed
+      // stride (page * USERS_PAGE_SIZE) assumes every non-final page is full.
+      // The docstring above deliberately keeps walking after a short page -- but
+      // a fixed stride would then resume at the wrong offset, skipping the rows
+      // between (offset + rowsReceived) and (offset + pageSize) that were never
+      // fetched, and the walk would still terminate on the later empty page and
+      // report truncated:false. That is a silent undercount: the exact defect
+      // class this repair exists to remove. rows.length is the count gathered so
+      // far, which is precisely the next offset on this row-offset endpoint.
+      response = await requestFn(rows.length);
     } catch (error: any) {
       logger.warn('users/search walk failed mid-pagination', {
         page,
