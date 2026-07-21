@@ -182,45 +182,15 @@ export class JiraApiClient {
     return isRequestTypeEndpoint && isExperimentalMethod;
   }
 
-  /**
-   * Determines if an endpoint requires organization admin permissions
-   * These endpoints need the JIRA_ORG_ADMIN_TOKEN for access
-   */
-  private requiresOrgAdminToken(path: string): boolean {
-    const orgAdminEndpoints = [
-      '/instance/license',     // License information
-      '/instance/billing',     // Billing information  
-      '/instance/',           // All instance-level endpoints
-      '/organization',         // Organization management
-      '/admin/organization',   // Organization administration
-      '/admin/billing',       // Admin billing endpoints
-      '/admin/instance',      // Admin instance endpoints
-    ];
-    
-    return orgAdminEndpoints.some(endpoint => path.startsWith(endpoint));
-  }
-
   async makeRequest<T>(config: RequestConfig): Promise<ApiResponse<T>> {
     const startTime = Date.now();
     
     try {
-      // Determine if this endpoint requires org admin token
-      const needsOrgAdmin = this.requiresOrgAdminToken(config.path);
-      
-      // Use appropriate token based on endpoint requirements
-      let authHeaders: Record<string, string>;
-      if (needsOrgAdmin) {
-        if (this.authManager.hasOrgAdminToken()) {
-          authHeaders = this.authManager.getAuthHeaders(true);
-        } else {
-          // For org admin endpoints without org admin token, still try with regular token
-          // but let the error handling provide clear feedback about missing permissions
-          authHeaders = this.authManager.getAuthHeaders(false);
-        }
-      } else {
-        // Regular endpoints always use regular token
-        authHeaders = this.authManager.getAuthHeaders(false);
-      }
+      // Every path this server addresses is tenant-scoped -- the baseURL below derives from
+      // getBaseUrl() -- so the site credential is the only correct one. The org-admin branch that
+      // used to sit here was constant-false over all 30 registered tool paths, but it pre-wired the
+      // wrong credential for whoever next added an /organization- or /instance-prefixed path.
+      const authHeaders = this.authManager.getAuthHeaders();
       
       const baseURL = `${this.authManager.getBaseUrl()}/rest/api/3`;
       
@@ -264,16 +234,8 @@ export class JiraApiClient {
     const startTime = Date.now();
     
     try {
-      // Determine if this Service Desk endpoint requires org admin token
-      const needsOrgAdmin = this.requiresOrgAdminToken(config.path);
-      
-      // Use appropriate token for Service Desk endpoints
-      let authHeaders: Record<string, string>;
-      if (needsOrgAdmin && this.authManager.hasOrgAdminToken()) {
-        authHeaders = this.authManager.getAuthHeaders(true);
-      } else {
-        authHeaders = this.authManager.getAuthHeaders(false);
-      }
+      // Same rule as makeRequest: this method targets ${siteUrl}/rest/servicedeskapi, the tenant.
+      const authHeaders = this.authManager.getAuthHeaders();
       
       const baseURL = `${this.authManager.getBaseUrl()}/rest/servicedeskapi`;
       
