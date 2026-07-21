@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { JiraApiClient } from '../../src/api/client.js';
-import { registerReportingTools } from '../../src/tools/reporting.js';
+import { registerReportingTools, __usersPagination } from '../../src/tools/reporting.js';
 
 // Mock the API client
 jest.mock('../../src/api/client.js');
@@ -134,5 +134,78 @@ describe('Reporting Tools - custom field truthfulness', () => {
       expect(payload.exportData.partialFailure).toBe(true);
       expect(payload.exportData.notes.join(' ')).toContain('projectmapping');
     });
+  });
+});
+
+/**
+ * /users/search pagination.
+ *
+ * CANNOT be validated against the live instance: it has 55 accounts and the
+ * previous single request asked for 1000, so the pagination path never executes
+ * there. Any "verified working" claim from live probing would exercise zero new
+ * code. These are mocked deliberately.
+ */
+describe('users/search bounded pagination', () => {
+  const { fetchAllUsers, USERS_PAGE_SIZE, USERS_MAX_PAGES } = __usersPagination;
+
+  const page = (n: number) => Array.from({ length: n }, (_, i) => ({ accountId: `a${i}`, active: true }));
+
+  it('walks every page and stops on the empty page', async () => {
+    const starts: number[] = [];
+    const result = await fetchAllUsers(async (startAt: number) => {
+      starts.push(startAt);
+      if (startAt === 0) return { data: page(USERS_PAGE_SIZE) };
+      if (startAt === USERS_PAGE_SIZE) return { data: page(USERS_PAGE_SIZE) };
+      if (startAt === USERS_PAGE_SIZE * 2) return { data: page(55) };
+      return { data: [] };
+    });
+
+    // Unfixed: one request, count capped at a single page.
+    expect(result!.rows.length).toBe(USERS_PAGE_SIZE * 2 + 55);
+    expect(starts).toEqual([0, 200, 400, 600]);
+    expect(result!.truncated).toBe(false);
+    expect(result!.partialFailure).toBe(false);
+  });
+
+  it('does not treat a short page as the end of the data', async () => {
+    // A short-but-non-final page must not terminate the walk: doing so would
+    // silently truncate the enumeration, which is the defect class itself.
+    const result = await fetchAllUsers(async (startAt: number) => {
+      if (startAt === 0) return { data: page(7) };
+      if (startAt === USERS_PAGE_SIZE) return { data: page(3) };
+      return { data: [] };
+    });
+
+    expect(result!.rows.length).toBe(10);
+    expect(result!.partialFailure).toBe(false);
+  });
+
+  it('flags truncation instead of stopping silently at the page cap', async () => {
+    const result = await fetchAllUsers(async () => ({ data: page(USERS_PAGE_SIZE) }));
+
+    expect(result!.truncated).toBe(true);
+    expect(result!.partialFailure).toBe(true);
+    expect(result!.rows.length).toBe(USERS_PAGE_SIZE * USERS_MAX_PAGES);
+  });
+
+  it('marks a mid-walk failure partial rather than returning a complete-looking prefix', async () => {
+    const result = await fetchAllUsers(async (startAt: number) => {
+      if (startAt === 0) return { data: page(USERS_PAGE_SIZE) };
+      throw new Error('boom');
+    });
+
+    // The prefix is returned, but never as a finished count.
+    expect(result!.rows.length).toBe(USERS_PAGE_SIZE);
+    expect(result!.partialFailure).toBe(true);
+  });
+
+  it('returns null - not an empty array - when the first page fails', async () => {
+    const result = await fetchAllUsers(async () => { throw new Error('boom'); });
+    expect(result).toBeNull();
+  });
+
+  it('returns null for a non-array body rather than reporting zero users', async () => {
+    const result = await fetchAllUsers(async () => ({ data: { notAnArray: true } }));
+    expect(result).toBeNull();
   });
 });
