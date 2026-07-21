@@ -46,13 +46,104 @@ import { JiraScreenScheme } from '../types/index.js';
 import { logger } from '../utils/logger.js';
 import { sanitizeErrorMessage } from '../utils/errors.js';
 
+/** Operations Jira defines on a screen scheme, in the order they are reported. */
+const SCREEN_SCHEME_OPERATIONS = ['default', 'create', 'edit', 'view'] as const;
+
+/**
+ * Projects a screen scheme's nested `screens` object onto row-level fields that
+ * survive table rendering.
+ *
+ * WHY: the API returns the scheme -> screen mapping as a NESTED OBJECT, e.g.
+ * {"default": 10140, "create": 10139}. The shared response formatter renders
+ * only scalars (plus `.name`/`.key` on nested objects) and merely discloses
+ * anything else in `_formatterOmitted.columns`. So the one fact this tool
+ * exists to convey -- which screens a scheme uses -- never reached the rendered
+ * table. The formatter is NOT changed: packages/optimizations is shared by all
+ * eight servers and renders 275 tools.
+ *
+ * WHY A SINGLE STRING COLUMN: per-operation scalars alone do not survive. The
+ * formatter's autoDetectFields samples only the first 3 rows and keeps a field
+ * only if it is non-null in ALL of them, then caps at 4 columns under the
+ * default `concise` format. On this instance 8 of 17 schemes carry `default`
+ * only, and the first rows returned are default-only, so createScreenId /
+ * editScreenId / viewScreenId would never reach column status and a reader
+ * would see an authoritative-looking table that silently omits create/edit/view
+ * for the 9 schemes that have them. `screenAssignments` is present on EVERY row
+ * and carries the complete mapping in one scalar, so the link survives.
+ *
+ * The per-operation ids are still provided, nested under `screenIds`, so
+ * programmatic callers get numbers rather than a string to parse. They are
+ * nested deliberately: as top-level scalars they would compete for -- and
+ * alphabetically win -- the last column slot, evicting the complete
+ * `screenAssignments` in favour of a partial answer.
+ *
+ * SEMANTICS, stated because the alternative is a plausible wrong reading:
+ * an operation absent from `screens` does NOT mean "no screen". Jira falls back
+ * to the scheme's `default` screen for any operation not explicitly set. That
+ * is why absent operations are reported as the string "-> default" rather than
+ * as 0 (a plausible real screen id) or as a bare null.
+ *
+ * Flattening is ADDITIVE: the raw `screens` object is preserved untouched.
+ */
+function flattenScreenScheme(scheme: JiraScreenScheme): Record<string, unknown> {
+  const row: Record<string, unknown> = { ...(scheme as unknown as Record<string, unknown>) };
+  const screens: unknown = (scheme as { screens?: unknown }).screens;
+
+  // `screens` absent or not an object is UNKNOWN, not "no screens assigned".
+  // Emitting a tidy "-> default" quartet here would assert a fallback that was
+  // never observed.
+  if (screens === null || screens === undefined || typeof screens !== 'object' || Array.isArray(screens)) {
+    row.screenAssignments = 'unknown (no `screens` object returned for this scheme)';
+    row.screenIds = null;
+    return row;
+  }
+
+  const entries = Object.entries(screens as Record<string, unknown>);
+  const ids: Record<string, unknown> = {};
+  const nonScalar: string[] = [];
+  const parts: string[] = [];
+
+  const ordered = [
+    ...SCREEN_SCHEME_OPERATIONS.filter((op) => op in (screens as object)),
+    ...entries.map(([k]) => k).filter((k) => !(SCREEN_SCHEME_OPERATIONS as readonly string[]).includes(k)),
+  ];
+
+  for (const op of ordered) {
+    const value = (screens as Record<string, unknown>)[op];
+    if (typeof value === 'number' || typeof value === 'string') {
+      ids[op] = value;
+      parts.push(`${op}=${value}`);
+    } else {
+      // Disclosed rather than dropped: a value we cannot render is not absence.
+      nonScalar.push(op);
+    }
+  }
+
+  for (const op of SCREEN_SCHEME_OPERATIONS) {
+    if (!(op in ids) && !nonScalar.includes(op)) {
+      // Not set on this scheme, which in Jira means it falls back to `default`.
+      parts.push(`${op}->default`);
+    }
+  }
+
+  row.screenAssignments = parts.length > 0 ? parts.join(' ') : '(none)';
+  // A flattened name must never overwrite real row data.
+  if (!('screenIds' in scheme)) {
+    row.screenIds = ids;
+  }
+  if (nonScalar.length > 0) {
+    row.nonScalarScreenOperations = nonScalar;
+  }
+  return row;
+}
+
 export async function registerScreenTools(server: McpServer, apiClient: JiraApiClient) {
   // Tool: getScreenSchemes
   server.registerTool(
     'get_screen_schemes',
     {
       title: 'Get Screen Schemes',
-      description: '🔍 DISCOVERY TOOL: Primary discovery method for screen scheme operations. Use this first to find available screen scheme IDs before using other screen scheme management tools. Returns comprehensive list with IDs, names, and key properties needed for subsequent operations.',
+      description: '🔍 DISCOVERY TOOL: Primary discovery method for screen scheme operations. Use this first to find available screen scheme IDs before using other screen scheme management tools. Each row carries `screenAssignments`, a flattened projection of the nested `screens` object in the form "default=10140 create=10139 edit->default view->default" - "->default" means the operation is not explicitly set and Jira falls back to the scheme\'s default screen, NOT that no screen is used. The per-operation numeric ids are also available under `screenIds`, and the raw `screens` object is preserved unchanged.',
       inputSchema: getScreenSchemesInputSchema,
       annotations: {
         readOnlyHint: true,
@@ -76,8 +167,55 @@ export async function registerScreenTools(server: McpServer, apiClient: JiraApiC
         });
 
         if (response.success && response.data) {
-          const screenSchemes = response.data.values || response.data;
-          const count = response.data.values ? response.data.values.length : 0;
+          // Resolve the union explicitly. The previous
+          // `response.data.values || response.data` would hand back the
+          // ENVELOPE OBJECT when `values` was absent, and a bare `.map()` over
+          // that throws while the obvious defensive form
+          // (`Array.isArray(x) ? x.map(f) : x`) would return UNFLATTENED rows
+          // under success:true -- a silent wrong answer introduced by the fix
+          // for a silent wrong answer.
+          const raw: unknown = response.data;
+          let rawSchemes: JiraScreenScheme[] | null = null;
+          if (Array.isArray(raw)) {
+            rawSchemes = raw as JiraScreenScheme[];
+          } else if (
+            raw !== null &&
+            typeof raw === 'object' &&
+            Array.isArray((raw as { values?: unknown }).values)
+          ) {
+            rawSchemes = (raw as { values: JiraScreenScheme[] }).values;
+          }
+
+          if (rawSchemes === null) {
+            const receivedKeys =
+              raw !== null && typeof raw === 'object' ? Object.keys(raw as object) : [];
+            return {
+              content: [{
+                type: 'text',
+                text: JSON.stringify({
+                  success: false,
+                  partialFailure: true,
+                  screenSchemes: null,
+                  count: null,
+                  pagination: null,
+                  error: {
+                    code: 'GET_SCREEN_SCHEMES_UNRECOGNIZED_SHAPE',
+                    message: `Jira returned a response for /screenscheme that is neither an array of schemes nor an envelope with an array "values" property. The number of screen schemes is UNKNOWN and is NOT zero. Top-level keys received: ${receivedKeys.length > 0 ? receivedKeys.join(', ') : '(none)'}.`,
+                    suggestion: 'Retry the request. If this persists, the Jira API response shape has changed and this tool must be updated. Do not treat this result as an empty screen-scheme list.',
+                  },
+                }, null, 2),
+              }],
+              isError: true,
+            };
+          }
+
+          const screenSchemes = rawSchemes.map(flattenScreenScheme);
+          // `count` is the length of what was actually returned. It used to be
+          // `response.data.values ? response.data.values.length : 0`, which
+          // reported 0 on the bare-array arm beside a populated list. That line
+          // is inside the block being rewritten for the flattening guard, so
+          // leaving a known-false zero in it was not defensible.
+          const count = screenSchemes.length;
 
           return {
             content: [{
