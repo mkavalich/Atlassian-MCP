@@ -300,7 +300,7 @@ export class JiraApiClient {
           'MISSING_ORG_ADMIN_TOKEN',
           'Compass API endpoints require organization admin token',
           { endpoint: config.path },
-          'Configure JIRA_ORG_ADMIN_TOKEN environment variable with appropriate scopes'
+          'Configure ATLASSIAN_ORG_ADMIN_TOKEN environment variable with appropriate scopes'
         );
       }
       
@@ -357,7 +357,7 @@ export class JiraApiClient {
           'MISSING_ORG_ADMIN_TOKEN',
           'Organization API endpoints require organization admin token',
           { endpoint: config.path },
-          'Configure JIRA_ORG_ADMIN_TOKEN environment variable with appropriate scopes'
+          'Configure ATLASSIAN_ORG_ADMIN_TOKEN environment variable with appropriate scopes'
         );
       }
       
@@ -414,7 +414,7 @@ export class JiraApiClient {
           'MISSING_ORG_ADMIN_TOKEN',
           'SCIM Directory API endpoints require organization admin token',
           { endpoint: config.path },
-          'Configure JIRA_ORG_ADMIN_TOKEN environment variable with read:directory:admin scope'
+          'Configure ATLASSIAN_ORG_ADMIN_TOKEN environment variable with read:directory:admin scope'
         );
       }
       
