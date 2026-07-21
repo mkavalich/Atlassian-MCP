@@ -35,13 +35,32 @@ import {
 } from './automation-component-types.js';
 import { toolExamples } from '../validation/tool-examples.js';
 
+/**
+ * Pulls the opaque `cursor` value out of an Automation API `links.next`, which
+ * has the form "?cursor=<opaque>&limit=50".
+ *
+ * Returns null when there is no next link. Never throws and never invents a
+ * cursor: a malformed link yields null, which surfaces as hasMore/nextCursor
+ * disagreeing rather than as a silently truncated walk.
+ */
+export function extractCursor(next: string | null | undefined): string | null {
+  if (!next) return null;
+  const match = /[?&]cursor=([^&]+)/.exec(next);
+  if (!match || !match[1]) return null;
+  try {
+    return decodeURIComponent(match[1]);
+  } catch {
+    return match[1];
+  }
+}
+
 export async function registerAutomationTools(server: McpServer, apiClient: JiraApiClient) {
   // Tool: get_automation_rules (Discovery Tool - 🔍)
   server.registerTool(
     'get_automation_rules',
     {
       title: 'Get Automation Rules',
-      description: '🔍 DISCOVERY TOOL: Primary discovery method for automation rule operations. Use this first to find available rule IDs, names, and basic configurations. Set includeDetails=true to get full rule configurations including triggers, conditions, and actions needed for creating similar rules.',
+      description: '🔍 DISCOVERY TOOL: Lists automation rules (uuid, name, state, author). Each rule\'s `uuid` is the identifier for "get_automation_rule_details", which returns the full trigger and components. Pagination is cursor-based: pass `limit`, then feed `nextCursor` back as `cursor`. The Jira Automation API supports no server-side filtering - name/enabled/author/project filters are rejected rather than silently ignored, so filter client-side on the returned rules.',
       inputSchema: getAutomationRulesInputSchema,
       annotations: {
         readOnlyHint: true,
@@ -51,34 +70,32 @@ export async function registerAutomationTools(server: McpServer, apiClient: Jira
     },
     async (params) => {
       try {
+        // Rejects includeDetails and every server-side filter with a message
+        // naming the working alternative. GET /rule returns 404 with a zero-byte
+        // body, so there is no listing endpoint that can carry rule details.
         const validatedParams = getAutomationRulesSchema.parse(params);
 
-        // Use /rule endpoint instead of /rule/summary for proper expand support
-        const endpoint = validatedParams.includeDetails ? '/rule' : '/rule/summary';
+        // `limit` and `cursor` are the only parameters this API honours.
+        const requestParams: Record<string, string | number> = {};
+        if (validatedParams.limit !== undefined) requestParams.limit = validatedParams.limit;
+        if (validatedParams.cursor !== undefined) requestParams.cursor = validatedParams.cursor;
 
-        const requestParams: any = {
-          name: validatedParams.name,
-          enabled: validatedParams.enabled,
-          authorAccountId: validatedParams.authorAccountId,
-          projects: validatedParams.projects?.join(','),
-          startAt: validatedParams.startAt,
-          maxResults: validatedParams.maxResults,
-        };
-
-        // Only add expand parameter if using /rule endpoint (not /rule/summary)
-        if (validatedParams.includeDetails && validatedParams.expand) {
-          requestParams.expand = validatedParams.expand;
-        }
-
-        const response = await apiClient.makeAutomationRequest<{ data: JiraAutomationRule[]; links: any }>({
+        const response = await apiClient.makeAutomationRequest<{
+          data: JiraAutomationRule[];
+          links?: { self?: string | null; next?: string | null; prev?: string | null };
+        }>({
           method: 'GET',
-          path: endpoint,
+          path: '/rule/summary',
           params: requestParams,
         });
 
         if (response.success && response.data) {
           const rules = response.data.data || [];
-          const total = rules.length;
+          const links = response.data.links;
+
+          // `links.next` looks like "?cursor=<opaque>&limit=50" and is the ONLY
+          // continuation signal this API emits.
+          const nextCursor = extractCursor(links?.next);
 
           return {
             content: [{
@@ -86,11 +103,21 @@ export async function registerAutomationTools(server: McpServer, apiClient: Jira
               text: JSON.stringify({
                 success: true,
                 rules: rules,
+                // No `total`: the Automation API returns no total, count, size or
+                // isLast anywhere in the response. The previous code emitted the
+                // length of the current page under the name `total`, which made a
+                // partial page look like the complete rule set, and derived
+                // hasMore from it as `n > startAt + n` -- structurally false for
+                // every permitted input.
                 count: rules.length,
-                total: total,
-                detailsIncluded: validatedParams.includeDetails,
-                endpoint: endpoint,
-                hasMore: total > (validatedParams.startAt || 0) + rules.length,
+                nextCursor: nextCursor,
+                hasMore: Boolean(links?.next),
+                detailsIncluded: false,
+                endpoint: '/rule/summary',
+                usage_guidance:
+                  'Rules are identified by `uuid`. Pass one to get_automation_rule_details ' +
+                  'for its full trigger and components. If hasMore is true, call again with ' +
+                  'cursor set to nextCursor.',
               }, null, 2),
             }],
           };
@@ -231,19 +258,49 @@ export async function registerAutomationTools(server: McpServer, apiClient: Jira
       try {
         const validatedParams = getAutomationTemplatesSchema.parse(params);
 
-        const response = await apiClient.makeAutomationRequest<{ values: JiraAutomationTemplate[]; total: number }>({
+        // GET /template/search returns {links, data} -- NOT {values, total}.
+        // Reading `.values` yielded undefined, `|| []` turned that into an empty
+        // list, and `.total || templates.length` turned it into 0, so the tool
+        // reported {count:0, total:0, hasMore:false} against 50 real templates
+        // under success:true. The repair is to read the correct key; defaulting
+        // to [] is what made a parsing failure look like an empty instance.
+        const response = await apiClient.makeAutomationRequest<{
+          data: JiraAutomationTemplate[];
+          links?: { self?: string | null; next?: string | null; prev?: string | null };
+        }>({
           method: 'GET',
           path: '/template/search',
           params: {
-            category: validatedParams.category,
-            startAt: validatedParams.startAt,
-            maxResults: validatedParams.maxResults,
+            ...(validatedParams.category !== undefined ? { category: validatedParams.category } : {}),
+            ...(validatedParams.maxResults !== undefined ? { limit: validatedParams.maxResults } : {}),
           },
         });
 
         if (response.success && response.data) {
-          const templates = response.data.values || [];
-          const total = response.data.total || templates.length;
+          const templates = response.data.data;
+
+          // A missing `data` key means the response shape changed. Say so rather
+          // than reporting an empty template catalogue.
+          if (!Array.isArray(templates)) {
+            return {
+              content: [{
+                type: 'text',
+                text: JSON.stringify({
+                  success: false,
+                  error:
+                    'Unexpected response shape from /template/search: expected a `data` array. ' +
+                    'Refusing to report an empty template list, which would be indistinguishable ' +
+                    'from an instance that genuinely has no templates.',
+                  partialFailure: true,
+                  templates: null,
+                  count: null,
+                }, null, 2),
+              }],
+              isError: true,
+            };
+          }
+
+          const links = response.data.links;
 
           return {
             content: [{
@@ -251,9 +308,10 @@ export async function registerAutomationTools(server: McpServer, apiClient: Jira
               text: JSON.stringify({
                 success: true,
                 templates: templates,
+                // No `total`: this API returns no count of the full catalogue.
                 count: templates.length,
-                total: total,
-                hasMore: total > (validatedParams.startAt || 0) + templates.length,
+                nextCursor: extractCursor(links?.next),
+                hasMore: Boolean(links?.next),
               }, null, 2),
             }],
           };
