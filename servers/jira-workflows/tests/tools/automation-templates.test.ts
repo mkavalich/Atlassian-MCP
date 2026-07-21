@@ -83,6 +83,15 @@ describe('get_automation_templates (item 1)', () => {
     expect(mockApiClient.makeAutomationRequest).not.toHaveBeenCalled();
   });
 
+  // LAYER NOTE, verified live and stated so this test is not read as more than
+  // it proves: this asserts the HANDLER's behaviour. Over a real MCP call the
+  // SDK validates against the ADVERTISED input schema first, where `categories`
+  // is z.string(), so an array is rejected there with the generic
+  // "Expected string, received array" and never reaches this refinement. That
+  // is still a loud rejection -- no silent wrong answer -- but the actionable
+  // message below is only delivered on the direct-handler path. The advertised
+  // schema is deliberately NOT widened to accept arrays, because it must not
+  // advertise a shape the tool always rejects.
   it('PROOF: an array of categories is rejected with a specific message', async () => {
     mockApiClient.makeAutomationRequest.mockResolvedValue(page(50) as any);
 
