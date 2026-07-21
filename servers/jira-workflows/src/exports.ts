@@ -63,7 +63,6 @@ export type {
   JiraPermissionScheme,
   JiraPermission,
   // Field types
-  JiraField,
   JiraCustomFieldContext,
   JiraCustomFieldOption,
   JiraFieldConfiguration,

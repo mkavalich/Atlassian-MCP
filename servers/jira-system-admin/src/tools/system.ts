@@ -28,6 +28,7 @@ import {
   getTimeTrackingSettingsInputSchema,
   updateTimeTrackingSettingsInputSchema,
 } from '../validation/input-schemas.js';
+import { JiraFieldListItem } from '../types/index.js';
 import { logger } from '../utils/logger.js';
 import { sanitizeErrorMessage } from '../utils/errors.js';
 
@@ -179,7 +180,7 @@ export async function registerSystemTools(server: McpServer, apiClient: JiraApiC
           workflowsResponse,
         ] = await Promise.allSettled([
           apiClient.makeRequest<any>({ method: 'GET', path: '/project' }),
-          apiClient.makeRequest<any>({ method: 'GET', path: '/field' }),
+          apiClient.makeRequest<JiraFieldListItem[]>({ method: 'GET', path: '/field' }),
           apiClient.makeRequest<any>({ method: 'GET', path: '/workflows/search' }),
         ]);
 
@@ -192,8 +193,13 @@ export async function registerSystemTools(server: McpServer, apiClient: JiraApiC
               : 'unknown',
           },
           customFields: {
-            count: fieldsResponse.status === 'fulfilled' && fieldsResponse.value.data
-              ? fieldsResponse.value.data.filter((f: any) => f.isCustom).length
+            // GET /field carries a real `custom` boolean. This count is scoped to
+            // that endpoint (143 rows on the dev instance -> 99 custom) and is NOT
+            // expected to match get_fields_paginated, which reads /field/search and
+            // sees a different row set. The two are legitimately different numbers;
+            // reconciling them would manufacture a new falsehood.
+            count: fieldsResponse.status === 'fulfilled' && Array.isArray(fieldsResponse.value.data)
+              ? fieldsResponse.value.data.filter((f) => f.custom === true).length
               : 'unknown',
           },
           workflows: {

@@ -82,17 +82,28 @@ export interface JiraPermission {
   };
 }
 
-export interface JiraField {
+/**
+ * A row from GET /rest/api/3/field, the only field endpoint this server calls.
+ *
+ * Mirrors JiraFieldListItem in jira-fields-permissions. The previous
+ * `isCustom: boolean` declaration named a property the Jira API has never
+ * returned, so every `f.isCustom` read evaluated to `undefined` and reported
+ * zero custom fields under success:true.
+ */
+export interface JiraFieldListItem {
   id: string;
+  key?: string;
   name: string;
-  description?: string;
-  type: string;
-  isCustom: boolean;
-  isArray?: boolean;
+  custom: boolean;
+  orderable?: boolean;
+  navigable?: boolean;
+  searchable?: boolean;
+  clauseNames?: string[];
   schema?: {
     type: string;
     custom?: string;
     customId?: number;
+    system?: string;
   };
 }
 

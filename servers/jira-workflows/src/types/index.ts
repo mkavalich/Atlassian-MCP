@@ -81,19 +81,6 @@ export interface JiraPermission {
   };
 }
 
-export interface JiraField {
-  id: string;
-  name: string;
-  description?: string;
-  type: string;
-  isCustom: boolean;
-  isArray?: boolean;
-  schema?: {
-    type: string;
-    custom?: string;
-    customId?: number;
-  };
-}
 
 export interface CreateProjectInput {
   name: string;

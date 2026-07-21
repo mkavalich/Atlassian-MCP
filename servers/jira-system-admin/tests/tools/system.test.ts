@@ -239,10 +239,13 @@ describe('System Tools', () => {
         })
         .mockResolvedValueOnce({
           success: true,
+          // GET /rest/api/3/field returns a `custom` boolean. It has never
+          // returned `isCustom`; mocking that name made the broken predicate
+          // look correct and is what allowed the miscount to survive review.
           data: [
-            { id: 'summary', name: 'Summary', isCustom: false },
-            { id: 'customfield_10001', name: 'Custom Field 1', isCustom: true },
-            { id: 'customfield_10002', name: 'Custom Field 2', isCustom: true },
+            { id: 'summary', name: 'Summary', custom: false },
+            { id: 'customfield_10001', name: 'Custom Field 1', custom: true },
+            { id: 'customfield_10002', name: 'Custom Field 2', custom: true },
           ],
         })
         .mockResolvedValueOnce({

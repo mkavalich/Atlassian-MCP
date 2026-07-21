@@ -12,7 +12,11 @@ import {
   deleteCustomFieldInputSchema,
   getFieldsPaginatedInputSchema,
 } from '../validation/input-schemas.js';
-import { JiraField } from '../types/index.js';
+import {
+  JiraFieldListItem,
+  JiraFieldSearchItem,
+  isCustomField,
+} from '../types/index.js';
 import { logger } from '../utils/logger.js';
 import { sanitizeErrorMessage } from '../utils/errors.js';
 
@@ -72,7 +76,7 @@ export async function registerFieldTools(server: McpServer, apiClient: JiraApiCl
           startAt: number;
           maxResults: number;
           total: number;
-          values: JiraField[];
+          values: JiraFieldSearchItem[];
         }>({
           method: 'GET',
           path: '/field/search',
@@ -81,6 +85,21 @@ export async function registerFieldTools(server: McpServer, apiClient: JiraApiCl
 
         if (response.success && response.data) {
           const fields = response.data.values;
+
+          // Custom/system classification for THIS PAGE only.
+          //
+          // GET /field/search returns no `custom` boolean, so the only
+          // discriminator available is schema.customId. `isCustomField` returns
+          // null (not false) when a row carries no schema at all, which is why
+          // there is an explicit `unknown` bucket: folding those rows into
+          // `system` would be indistinguishable from a genuine system field.
+          //
+          // This is deliberately named `pageBreakdown` and carries scope:'page'
+          // because it is computed over the current page (default 50) and sits
+          // next to a site-wide `total`. The site-wide custom count comes from
+          // passing type:'custom' and reading `total` -- the API computes that
+          // server-side and correctly.
+          const marks = fields.map(f => isCustomField(f));
 
           return {
             content: [{
@@ -92,10 +111,16 @@ export async function registerFieldTools(server: McpServer, apiClient: JiraApiCl
                 maxResults: response.data.maxResults,
                 total: response.data.total,
                 count: fields.length,
-                breakdown: {
-                  custom: fields.filter(f => f.isCustom).length,
-                  system: fields.filter(f => !f.isCustom).length,
+                pageBreakdown: {
+                  scope: 'page',
+                  custom: marks.filter(m => m === true).length,
+                  system: marks.filter(m => m === false).length,
+                  unknown: marks.filter(m => m === null).length,
                 },
+                usage_guidance:
+                  'pageBreakdown counts only the current page. For the site-wide ' +
+                  'custom-field count call this tool with type:["custom"] and read ' +
+                  '`total`; the API computes that server-side.',
                 pagination: {
                   hasMore: response.data.startAt + fields.length < response.data.total,
                   nextStartAt: response.data.startAt + fields.length,
@@ -143,7 +168,9 @@ export async function registerFieldTools(server: McpServer, apiClient: JiraApiCl
       try {
         const validatedParams = createCustomFieldSchema.parse(params);
         
-        const response = await apiClient.makeRequest<JiraField>({
+        // POST /field echoes the created field back in the /field row shape,
+        // which does carry the `custom` boolean.
+        const response = await apiClient.makeRequest<JiraFieldListItem>({
           method: 'POST',
           path: '/field',
           data: {
@@ -211,7 +238,10 @@ export async function registerFieldTools(server: McpServer, apiClient: JiraApiCl
         const validatedParams = updateCustomFieldSchema.parse(params);
         const { fieldId, ...updateData } = validatedParams;
 
-        const response = await apiClient.makeRequest<JiraField>({
+        // Deliberately NOT typed as a field row: PUT /field/{fieldId} may return
+        // 204 No Content (see the `response.data || null` below), and asserting a
+        // populated row shape on an empty body would claim data that is not there.
+        const response = await apiClient.makeRequest<unknown>({
           method: 'PUT',
           path: `/field/${fieldId}`,
           data: updateData,

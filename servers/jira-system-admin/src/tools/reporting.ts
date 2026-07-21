@@ -14,6 +14,7 @@ import {
   generateUsageAnalyticsInputSchema,
   generateHealthCheckReportInputSchema,
 } from '../validation/input-schemas.js';
+import { JiraFieldListItem } from '../types/index.js';
 import { logger } from '../utils/logger.js';
 import { sanitizeErrorMessage } from '../utils/errors.js';
 
@@ -125,20 +126,30 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
           }
         }
 
-        // Include custom fields if requested
+        // Include custom fields if requested.
+        //
+        // PROJECT-SCOPED CUSTOM FIELDS ARE NOT OBTAINABLE HERE.
+        //
+        // This previously filtered GET /field on `field.isCustom && field.contexts`.
+        // Both halves are always falsy: /field returns no `isCustom` property and no
+        // `contexts` property at all, so the filter matched nothing and the tool
+        // returned an unconditional `[]` under success:true -- a confident, wrong,
+        // healthy-looking answer that is indistinguishable from a project that
+        // genuinely has no custom fields.
+        //
+        // No predicate change can repair this: /field carries no project-context
+        // data whatsoever. Rather than substitute a plausible-looking empty list,
+        // report the gap explicitly and name the endpoint that can answer it.
         if (validatedParams.includeCustomFields) {
-          const fieldsResponse = await apiClient.makeRequest<any>({
-            method: 'GET',
-            path: '/field',
-          });
-
-          if (fieldsResponse.success) {
-            exportData.customFields = fieldsResponse.data.filter((field: any) =>
-              field.isCustom && field.contexts?.some((ctx: any) =>
-                ctx.projectIds?.includes(projectResponse.data.id)
-              )
-            );
-          }
+          exportData.customFields = null;
+          exportData.partialFailure = true;
+          exportData.notes = [
+            ...(exportData.notes ?? []),
+            'Project-scoped custom fields are not obtainable from GET /rest/api/3/field: ' +
+            'that endpoint returns no project-context data. Use the field context ' +
+            'endpoints (GET /rest/api/3/field/{fieldId}/context/projectmapping) to map ' +
+            'custom fields to projects.',
+          ];
         }
 
         return {
@@ -808,28 +819,51 @@ export async function registerReportingTools(server: McpServer, apiClient: JiraA
             // Check system limits usage
             const [projectsRes, fieldsRes] = await Promise.allSettled([
               apiClient.makeRequest<any>({ method: 'GET', path: '/project' }),
-              apiClient.makeRequest<any>({ method: 'GET', path: '/field' }),
+              apiClient.makeRequest<JiraFieldListItem[]>({ method: 'GET', path: '/field' }),
             ]);
 
-            const projectCount = projectsRes.status === 'fulfilled' ?
-              (Array.isArray(projectsRes.value.data) ? projectsRes.value.data.length : projectsRes.value.data?.total || 0) : 0;
+            // A metric that could not be obtained is null, never 0. The previous
+            // `|| 0` / `: 0` rendered an unavailable count as a genuine zero, which
+            // is indistinguishable from an instance that really has none. Note the
+            // explicit `?? null`: the optional chain short-circuits the WHOLE
+            // expression to undefined when `data` is absent, and JSON.stringify
+            // drops undefined-valued keys entirely -- so the caller would see no
+            // key at all rather than an explicit null.
+            const projectCount: number | null = projectsRes.status === 'fulfilled'
+              ? (Array.isArray(projectsRes.value.data)
+                  ? projectsRes.value.data.length
+                  : projectsRes.value.data?.total ?? null)
+              : null;
 
-            const customFieldCount = fieldsRes.status === 'fulfilled' ?
-              fieldsRes.value.data?.filter((f: any) => f.isCustom).length || 0 : 0;
+            const customFieldCount: number | null = fieldsRes.status === 'fulfilled'
+              && Array.isArray(fieldsRes.value.data)
+              ? fieldsRes.value.data.filter((f) => f.custom === true).length
+              : null;
+
+            const metricsUnavailable = projectCount === null || customFieldCount === null;
 
             healthCheck.results.performance = {
-              status: 'healthy',
+              // Do not claim 'healthy' while a metric is unobtainable.
+              status: metricsUnavailable ? 'unknown' : 'healthy',
+              ...(metricsUnavailable ? { partialFailure: true } : {}),
               metrics: {
                 projectCount,
                 customFieldCount,
               },
             };
 
-            // Performance warnings
-            if (projectCount > 1000) {
+            if (metricsUnavailable) {
+              healthCheck.warnings.push(
+                'Performance metrics incomplete: one or more counts could not be retrieved from the Jira API.'
+              );
+            }
+
+            // Thresholds are skipped when the count is unknown -- `null > 100` is
+            // false, which would silently read as "within limits".
+            if (projectCount !== null && projectCount > 1000) {
               healthCheck.warnings.push(`High number of projects (${projectCount})`);
             }
-            if (customFieldCount > 100) {
+            if (customFieldCount !== null && customFieldCount > 100) {
               healthCheck.warnings.push(`High number of custom fields (${customFieldCount})`);
             }
           } catch (error) {
