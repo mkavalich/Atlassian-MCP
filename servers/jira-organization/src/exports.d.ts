@@ -191,7 +191,6 @@ export type {
   JiraWorkflow,
   JiraPermissionScheme,
   JiraPermission,
-  JiraField,
   CreateProjectInput,
   JiraIssueTypeScheme,
   JiraIssueType,

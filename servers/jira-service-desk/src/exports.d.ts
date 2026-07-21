@@ -184,7 +184,6 @@ export type {
   JiraWorkflow,
   JiraPermissionScheme,
   JiraPermission,
-  JiraField,
   JiraCustomFieldContext,
   JiraCustomFieldOption,
   JiraFieldConfiguration,
