@@ -131,6 +131,84 @@ export class ConfluenceApiClient {
     }).join('/');
   }
 
+  /**
+   * Resolve an attachment downloadLink to an absolute URL bound to the
+   * configured Confluence site.
+   *
+   * This client only ever holds the TENANT credential, so every URL it fetches
+   * with that credential must be on the tenant origin. Relative links (the only
+   * shape the Confluence Cloud API returns in practice) are joined onto the base
+   * URL exactly as before. An ABSOLUTE link is honoured only when its origin
+   * matches the configured base URL; any other origin is rejected rather than
+   * fetched, so a server-supplied link cannot carry the credential off-site.
+   *
+   * Resolution runs before any credential is read, so the off-origin case is
+   * structurally incapable of attaching an Authorization header.
+   *
+   * Rejecting is deliberate rather than falling back to an unauthenticated
+   * fetch: the only caller re-uploads the bytes, and a credential-less fetch of
+   * a foreign URL would likely return an error page that would then be uploaded
+   * as the "copied" attachment. A loud failure beats a plausible wrong result.
+   */
+  private resolveAttachmentDownloadUrl(downloadLink: string): string {
+    // Guard first: ConfluenceAttachment.downloadLink is optional, so this can be
+    // undefined at runtime. Without this the string methods below would throw a
+    // raw TypeError from OUTSIDE downloadAttachment's try block, losing the
+    // DOWNLOAD_ERROR wrapping that callers rely on.
+    if (typeof downloadLink !== 'string' || downloadLink.length === 0) {
+      throw new ConfluenceApiError(
+        'INVALID_DOWNLOAD_LINK',
+        'Attachment metadata did not include a downloadLink',
+        { received: typeof downloadLink },
+        'Re-fetch the attachment metadata; the attachment may be trashed or still uploading'
+      );
+    }
+
+    const baseUrl = this.authManager.getBaseUrl();
+
+    // No URI scheme => relative link. Existing behaviour, unchanged.
+    if (!/^[a-z][a-z0-9+.-]*:/i.test(downloadLink)) {
+      // V2 API returns /download/... without the /wiki prefix
+      return downloadLink.startsWith('/wiki/')
+        ? `${baseUrl}${downloadLink}`
+        : `${baseUrl}/wiki${downloadLink}`;
+    }
+
+    let linkHost: string;
+    let linkOrigin: string;
+    let expectedHost: string;
+    let expectedOrigin: string;
+    try {
+      const link = new URL(downloadLink);
+      const expected = new URL(baseUrl);
+      linkHost = link.host;
+      linkOrigin = link.origin;
+      expectedHost = expected.host;
+      expectedOrigin = expected.origin;
+    } catch {
+      throw new ConfluenceApiError(
+        'INVALID_DOWNLOAD_LINK',
+        'Attachment downloadLink could not be resolved against the configured Confluence site',
+        { reason: 'unparseable downloadLink or base URL' },
+        'Re-fetch the attachment metadata and confirm the Confluence base URL is a valid absolute URL'
+      );
+    }
+
+    if (linkOrigin !== expectedOrigin) {
+      throw new ConfluenceApiError(
+        'DOWNLOAD_LINK_ORIGIN_MISMATCH',
+        `Refusing to download attachment: downloadLink points at host "${linkHost}", which is not the configured Confluence site`,
+        { linkHost, expectedHost },
+        'Attachment downloads are restricted to the configured Confluence site so the tenant API token is never sent to another host. If Atlassian has started returning off-site media URLs, add an explicit UNAUTHENTICATED fetch path for them instead of widening this check.'
+      );
+    }
+
+    // Absolute but same-origin: equivalent to the relative case. Log it - this
+    // branch has never been observed on a live tenant and we want to know if it starts.
+    logger.warn('Attachment downloadLink was absolute', { linkHost });
+    return downloadLink;
+  }
+
   private handleError(error: AxiosError): never {
     const status = error.response?.status;
     const data = error.response?.data as any;
@@ -264,20 +342,13 @@ export class ConfluenceApiClient {
   async downloadAttachment(downloadLink: string): Promise<ApiResponse<Buffer>> {
     const startTime = Date.now();
 
+    // Resolve and origin-check the target BEFORE entering the credentialed
+    // region. Thrown outside the try so the specific error code survives instead
+    // of being re-wrapped as DOWNLOAD_ERROR by the catch below.
+    const fullUrl = this.resolveAttachmentDownloadUrl(downloadLink);
+
     try {
       const authHeaders = this.authManager.getAuthHeaders();
-      const baseUrl = this.authManager.getBaseUrl();
-
-      // downloadLink from V2 API is /download/attachments/... but needs /wiki prefix
-      let fullUrl: string;
-      if (downloadLink.startsWith('http')) {
-        fullUrl = downloadLink;
-      } else if (downloadLink.startsWith('/wiki/')) {
-        fullUrl = `${baseUrl}${downloadLink}`;
-      } else {
-        // V2 API returns /download/... without /wiki prefix
-        fullUrl = `${baseUrl}/wiki${downloadLink}`;
-      }
 
       const response = await this.axios.request<Buffer>({
         method: 'GET',
