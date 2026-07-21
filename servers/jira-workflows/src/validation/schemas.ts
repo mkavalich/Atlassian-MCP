@@ -1170,16 +1170,66 @@ export const updateRequestTypeGroupsSchema = z.object({
 }).strict();
 
 // Automation Rule schemas
+/**
+ * Parameters the Jira Automation API actually honours on GET /rule/summary are
+ * `limit` and an opaque `cursor`. Verified against the live API: name, enabled,
+ * authorAccountId, projects, expand, startAt, maxResults and even a nonsense
+ * parameter all return HTTP 200 with the byte-identical full rule set.
+ *
+ * The unsupported keys are RETAINED here rather than removed so they can be
+ * rejected with a message that names the working alternative. Removing them
+ * from a .strict() object would emit a generic "unrecognized key" error, and
+ * silently accepting them is what previously let `enabled:true` return every
+ * rule on a 5-enabled/3-disabled instance under success:true.
+ */
+const AUTOMATION_LIST_UNSUPPORTED = [
+  'name',
+  'enabled',
+  'authorAccountId',
+  'projects',
+  'expand',
+  'startAt',
+  'maxResults',
+] as const;
+
 export const getAutomationRulesSchema = z.object({
-  name: z.string().max(255).optional().describe('Filter by rule name (partial match)'),
-  enabled: z.boolean().optional().describe('Filter by enabled status'),
-  authorAccountId: z.string().max(10000).optional().describe('Filter by author account ID'),
-  projects: z.array(z.string()).optional().describe('Filter by project IDs'),
-  expand: z.string().max(10000).optional().describe('Comma-separated list of fields to expand (e.g., trigger,conditions,actions)'),
-  includeDetails: z.boolean().optional().default(false).describe('Include detailed rule configurations (trigger, conditions, actions)'),
-  startAt: z.number().min(0).optional().default(0).describe('The starting index for results'),
-  maxResults: z.number().min(1).max(100).optional().default(50).describe('The maximum number of results to return'),
-}).strict();
+  name: z.string().max(255).optional().describe('NOT SUPPORTED by the Automation API - rejected'),
+  enabled: z.boolean().optional().describe('NOT SUPPORTED by the Automation API - rejected'),
+  authorAccountId: z.string().max(10000).optional().describe('NOT SUPPORTED by the Automation API - rejected'),
+  projects: z.array(z.string()).optional().describe('NOT SUPPORTED by the Automation API - rejected'),
+  expand: z.string().max(10000).optional().describe('NOT SUPPORTED by the Automation API - rejected'),
+  includeDetails: z.boolean().optional().default(false).describe('Rejected: there is no listing endpoint that returns full rule configurations. Use get_automation_rule_details with a uuid from this tool.'),
+  startAt: z.number().min(0).optional().describe('NOT SUPPORTED - the Automation API uses opaque cursor pagination, not offsets'),
+  maxResults: z.number().min(1).max(100).optional().describe('NOT SUPPORTED - use `limit`'),
+  limit: z.number().min(1).max(100).optional().describe('Page size. The only size parameter the Automation API honours.'),
+  cursor: z.string().max(10000).optional().describe('Opaque continuation token taken from `nextCursor` of a previous response.'),
+}).strict().superRefine((val, ctx) => {
+  const supplied = AUTOMATION_LIST_UNSUPPORTED.filter(
+    (k) => (val as Record<string, unknown>)[k] !== undefined
+  );
+  if (supplied.length > 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: [supplied[0]!],
+      message:
+        `The Jira Automation API does not support these parameters: ${supplied.join(', ')}. ` +
+        'It returns the full rule set regardless of them, so honouring them would ' +
+        'silently return unfiltered results. Supported parameters are `limit` and ' +
+        '`cursor` (from nextCursor). Filter client-side on the returned rules.',
+    });
+  }
+  if (val.includeDetails === true) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['includeDetails'],
+      message:
+        'includeDetails is not obtainable: GET /rule returns HTTP 404 with an empty ' +
+        'body and no listing endpoint accepts expand. Call get_automation_rules to ' +
+        'list rules, then get_automation_rule_details with a `uuid` from the result ' +
+        'to retrieve the full trigger and components for a specific rule.',
+    });
+  }
+});
 
 export const getAutomationRuleDetailsSchema = z.object({
   ruleId: z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id').describe('The ID of the automation rule to get details for'),

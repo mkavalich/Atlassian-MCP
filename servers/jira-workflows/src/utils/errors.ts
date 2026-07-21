@@ -109,11 +109,22 @@ export class ValidationError extends JiraApiError {
 }
 
 export class NotFoundError extends JiraApiError {
-  constructor(resource: string, identifier: string) {
+  /**
+   * @param resource   what was being looked up (e.g. 'automation rule')
+   * @param identifier the actual id that was not found. This is interpolated
+   *                   into the message as an identifier, so passing an error
+   *                   string here produces nonsense such as
+   *                   "resource with identifier 'Unknown error' not found".
+   * @param detail     optional server-supplied explanation, appended verbatim.
+   */
+  constructor(resource: string, identifier?: string, detail?: string) {
+    const subject = identifier
+      ? `${resource} with identifier '${identifier}' not found`
+      : `${resource} not found`;
     super(
       'NOT_FOUND',
-      `${resource} with identifier '${identifier}' not found`,
-      { resource, identifier },
+      detail ? `${subject}: ${detail}` : subject,
+      { resource, ...(identifier ? { identifier } : {}), ...(detail ? { detail } : {}) },
       `Verify the ${resource} exists and you have permission to access it`
     );
   }
@@ -182,7 +193,10 @@ export function mapAtlassianError(statusCode: number, responseBody?: any): JiraA
     case 403:
       return new PermissionError('perform this operation', errorMessage);
     case 404:
-      return new NotFoundError('resource', errorMessage || 'Resource not found');
+      // The server message is a DETAIL, not an identifier. Passing it as the
+      // identifier produced "resource with identifier 'Unknown error' not
+      // found" on every Automation 404, whose bodies are always zero bytes.
+      return new NotFoundError('resource', undefined, errorMessage || undefined);
     case 429:
       const resetTime = responseBody?.['X-RateLimit-Reset'] || Math.floor(Date.now() / 1000) + 3600;
       return new RateLimitError(resetTime);
