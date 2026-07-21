@@ -182,52 +182,12 @@ export class JiraApiClient {
     return isRequestTypeEndpoint && isExperimentalMethod;
   }
 
-  /**
-   * Determines if an endpoint requires organization admin permissions
-   * These endpoints need the JIRA_ORG_ADMIN_TOKEN for access
-   */
-  private requiresOrgAdminToken(path: string): boolean {
-    const orgAdminEndpoints = [
-      '/instance/license',     // License information
-      '/instance/billing',     // Billing information  
-      '/instance/',           // All instance-level endpoints
-      '/organization',         // Organization management
-      '/admin/organization',   // Organization administration
-      '/admin/billing',       // Admin billing endpoints
-      '/admin/instance',      // Admin instance endpoints
-    ];
-    
-    // For Service Desk, also check for organization-specific Service Desk patterns
-    const serviceDeskOrgPatterns = [
-      '/organization',                     // Service Desk organization endpoints
-      '/servicedeskapi/organization',      // Organization management in Service Desk
-    ];
-    
-    return orgAdminEndpoints.some(endpoint => path.startsWith(endpoint)) ||
-           serviceDeskOrgPatterns.some(pattern => path.includes(pattern));
-  }
-
   async makeRequest<T>(config: RequestConfig): Promise<ApiResponse<T>> {
     const startTime = Date.now();
     
     try {
-      // Determine if this endpoint requires org admin token
-      const needsOrgAdmin = this.requiresOrgAdminToken(config.path);
-      
-      // Use appropriate token based on endpoint requirements
-      let authHeaders: Record<string, string>;
-      if (needsOrgAdmin) {
-        if (this.authManager.hasOrgAdminToken()) {
-          authHeaders = this.authManager.getAuthHeaders(true);
-        } else {
-          // For org admin endpoints without org admin token, still try with regular token
-          // but let the error handling provide clear feedback about missing permissions
-          authHeaders = this.authManager.getAuthHeaders(false);
-        }
-      } else {
-        // Regular endpoints always use regular token
-        authHeaders = this.authManager.getAuthHeaders(false);
-      }
+      // The baseURL below is the tenant, so the site credential is the only correct one.
+      const authHeaders = this.authManager.getAuthHeaders();
       
       const baseURL = `${this.authManager.getBaseUrl()}/rest/api/3`;
       
@@ -271,16 +231,11 @@ export class JiraApiClient {
     const startTime = Date.now();
     
     try {
-      // Determine if this Service Desk endpoint requires org admin token
-      const needsOrgAdmin = this.requiresOrgAdminToken(config.path);
-      
-      // Use appropriate token for Service Desk endpoints
-      let authHeaders: Record<string, string>;
-      if (needsOrgAdmin && this.authManager.hasOrgAdminToken()) {
-        authHeaders = this.authManager.getAuthHeaders(true);
-      } else {
-        authHeaders = this.authManager.getAuthHeaders(false);
-      }
+      // Same rule as makeRequest: this method targets ${siteUrl}/rest/servicedeskapi, the tenant.
+      // The predicate that used to gate this matched via a SUBSTRING test on '/organization', so
+      // routine customer-organization reads -- the hottest path in this server -- selected the
+      // org-admin credential. It was inert only because server.ts never read the env var.
+      const authHeaders = this.authManager.getAuthHeaders();
       
       const baseURL = `${this.authManager.getBaseUrl()}/rest/servicedeskapi`;
       
