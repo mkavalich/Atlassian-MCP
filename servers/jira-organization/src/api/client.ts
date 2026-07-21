@@ -182,73 +182,16 @@ export class JiraApiClient {
     return isRequestTypeEndpoint && isExperimentalMethod;
   }
 
-  /**
-   * Determines if an endpoint requires organization admin permissions
-   * These endpoints need the JIRA_ORG_ADMIN_TOKEN for access
-   */
-  private requiresOrgAdminToken(path: string): boolean {
-    const orgAdminEndpoints = [
-      '/instance/license',     // License information
-      '/instance/billing',     // Billing information  
-      '/instance/',           // All instance-level endpoints
-      '/organization',         // Organization management
-      '/admin/organization',   // Organization administration
-      '/admin/billing',       // Admin billing endpoints
-      '/admin/instance',      // Admin instance endpoints
-      '/users/search',         // Global user search (organization scope)
-      '/groups/search',        // Global group search (organization scope)
-    ];
-    
-    // For organization server, also check for org-specific patterns
-    const orgSpecificPatterns = [
-      '/rest/servicedeskapi/organization', // Organization management in Service Desk
-      '/rest/api/3/organization',          // Direct organization API calls
-    ];
-    
-    // Group 3: Cross-Product Analytics & Directory Health endpoints
-    const crossProductEndpoints = [
-      '/api-group-metrics/',    // Compass API - Component and team metrics
-      '/api-group-events/',     // Compass API - System and component events
-    ];
-    
-    const directoryHealthEndpoints = [
-      '/scim/directory/',       // SCIM directory endpoints (all require org admin)
-    ];
-    
-    const organizationApiEndpoints = [
-      '/v1/orgs',              // Organization API - List organizations
-      '/v1/orgs/',             // Organization API - Organization details
-    ];
-    
-    return orgAdminEndpoints.some(endpoint => path.startsWith(endpoint)) ||
-           orgSpecificPatterns.some(pattern => path.includes(pattern)) ||
-           crossProductEndpoints.some(endpoint => path.startsWith(endpoint)) ||
-           directoryHealthEndpoints.some(endpoint => path.startsWith(endpoint)) ||
-           organizationApiEndpoints.some(endpoint => path.startsWith(endpoint));
-  }
-
   async makeRequest<T>(config: RequestConfig): Promise<ApiResponse<T>> {
     const startTime = Date.now();
     
     try {
-      // Determine if this endpoint requires org admin token
-      const needsOrgAdmin = this.requiresOrgAdminToken(config.path);
-      
-      // Use appropriate token based on endpoint requirements
-      let authHeaders: Record<string, string>;
-      if (needsOrgAdmin) {
-        if (this.authManager.hasOrgAdminToken()) {
-          authHeaders = this.authManager.getAuthHeaders(true);
-        } else {
-          // For org admin endpoints without org admin token, still try with regular token
-          // but let the error handling provide clear feedback about missing permissions
-          authHeaders = this.authManager.getAuthHeaders(false);
-        }
-      } else {
-        // Regular endpoints always use regular token
-        authHeaders = this.authManager.getAuthHeaders(false);
-      }
-      
+      // This request targets the customer TENANT (see baseURL below), so the tenant
+      // credential is the only correct one. The credential is selected here, next to
+      // the host it is sent to, and there is deliberately no branch that could select
+      // the admin.atlassian.com organization token for a tenant-bound request.
+      const authHeaders = this.authManager.getAuthHeaders(false);
+
       const baseURL = `${this.authManager.getBaseUrl()}/rest/api/3`;
       
       const axiosConfig: AxiosConfigWithMetadata = {
@@ -291,17 +234,10 @@ export class JiraApiClient {
     const startTime = Date.now();
     
     try {
-      // Determine if this Service Desk endpoint requires org admin token
-      const needsOrgAdmin = this.requiresOrgAdminToken(config.path);
-      
-      // Use appropriate token for Service Desk endpoints
-      let authHeaders: Record<string, string>;
-      if (needsOrgAdmin && this.authManager.hasOrgAdminToken()) {
-        authHeaders = this.authManager.getAuthHeaders(true);
-      } else {
-        authHeaders = this.authManager.getAuthHeaders(false);
-      }
-      
+      // Tenant-bound, exactly as makeRequest above: the Service Desk API lives on the
+      // customer site, so only the tenant credential is expressible here.
+      const authHeaders = this.authManager.getAuthHeaders(false);
+
       const baseURL = `${this.authManager.getBaseUrl()}/rest/servicedeskapi`;
       
       // Check if this endpoint requires experimental API header
