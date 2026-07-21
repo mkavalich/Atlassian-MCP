@@ -164,7 +164,6 @@ function getAuthConfigFromEnv(): AuthConfig {
     baseUrl: process.env.ATLASSIAN_SITE_URL || '',
     email: process.env.ATLASSIAN_USER_EMAIL,
     apiToken: process.env.ATLASSIAN_API_TOKEN,
-    orgAdminToken: process.env.ATLASSIAN_ORG_ADMIN_TOKEN,
   };
 }
 

@@ -183,45 +183,20 @@ export class JiraApiClient {
     return isRequestTypeEndpoint && isExperimentalMethod;
   }
 
-  /**
-   * Determines if an endpoint requires organization admin permissions
-   * These endpoints need the JIRA_ORG_ADMIN_TOKEN for access
-   */
-  private requiresOrgAdminToken(path: string): boolean {
-    const orgAdminEndpoints = [
-      '/instance/license',     // License information
-      '/instance/billing',     // Billing information  
-      '/instance/',           // All instance-level endpoints
-      '/organization',         // Organization management
-      '/admin/organization',   // Organization administration
-      '/admin/billing',       // Admin billing endpoints
-      '/admin/instance',      // Admin instance endpoints
-    ];
-    
-    return orgAdminEndpoints.some(endpoint => path.startsWith(endpoint));
-  }
-
   async makeRequest<T>(config: RequestConfig): Promise<ApiResponse<T>> {
     const startTime = Date.now();
     
     try {
-      // Determine if this endpoint requires org admin token
-      const needsOrgAdmin = this.requiresOrgAdminToken(config.path);
-      
-      // Use appropriate token based on endpoint requirements
-      let authHeaders: Record<string, string>;
-      if (needsOrgAdmin) {
-        if (this.authManager.hasOrgAdminToken()) {
-          authHeaders = this.authManager.getAuthHeaders(true);
-        } else {
-          // For org admin endpoints without org admin token, still try with regular token
-          // but let the error handling provide clear feedback about missing permissions
-          authHeaders = this.authManager.getAuthHeaders(false);
-        }
-      } else {
-        // Regular endpoints always use regular token
-        authHeaders = this.authManager.getAuthHeaders(false);
-      }
+      // Every endpoint this server reaches is site-scoped -- see baseURL below, which is
+      // unconditionally the tenant host (${siteUrl}/rest/api/3). So requests always authenticate
+      // with the regular Basic credentials.
+      //
+      // There is deliberately NO org-admin branch here. An admin.atlassian.com org token is the
+      // wrong credential for this host, and a conditional would let a tool added later under an
+      // /instance/ or /organization path silently attach a high-privilege org token to a tenant
+      // request. jira-organization and jira-system-admin are the only servers that legitimately
+      // use ATLASSIAN_ORG_ADMIN_TOKEN.
+      const authHeaders: Record<string, string> = this.authManager.getAuthHeaders();
       
       const baseURL = `${this.authManager.getBaseUrl()}/rest/api/3`;
       
@@ -371,8 +346,9 @@ export class JiraApiClient {
       // IMPORTANT: Automation API only supports Basic Auth (email + API token)
       // According to Atlassian docs: https://support.atlassian.com/cloud-automation/docs/jira-cloud-automation-rest-api/
       // OAuth and Bearer tokens are NOT supported for Automation API
-      // Always use Basic auth regardless of orgAdminToken presence
-      const authHeaders = this.authManager.getAuthHeaders(false);
+      // Basic auth is the only scheme AuthManager can produce for this server, so this is
+      // enforced structurally rather than by convention.
+      const authHeaders = this.authManager.getAuthHeaders();
 
       // Use the global Atlassian API endpoint with cloud ID
       // Format: https://api.atlassian.com/automation/public/{product}/{cloudid}/rest/v1
