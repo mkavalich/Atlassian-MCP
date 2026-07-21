@@ -61,7 +61,6 @@ export interface AuthConfig {
   baseUrl: string;
   email?: string;
   apiToken?: string;
-  orgAdminToken?: string;
   clientId?: string;
   clientSecret?: string;
   accessToken?: string;
@@ -115,9 +114,8 @@ export declare class JiraApiClient {
 
 export declare class AuthManager {
   constructor(config: AuthConfig);
-  getAuthHeaders(useOrgAdmin?: boolean): Record<string, string>;
+  getAuthHeaders(): Record<string, string>;
   getBaseUrl(): string;
-  hasOrgAdminToken(): boolean;
   refreshOAuthToken(): Promise<void>;
 }
 

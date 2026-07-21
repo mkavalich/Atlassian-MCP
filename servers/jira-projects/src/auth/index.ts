@@ -28,14 +28,15 @@ export class AuthManager {
     }
   }
 
-  getAuthHeaders(useOrgAdmin = false): Record<string, string> {
+  getAuthHeaders(): Record<string, string> {
     // Validate config when authentication is actually needed
     this.validateConfig();
-    
+
     if (this.config.type === 'basic') {
-      // Use org admin token for system-level endpoints if available
-      const token = useOrgAdmin && this.config.orgAdminToken ? this.config.orgAdminToken : this.config.apiToken;
-      const auth = Buffer.from(`${this.config.email}:${token}`).toString('base64');
+      // This server is tenant-scoped only, so the site API token is the only correct credential.
+      // The org-admin substitution removed here spliced an admin.atlassian.com token in as the
+      // Basic PASSWORD beside the user's email.
+      const auth = Buffer.from(`${this.config.email}:${this.config.apiToken}`).toString('base64');
       return {
         'Authorization': `Basic ${auth}`,
         'Accept': 'application/json',
@@ -54,10 +55,6 @@ export class AuthManager {
 
   getBaseUrl(): string {
     return this.config.baseUrl.replace(/\/$/, '');
-  }
-
-  hasOrgAdminToken(): boolean {
-    return Boolean(this.config.orgAdminToken);
   }
 
   async refreshOAuthToken(): Promise<void> {
