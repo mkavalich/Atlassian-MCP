@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Atlassian MCP Tools Schema",
   "description": "Auto-generated schema of all available MCP tools for skill validation",
-  "generated": "2026-07-21T18:47:11.039Z",
+  "generated": "2026-07-21T20:14:18.348Z",
   "servers": {
     "jira-projects": {
       "description": "Projects, issues, dashboards, reporting",
@@ -1840,9 +1840,9 @@
           "description": "🔍 DISCOVERY TOOL: Retrieves available automation rule templates that can be used as starting points for creating new ru",
           "type": "read",
           "parameters": [
-            "category",
-            "startAt",
-            "maxResults"
+            "categories",
+            "maxResults",
+            "cursor"
           ],
           "annotations": {
             "readOnlyHint": true,
