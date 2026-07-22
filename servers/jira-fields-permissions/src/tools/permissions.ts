@@ -706,7 +706,50 @@ export async function registerPermissionTools(server: McpServer, apiClient: Jira
         });
 
         if (response.success && response.data) {
-          const permissions = response.data.permissions || response.data;
+          // GET /mypermissions returns { permissions: { KEY: { id, key, name,
+          // type, description, havePermission }, ... } } -- an OBJECT MAP keyed
+          // by permission name (verified live: a call with a permissions list
+          // returns 200 with the map; a call with no "permissions" query param
+          // 400s before this code is reached). The previous `data.permissions ||
+          // data` passed the RAW BODY through as `permissions` under
+          // success:true whenever the envelope property was absent -- a
+          // confident, wrong, successful-looking answer. Require the documented
+          // map shape and fail loud otherwise, mirroring get_global_permissions.
+          // A genuinely empty map ({}) still reports count 0.
+          const raw: unknown = response.data;
+          const isPlainObject = (x: unknown): x is Record<string, unknown> =>
+            x !== null && typeof x === 'object' && !Array.isArray(x);
+          const permissions: Record<string, unknown> | null =
+            isPlainObject(raw) && isPlainObject(raw.permissions)
+              ? (raw.permissions as Record<string, unknown>)
+              : null;
+
+          if (permissions === null) {
+            const receivedKeys = isPlainObject(raw) ? Object.keys(raw) : [];
+            return {
+              content: [{
+                type: 'text',
+                text: JSON.stringify({
+                  success: false,
+                  partialFailure: true,
+                  permissions: null,
+                  count: null,
+                  context: {
+                    projectKey: validatedParams.projectKey,
+                    projectId: validatedParams.projectId,
+                    issueKey: validatedParams.issueKey,
+                    issueId: validatedParams.issueId,
+                  },
+                  error: {
+                    code: 'GET_MY_PERMISSIONS_UNRECOGNIZED_SHAPE',
+                    message: `Jira returned a response for /mypermissions without an object "permissions" map. The caller's permissions are UNKNOWN and this is NOT an empty permission set. Top-level keys received: ${receivedKeys.length > 0 ? receivedKeys.join(', ') : '(none)'}.`,
+                    suggestion: 'Retry the request. If this persists the Jira API response shape has changed and this tool must be updated. Do not treat this result as "no permissions".',
+                  },
+                }, null, 2),
+              }],
+              isError: true,
+            };
+          }
 
           return {
             content: [{
@@ -714,6 +757,7 @@ export async function registerPermissionTools(server: McpServer, apiClient: Jira
               text: JSON.stringify({
                 success: true,
                 permissions,
+                count: Object.keys(permissions).length,
                 context: {
                   projectKey: validatedParams.projectKey,
                   projectId: validatedParams.projectId,

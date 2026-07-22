@@ -278,4 +278,71 @@ describe('union shape guards (items 2 and 3)', () => {
       expect(payload.count).toBe(66);
     });
   });
+
+  // Pass B follow-up item 3: get_my_permissions had the same `data.permissions ||
+  // data` fragility as its siblings. Unlike them it emitted no count, so it was
+  // not a fabricated zero -- but when the documented envelope was absent it passed
+  // the RAW BODY through as `permissions` under success:true (a confident, wrong,
+  // successful-looking answer). GET /mypermissions returns an OBJECT MAP
+  // { permissions: { KEY: { id, key, name, type, description, havePermission }, ... } }
+  // (verified live: a call with a permissions list returns HTTP 200 with the map;
+  // a call with no permissions param 400s before this code is reached), so it is
+  // narrowed like get_global_permissions.
+  describe('get_my_permissions (object map)', () => {
+    const map4 = Object.fromEntries(
+      ['BROWSE_PROJECTS', 'ADMINISTER', 'CREATE_ISSUES', 'ADMINISTER_PROJECTS'].map((k) => [
+        k,
+        { id: k, key: k, name: k, type: 'PROJECT', description: 'x', havePermission: true },
+      ])
+    );
+
+    it('PROOF: a body with NO permissions map must not pass the raw body through as success', async () => {
+      // Jira returns something without the documented "permissions" envelope.
+      mockApiClient.makeRequest.mockResolvedValue({
+        success: true,
+        data: { self: 'https://x/rest/api/3/mypermissions', accountId: 'acc-1' },
+      } as any);
+
+      const tool = registeredTools.get('get_my_permissions');
+      const payload = parse(await tool.handler({}));
+
+      expect(payload.success).toBe(false);
+      expect(payload.permissions).toBeNull();
+      expect(payload.error.code).toBe('GET_MY_PERMISSIONS_UNRECOGNIZED_SHAPE');
+      // The message must name what actually arrived, not guess.
+      expect(payload.error.message).toContain('self');
+    });
+
+    it('PROOF: a normal map now reports an Object.keys count, never an absent one', async () => {
+      mockApiClient.makeRequest.mockResolvedValue({ success: true, data: { permissions: map4 } } as any);
+
+      const tool = registeredTools.get('get_my_permissions');
+      const payload = parse(await tool.handler({}));
+
+      expect(payload.success).toBe(true);
+      expect(payload.count).toBe(4);
+    });
+
+    it('GUARD: the normal live-shape map stays success true with the map intact', async () => {
+      mockApiClient.makeRequest.mockResolvedValue({ success: true, data: { permissions: map4 } } as any);
+
+      const tool = registeredTools.get('get_my_permissions');
+      const payload = parse(await tool.handler({ permissions: 'BROWSE_PROJECTS' }));
+
+      expect(payload.success).toBe(true);
+      expect(Object.keys(payload.permissions)).toHaveLength(4);
+      // structure preserved -- entries still carry havePermission
+      expect(payload.permissions.BROWSE_PROJECTS.havePermission).toBeDefined();
+    });
+
+    it('GUARD: a genuine empty permissions map stays success true', async () => {
+      mockApiClient.makeRequest.mockResolvedValue({ success: true, data: { permissions: {} } } as any);
+
+      const tool = registeredTools.get('get_my_permissions');
+      const payload = parse(await tool.handler({}));
+
+      expect(payload.success).toBe(true);
+      expect(Object.keys(payload.permissions)).toHaveLength(0);
+    });
+  });
 });
