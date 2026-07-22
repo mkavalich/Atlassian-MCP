@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Atlassian MCP Tools Schema",
   "description": "Auto-generated schema of all available MCP tools for skill validation",
-  "generated": "2026-07-21T20:14:18.348Z",
+  "generated": "2026-07-22T15:07:50.543Z",
   "servers": {
     "jira-projects": {
       "description": "Projects, issues, dashboards, reporting",
@@ -2027,7 +2027,7 @@
     },
     "jira-fields-permissions": {
       "description": "Custom fields, permissions, notifications",
-      "toolCount": 31,
+      "toolCount": 33,
       "tools": {
         "search_tools": {
           "description": "Discover available tools by category or type.",
@@ -2257,6 +2257,18 @@
             "destructiveHint": false
           }
         },
+        "get_field_project_mapping": {
+          "description": "🔍 DISCOVERY TOOL: Maps custom fields to the projects they apply to via field context project mappings. Custom fields ar",
+          "type": "read",
+          "parameters": [
+            "fieldIds",
+            "resolveGlobalToProjects"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false
+          }
+        },
         "create_custom_field_context": {
           "description": "⚠️ KNOWN LIMITATION: Some system custom fields are \"locked\" and cannot have new contexts created. Returns VALIDATION_ERR",
           "type": "create",
@@ -2322,6 +2334,19 @@
           ],
           "annotations": {
             "readOnlyHint": false,
+            "destructiveHint": false
+          }
+        },
+        "get_field_screens": {
+          "description": "🔍 DISCOVERY TOOL: Lists the screens a field appears on, via /field/{id}/screens, paginated to completion. A 200 with to",
+          "type": "read",
+          "parameters": [
+            "fieldId",
+            "maxResults",
+            "startAt"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
             "destructiveHint": false
           }
         },
@@ -4804,6 +4829,8 @@
     "get_enhanced_identity_provider_insights",
     "get_field_configuration_schemes",
     "get_field_configurations",
+    "get_field_project_mapping",
+    "get_field_screens",
     "get_fields_paginated",
     "get_footer_comments",
     "get_global_permissions",

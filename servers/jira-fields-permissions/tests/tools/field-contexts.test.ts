@@ -476,11 +476,12 @@ describe('Field Context Tools', () => {
 
   it('should register all expected tools', () => {
     expect(registeredTools.has('get_custom_field_contexts')).toBe(true);
+    expect(registeredTools.has('get_field_project_mapping')).toBe(true);
     expect(registeredTools.has('create_custom_field_context')).toBe(true);
     expect(registeredTools.has('update_custom_field_context')).toBe(true);
     expect(registeredTools.has('delete_custom_field_context')).toBe(true);
     expect(registeredTools.has('get_custom_field_options')).toBe(true);
     expect(registeredTools.has('create_custom_field_options')).toBe(true);
-    expect(registeredTools.size).toBe(6);
+    expect(registeredTools.size).toBe(7);
   });
 });

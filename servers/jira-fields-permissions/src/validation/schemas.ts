@@ -327,6 +327,22 @@ export const getCustomFieldContextsSchema = z.object({
     .describe('The maximum number of results to return'),
 }).strict();
 
+export const getFieldProjectMappingSchema = z.object({
+  fieldIds: z.array(z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id'))
+    .min(1)
+    .max(25)
+    .describe('Custom field IDs to map (1-25). Over the cap is a hard error, never a silent truncation.'),
+  resolveGlobalToProjects: z.boolean().optional().default(false)
+    .describe('When true, expand a global context to the concrete list of project IDs on the site.'),
+}).strict();
+
+export const getFieldScreensSchema = z.object({
+  fieldId: z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id').describe('The ID of the field to resolve screens for'),
+  maxResults: z.number().int().min(1).max(100).optional().default(100)
+    .describe('Page size for the /screens walk (honored up to 100); the walk paginates to completion regardless'),
+  startAt: z.number().int().min(0).optional().default(0).describe('The starting index for the /screens walk'),
+}).strict();
+
 export const createCustomFieldContextSchema = z.object({
   fieldId: z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id').describe('The ID of the custom field'),
   name: z.string().min(1).max(255).describe('The name of the context'),

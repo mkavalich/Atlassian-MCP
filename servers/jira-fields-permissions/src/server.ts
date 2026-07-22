@@ -15,6 +15,7 @@ import type { AuthConfig } from './types/index.js';
 import { registerPermissionTools } from './tools/permissions.js';
 import { registerFieldTools } from './tools/fields.js';
 import { registerFieldContextTools } from './tools/field-contexts.js';
+import { registerFieldScreenTools } from './tools/field-screens.js';
 import { registerFieldConfigurationTools } from './tools/field-configurations.js';
 import { registerNotificationScreenTools } from './tools/notifications-screens.js';
 
@@ -66,8 +67,10 @@ export const toolCatalog = [
   { name: 'create_custom_field', category: 'fields', type: 'create', description: 'Create custom field' },
   { name: 'update_custom_field', category: 'fields', type: 'update', description: 'Update custom field' },
   { name: 'delete_custom_field', category: 'fields', type: 'delete', description: 'Delete custom field' },
+  { name: 'get_field_screens', category: 'fields', type: 'read', description: 'List the screens a field appears on (paginated; 404 for a known custom field = SCREENS_UNAVAILABLE, never an empty list)' },
   // Field Contexts
   { name: 'get_custom_field_contexts', category: 'field-contexts', type: 'discovery', description: 'Get field contexts' },
+  { name: 'get_field_project_mapping', category: 'field-contexts', type: 'read', description: 'Map custom fields to the projects they apply to (union-enumerated; global=all-projects; 404=unverifiable, never a false zero)' },
   { name: 'create_custom_field_context', category: 'field-contexts', type: 'create', description: 'Create field context' },
   { name: 'update_custom_field_context', category: 'field-contexts', type: 'update', description: 'Update field context' },
   { name: 'delete_custom_field_context', category: 'field-contexts', type: 'delete', description: 'Delete field context' },
@@ -207,6 +210,7 @@ export async function createServer(config: ServerConfig = {}): Promise<ServerIns
   await registerPermissionTools(registrarServer, apiClient);
   await registerFieldTools(registrarServer, apiClient);
   await registerFieldContextTools(registrarServer, apiClient);
+  await registerFieldScreenTools(registrarServer, apiClient);
   await registerFieldConfigurationTools(registrarServer, apiClient);
   await registerNotificationScreenTools(registrarServer, apiClient);
 
@@ -242,5 +246,6 @@ export async function createServer(config: ServerConfig = {}): Promise<ServerIns
 export { registerPermissionTools } from './tools/permissions.js';
 export { registerFieldTools } from './tools/fields.js';
 export { registerFieldContextTools } from './tools/field-contexts.js';
+export { registerFieldScreenTools } from './tools/field-screens.js';
 export { registerFieldConfigurationTools } from './tools/field-configurations.js';
 export { registerNotificationScreenTools } from './tools/notifications-screens.js';

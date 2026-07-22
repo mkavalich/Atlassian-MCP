@@ -48,6 +48,7 @@ export declare const toolCatalog: ToolCatalogEntry[];
 export declare function registerPermissionTools(server: McpServer, apiClient: JiraApiClient): Promise<void>;
 export declare function registerFieldTools(server: McpServer, apiClient: JiraApiClient): Promise<void>;
 export declare function registerFieldContextTools(server: McpServer, apiClient: JiraApiClient): Promise<void>;
+export declare function registerFieldScreenTools(server: McpServer, apiClient: JiraApiClient): Promise<void>;
 export declare function registerFieldConfigurationTools(server: McpServer, apiClient: JiraApiClient): Promise<void>;
 export declare function registerNotificationScreenTools(server: McpServer, apiClient: JiraApiClient): Promise<void>;
 
@@ -192,6 +193,11 @@ export type {
   JiraFieldSearchItem,
   JiraCustomFieldContext,
   JiraCustomFieldOption,
+  JiraFieldContextProjectMappingRow,
+  JiraFieldProjectMapping,
+  FieldProjectScope,
+  JiraFieldScreenRef,
+  JiraFieldScreensResult,
   JiraFieldConfiguration,
   JiraFieldConfigItem,
   JiraFieldConfigurationScheme,

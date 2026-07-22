@@ -1,12 +1,12 @@
 # Atlassian MCP Servers - Complete Tool Catalog
 
-> **Generated:** 2026-07-21T20:14:18.333Z
+> **Generated:** 2026-07-22T15:07:50.527Z
 > 
 > This file is auto-generated. Do not edit manually.
 > Run `npm run generate:tool-catalog` to regenerate.
 
 **Total Servers:** 8
-**Total Tools:** 275
+**Total Tools:** 277
 
 ---
 
@@ -16,13 +16,13 @@
 |--------|-------|-------------|
 | jira-projects | 60 | Projects, issues, dashboards, reporting |
 | jira-workflows | 39 | Workflows, screens, schemes, automation |
-| jira-fields-permissions | 31 | Custom fields, permissions, notifications |
+| jira-fields-permissions | 33 | Custom fields, permissions, notifications |
 | jira-service-desk | 12 | JSM request types, customer organizations |
 | jira-organization | 31 | Atlassian Admin, identity, directories |
 | jira-system-admin | 21 | System config, licensing, users, groups |
 | jira-product-discovery | 12 | JPD ideas, insights, scoring |
 | confluence | 69 | Spaces, pages, comments, attachments |
-| **Total** | **275** | |
+| **Total** | **277** | |
 
 ---
 
@@ -192,7 +192,7 @@ Workflows, screens, schemes, automation
 
 ---
 
-## 3. jira-fields-permissions (31 tools)
+## 3. jira-fields-permissions (33 tools)
 
 Custom fields, permissions, notifications
 
@@ -217,12 +217,19 @@ Custom fields, permissions, notifications
 | `get_global_permissions` | read | 🔍 DISCOVERY TOOL: Primary discovery method for global permission operations. Use this first to find available global pe |
 | `get_my_permissions` | read | 🔍 DISCOVERY TOOL: Gets current user permissions for a specific project, issue, or globally. Use this to understand your |
 
-### Screens (3 tools)
+### Projects (1 tools)
+
+| Tool | Type | Description |
+|------|------|-------------|
+| `get_field_project_mapping` | read | 🔍 DISCOVERY TOOL: Maps custom fields to the projects they apply to via field context project mappings. Custom fields ar |
+
+### Screens (4 tools)
 
 | Tool | Type | Description |
 |------|------|-------------|
 | `add_field_to_notification_screen` | create | ⚠️ PREREQUISITES: Use "get_notification_screens" to find valid screen IDs, then use jira-workflows "get_screen_tabs" to  |
 | `create_notification_screen` | create | Create a new screen for notification workflows with tabs and fields |
+| `get_field_screens` | read | 🔍 DISCOVERY TOOL: Lists the screens a field appears on, via /field/{id}/screens, paginated to completion. A 200 with to |
 | `get_notification_screens` | read | Retrieve all screens available for notification configuration |
 
 ### Other (17 tools)
