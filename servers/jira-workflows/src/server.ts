@@ -18,6 +18,7 @@ import type { AuthConfig } from './types/index.js';
 // Import tool modules
 import { registerWorkflowTools } from './tools/workflows.js';
 import { registerScreenTools } from './tools/screens.js';
+import { registerIssueTypeScreenSchemeTools } from './tools/issue-type-screen-schemes.js';
 import { registerWorkflowSchemeTools } from './tools/workflow-schemes.js';
 import { registerGuidedWorkflowTools } from './tools/guided-workflows.js';
 import { registerAutomationTools } from './tools/automation.js';
@@ -83,6 +84,9 @@ export const toolCatalog = [
   { name: 'add_field_to_default_screen', category: 'screens', type: 'create', description: 'Add field to default screen' },
   { name: 'get_screen_available_fields', category: 'screens', type: 'read', description: 'Get available fields for screen' },
   { name: 'assign_issue_type_screen_scheme_to_project', category: 'screens', type: 'update', description: 'Assign ITSS to project' },
+  { name: 'get_issue_type_screen_schemes', category: 'screens', type: 'discovery', description: 'List issue type screen schemes' },
+  { name: 'get_project_issue_type_screen_scheme', category: 'screens', type: 'read', description: "Resolve a project's assigned ITSS" },
+  { name: 'get_issue_type_screen_scheme_mappings', category: 'screens', type: 'read', description: 'List issueType->screenScheme mappings for an ITSS' },
   // Workflow Schemes
   { name: 'get_workflow_schemes_detailed', category: 'schemes', type: 'discovery', description: 'List workflow schemes (detailed)' },
   { name: 'create_workflow_scheme', category: 'schemes', type: 'create', description: 'Create workflow scheme' },
@@ -263,6 +267,7 @@ export async function createServer(config: ServerConfig = {}): Promise<ServerIns
   registerSearchTools(registrarServer);
   await registerWorkflowTools(registrarServer, apiClient);
   await registerScreenTools(registrarServer, apiClient);
+  await registerIssueTypeScreenSchemeTools(registrarServer, apiClient);
   await registerWorkflowSchemeTools(registrarServer, apiClient);
   await registerGuidedWorkflowTools(registrarServer, apiClient);
   await registerAutomationTools(registrarServer, apiClient);
@@ -310,6 +315,7 @@ export async function createServer(config: ServerConfig = {}): Promise<ServerIns
 // Tool Registration Exports
 export { registerWorkflowTools } from './tools/workflows.js';
 export { registerScreenTools } from './tools/screens.js';
+export { registerIssueTypeScreenSchemeTools } from './tools/issue-type-screen-schemes.js';
 export { registerWorkflowSchemeTools } from './tools/workflow-schemes.js';
 export { registerGuidedWorkflowTools } from './tools/guided-workflows.js';
 export { registerAutomationTools } from './tools/automation.js';

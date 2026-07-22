@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Atlassian MCP Tools Schema",
   "description": "Auto-generated schema of all available MCP tools for skill validation",
-  "generated": "2026-07-22T15:07:50.543Z",
+  "generated": "2026-07-22T16:59:47.699Z",
   "servers": {
     "jira-projects": {
       "description": "Projects, issues, dashboards, reporting",
@@ -1228,7 +1228,7 @@
     },
     "jira-workflows": {
       "description": "Workflows, screens, schemes, automation",
-      "toolCount": 39,
+      "toolCount": 42,
       "tools": {
         "search_tools": {
           "description": "Discover available tools by category or type. Use this first to find the right tool for your task.",
@@ -1668,6 +1668,48 @@
           ],
           "annotations": {
             "readOnlyHint": false,
+            "destructiveHint": false,
+            "openWorldHint": false
+          }
+        },
+        "get_issue_type_screen_schemes": {
+          "description": "🔍 DISCOVERY TOOL: Lists issue type screen schemes (ITSS) via GET /issuetypescreenscheme, paginated to completion (isLas",
+          "type": "read",
+          "parameters": [
+            "ids",
+            "startAt",
+            "maxResults"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "openWorldHint": false
+          }
+        },
+        "get_project_issue_type_screen_scheme": {
+          "description": "Resolves a single project's assigned issue type screen scheme (ITSS) via GET /issuetypescreenscheme/project?projectId=. ",
+          "type": "read",
+          "parameters": [
+            "projectId",
+            "startAt",
+            "maxResults"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
+            "destructiveHint": false,
+            "openWorldHint": false
+          }
+        },
+        "get_issue_type_screen_scheme_mappings": {
+          "description": "🔍 DISCOVERY TOOL: Lists issueType -> screenScheme mappings for one or more issue type screen schemes via GET /issuetype",
+          "type": "read",
+          "parameters": [
+            "issueTypeScreenSchemeId",
+            "startAt",
+            "maxResults"
+          ],
+          "annotations": {
+            "readOnlyHint": true,
             "destructiveHint": false,
             "openWorldHint": false
           }
@@ -4847,6 +4889,8 @@
     "get_issue_editmeta_fields",
     "get_issue_type_scheme_mappings",
     "get_issue_type_schemes",
+    "get_issue_type_screen_scheme_mappings",
+    "get_issue_type_screen_schemes",
     "get_issue_types",
     "get_jpd_projects",
     "get_labels",
@@ -4878,6 +4922,7 @@
     "get_project",
     "get_project_analytics",
     "get_project_customer_organizations",
+    "get_project_issue_type_screen_scheme",
     "get_provisioning_insights",
     "get_request_type_fields",
     "get_request_types",

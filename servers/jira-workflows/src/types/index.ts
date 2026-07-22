@@ -131,6 +131,50 @@ export interface JiraIssueTypeMapping {
   screenScheme?: JiraScreenScheme;
 }
 
+// ---------------------------------------------------------------------------
+// Issue Type Screen Scheme READ types (Pass B / Tool 3: 3a/3b/3c)
+//
+// These describe the row/result shapes for the three read-only ITSS discovery
+// tools in tools/issue-type-screen-schemes.ts. They are intentionally distinct
+// from JiraIssueTypeScreenScheme (which carries nested issueTypeMappings for the
+// write/create path).
+// ---------------------------------------------------------------------------
+
+/** A single issue-type screen scheme row from GET /issuetypescreenscheme (3a). */
+export interface JiraIssueTypeScreenSchemeListItem {
+  id: string;
+  name?: string;
+  description?: string;
+}
+
+/**
+ * The resolution of a single project's assigned issue-type screen scheme (3b).
+ *
+ * `assigned` is a TRISTATE and the fabrication-safety contract lives in these
+ * fields:
+ *  - `assigned:true`  -> `issueTypeScreenSchemeId` is the assigned ITSS id.
+ *  - `assigned:false` -> the walk COMPLETED and the project was genuinely absent;
+ *                        `usesDefaultItss:'1'` + `note` (honest "uses default").
+ *  - `assigned:null`  -> the walk truncated at the page cap; `verifiable:false` +
+ *                        `reason`. NEVER the default-ITSS fallback (MC1).
+ */
+export interface JiraProjectItssResolution {
+  projectId: string;
+  assigned: boolean | null;
+  issueTypeScreenSchemeId?: string;
+  usesDefaultItss?: string;
+  note?: string;
+  verifiable?: boolean;
+  reason?: string;
+}
+
+/** One issueType -> screenScheme mapping row from GET /issuetypescreenscheme/mapping (3c). */
+export interface JiraIssueTypeScreenSchemeMappingRow {
+  issueTypeScreenSchemeId: string;
+  issueTypeId: string;
+  screenSchemeId: string;
+}
+
 export interface JiraScreenScheme {
   id: string;
   name: string;

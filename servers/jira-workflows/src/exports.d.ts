@@ -47,6 +47,7 @@ export declare const toolCatalog: ToolCatalogEntry[];
 // Tool Registration Functions
 export declare function registerWorkflowTools(server: McpServer, apiClient: JiraApiClient): Promise<void>;
 export declare function registerScreenTools(server: McpServer, apiClient: JiraApiClient): Promise<void>;
+export declare function registerIssueTypeScreenSchemeTools(server: McpServer, apiClient: JiraApiClient): Promise<void>;
 export declare function registerWorkflowSchemeTools(server: McpServer, apiClient: JiraApiClient): Promise<void>;
 export declare function registerGuidedWorkflowTools(server: McpServer, apiClient: JiraApiClient): Promise<void>;
 export declare function registerAutomationTools(server: McpServer, apiClient: JiraApiClient): Promise<void>;
@@ -197,6 +198,9 @@ export type {
   JiraIssueTypeScheme,
   JiraIssueTypeScreenScheme,
   JiraIssueTypeMapping,
+  JiraIssueTypeScreenSchemeListItem,
+  JiraProjectItssResolution,
+  JiraIssueTypeScreenSchemeMappingRow,
   JiraScreen,
   JiraScreenScheme,
   JiraScreenDetailed,
