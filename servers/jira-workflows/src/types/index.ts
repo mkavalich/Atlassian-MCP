@@ -81,19 +81,6 @@ export interface JiraPermission {
   };
 }
 
-export interface JiraField {
-  id: string;
-  name: string;
-  description?: string;
-  type: string;
-  isCustom: boolean;
-  isArray?: boolean;
-  schema?: {
-    type: string;
-    custom?: string;
-    customId?: number;
-  };
-}
 
 export interface CreateProjectInput {
   name: string;
@@ -413,21 +400,43 @@ export interface JiraPortalSettings {
 }
 
 // Automation Rule Types
+//
+// Corrected against the live Jira Automation API (GET /rule/summary and
+// GET /rule/{uuid}). The previous declaration contradicted the wire format on
+// five fields: it declared `id` (the API returns `uuid`), `enabled: boolean`
+// (the API returns state:'ENABLED'|'DISABLED'), separate `conditions[]` and
+// `actions[]` (the API returns a single `components[]`), `created`/`updated` as
+// strings (they are epoch-millisecond numbers) and `projects` (the API returns
+// `ruleScopeARIs`). Every one of those reads would have been undefined.
 export interface JiraAutomationRule {
-  id: string;
+  /** Primary identifier. Pass to get_automation_rule_details. There is no `id`. */
+  uuid: string;
   name: string;
-  description?: string;
-  enabled: boolean;
-  trigger: JiraAutomationTrigger;
-  conditions?: JiraAutomationCondition[];
-  actions: JiraAutomationAction[];
-  projects?: string[];
-  created: string;
-  updated: string;
-  authorAccountId: string;
-  executions?: number;
-  lastRun?: string;
-  tags?: string[];
+  description?: string | null;
+  state: 'ENABLED' | 'DISABLED';
+  /** Epoch milliseconds, not an ISO string. */
+  created?: number;
+  /** Epoch milliseconds, not an ISO string. */
+  updated?: number;
+  authorAccountId?: string;
+  actorAccountId?: string;
+  /** Only returned by GET /rule/{uuid}, never by the listing endpoint. */
+  trigger?: JiraAutomationTrigger;
+  /** Triggers, conditions and actions arrive as one flat list, not two arrays. */
+  components?: JiraAutomationComponent[];
+  /** Rule scope as Atlassian Resource Identifiers. */
+  ruleScopeARIs?: string[];
+}
+
+/** A single entry of a rule's flat `components[]` list. */
+export interface JiraAutomationComponent {
+  component?: string;
+  schemaVersion?: number;
+  type?: string;
+  value?: Record<string, any> | null;
+  children?: JiraAutomationComponent[];
+  conditions?: JiraAutomationComponent[];
+  [key: string]: any;
 }
 
 export interface JiraAutomationTrigger {

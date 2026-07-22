@@ -60,7 +60,47 @@ export async function registerPermissionTools(server: McpServer, apiClient: Jira
         });
 
         if (response.success && response.data) {
-          const permissionSchemes = response.data.permissionSchemes || response.data;
+          // The API returns EITHER a bare array of schemes OR an envelope
+          // { permissionSchemes }. Resolve the union explicitly and handle both
+          // arms. The previous `data.permissionSchemes || data` followed by
+          // `.length || 0` reported `count: 0` under `success: true` whenever
+          // the envelope arrived without its array property -- an absent
+          // property is not a genuine zero. Array.isArray is checked first so
+          // no prototype member can ever be mistaken for the payload.
+          const raw: unknown = response.data;
+          let permissionSchemes: JiraPermissionScheme[] | null = null;
+          if (Array.isArray(raw)) {
+            permissionSchemes = raw as JiraPermissionScheme[];
+          } else if (
+            raw !== null &&
+            typeof raw === 'object' &&
+            Array.isArray((raw as { permissionSchemes?: unknown }).permissionSchemes)
+          ) {
+            permissionSchemes = (raw as { permissionSchemes: JiraPermissionScheme[] }).permissionSchemes;
+          }
+
+          if (permissionSchemes === null) {
+            // Unknown is NOT zero. Fail loudly rather than fabricate a count.
+            const receivedKeys =
+              raw !== null && typeof raw === 'object' ? Object.keys(raw as object) : [];
+            return {
+              content: [{
+                type: 'text',
+                text: JSON.stringify({
+                  success: false,
+                  partialFailure: true,
+                  permissionSchemes: null,
+                  count: null,
+                  error: {
+                    code: 'GET_PERMISSION_SCHEMES_UNRECOGNIZED_SHAPE',
+                    message: `Jira returned a response for /permissionscheme that is neither an array of schemes nor an envelope with an array "permissionSchemes" property. The number of permission schemes is UNKNOWN and is NOT zero. Top-level keys received: ${receivedKeys.length > 0 ? receivedKeys.join(', ') : '(none)'}.`,
+                    suggestion: 'Retry the request. If this persists, the Jira API response shape has changed and this tool must be updated. Do not treat this result as an empty permission-scheme list.',
+                  },
+                }, null, 2),
+              }],
+              isError: true,
+            };
+          }
 
           return {
             content: [{
@@ -68,7 +108,7 @@ export async function registerPermissionTools(server: McpServer, apiClient: Jira
               text: JSON.stringify({
                 success: true,
                 permissionSchemes,
-                count: permissionSchemes.length || 0,
+                count: permissionSchemes.length,
               }, null, 2),
             }],
           };
@@ -330,7 +370,47 @@ export async function registerPermissionTools(server: McpServer, apiClient: Jira
         });
 
         if (response.success && response.data) {
-          const permissions = response.data.permissions || response.data;
+          // /permissionscheme/{id}/permission returns { permissions: [...] } (an
+          // envelope with an ARRAY, verified live: 90 grants on the Default
+          // scheme) or, defensively, a bare array. The previous
+          // `data.permissions || data` + `.length || 0` reported count 0 under
+          // success:true whenever the envelope arrived without its array -- an
+          // absent property is not a genuine zero. Array.isArray first so no
+          // prototype member is mistaken for the payload.
+          const raw: unknown = response.data;
+          let permissions: unknown[] | null = null;
+          if (Array.isArray(raw)) {
+            permissions = raw;
+          } else if (
+            raw !== null &&
+            typeof raw === 'object' &&
+            Array.isArray((raw as { permissions?: unknown }).permissions)
+          ) {
+            permissions = (raw as { permissions: unknown[] }).permissions;
+          }
+
+          if (permissions === null) {
+            const receivedKeys =
+              raw !== null && typeof raw === 'object' ? Object.keys(raw as object) : [];
+            return {
+              content: [{
+                type: 'text',
+                text: JSON.stringify({
+                  success: false,
+                  partialFailure: true,
+                  permissions: null,
+                  count: null,
+                  schemeId: validatedParams.schemeId,
+                  error: {
+                    code: 'GET_PERMISSION_GRANTS_UNRECOGNIZED_SHAPE',
+                    message: `Jira returned a response for /permissionscheme/${validatedParams.schemeId}/permission that is neither an array of grants nor an envelope with an array "permissions" property. The number of grants is UNKNOWN and is NOT zero. Top-level keys received: ${receivedKeys.length > 0 ? receivedKeys.join(', ') : '(none)'}.`,
+                    suggestion: 'Retry the request. If this persists the Jira API response shape has changed and this tool must be updated. Do not treat this result as an empty grant list.',
+                  },
+                }, null, 2),
+              }],
+              isError: true,
+            };
+          }
 
           return {
             content: [{
@@ -339,7 +419,7 @@ export async function registerPermissionTools(server: McpServer, apiClient: Jira
                 success: true,
                 permissions,
                 schemeId: validatedParams.schemeId,
-                count: permissions.length || 0,
+                count: permissions.length,
               }, null, 2),
             }],
           };
@@ -523,7 +603,43 @@ export async function registerPermissionTools(server: McpServer, apiClient: Jira
         });
 
         if (response.success && response.data) {
-          const permissions = response.data.permissions || response.data;
+          // GET /permissions returns { permissions: { KEY: {...}, ... } } -- an
+          // OBJECT MAP keyed by permission name, NOT an array (verified live: 66
+          // entries). The count is therefore the number of map entries. The
+          // previous `data.permissions || data` + `.length || Object.keys(...).length || 0`
+          // reached the right Object.keys branch on the live shape, but the
+          // trailing `|| 0` fabricates a zero for any unrecognised shape, and if
+          // the envelope property were absent Object.keys would silently count
+          // the envelope's own keys instead. Require the documented map shape and
+          // fail loud otherwise. A genuinely empty map ({}) still reports 0.
+          const raw: unknown = response.data;
+          const isPlainObject = (x: unknown): x is Record<string, unknown> =>
+            x !== null && typeof x === 'object' && !Array.isArray(x);
+          const permissions: Record<string, unknown> | null =
+            isPlainObject(raw) && isPlainObject(raw.permissions)
+              ? (raw.permissions as Record<string, unknown>)
+              : null;
+
+          if (permissions === null) {
+            const receivedKeys = isPlainObject(raw) ? Object.keys(raw) : [];
+            return {
+              content: [{
+                type: 'text',
+                text: JSON.stringify({
+                  success: false,
+                  partialFailure: true,
+                  permissions: null,
+                  count: null,
+                  error: {
+                    code: 'GET_GLOBAL_PERMISSIONS_UNRECOGNIZED_SHAPE',
+                    message: `Jira returned a response for /permissions without an object "permissions" map. The number of global permissions is UNKNOWN and is NOT zero. Top-level keys received: ${receivedKeys.length > 0 ? receivedKeys.join(', ') : '(none)'}.`,
+                    suggestion: 'Retry the request. If this persists the Jira API response shape has changed and this tool must be updated. Do not treat this result as zero global permissions.',
+                  },
+                }, null, 2),
+              }],
+              isError: true,
+            };
+          }
 
           return {
             content: [{
@@ -531,7 +647,7 @@ export async function registerPermissionTools(server: McpServer, apiClient: Jira
               text: JSON.stringify({
                 success: true,
                 permissions,
-                count: permissions.length || Object.keys(permissions).length || 0,
+                count: Object.keys(permissions).length,
                 message: 'Global permissions retrieved successfully',
               }, null, 2),
             }],

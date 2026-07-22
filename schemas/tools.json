@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Atlassian MCP Tools Schema",
   "description": "Auto-generated schema of all available MCP tools for skill validation",
-  "generated": "2026-02-23T13:43:43.077Z",
+  "generated": "2026-07-21T20:14:18.348Z",
   "servers": {
     "jira-projects": {
       "description": "Projects, issues, dashboards, reporting",
@@ -1267,7 +1267,8 @@
           ],
           "annotations": {
             "readOnlyHint": true,
-            "destructiveHint": false
+            "destructiveHint": false,
+            "openWorldHint": false
           }
         },
         "create_workflow": {
@@ -1281,7 +1282,8 @@
           ],
           "annotations": {
             "readOnlyHint": false,
-            "destructiveHint": false
+            "destructiveHint": false,
+            "openWorldHint": false
           },
           "examples": [
             {
@@ -1411,7 +1413,8 @@
           ],
           "annotations": {
             "readOnlyHint": true,
-            "destructiveHint": false
+            "destructiveHint": false,
+            "openWorldHint": false
           }
         },
         "delete_workflow": {
@@ -1437,7 +1440,8 @@
           ],
           "annotations": {
             "readOnlyHint": true,
-            "destructiveHint": false
+            "destructiveHint": false,
+            "openWorldHint": false
           }
         },
         "create_screen_scheme": {
@@ -1450,7 +1454,8 @@
           ],
           "annotations": {
             "readOnlyHint": false,
-            "destructiveHint": false
+            "destructiveHint": false,
+            "openWorldHint": false
           }
         },
         "delete_screen_scheme": {
@@ -1461,7 +1466,8 @@
           ],
           "annotations": {
             "readOnlyHint": false,
-            "destructiveHint": true
+            "destructiveHint": true,
+            "openWorldHint": false
           }
         },
         "get_screens": {
@@ -1474,7 +1480,8 @@
           ],
           "annotations": {
             "readOnlyHint": true,
-            "destructiveHint": false
+            "destructiveHint": false,
+            "openWorldHint": false
           }
         },
         "create_screen": {
@@ -1487,7 +1494,8 @@
           ],
           "annotations": {
             "readOnlyHint": false,
-            "destructiveHint": false
+            "destructiveHint": false,
+            "openWorldHint": false
           }
         },
         "update_screen": {
@@ -1500,7 +1508,8 @@
           ],
           "annotations": {
             "readOnlyHint": false,
-            "destructiveHint": false
+            "destructiveHint": false,
+            "openWorldHint": false
           }
         },
         "delete_screen": {
@@ -1511,7 +1520,8 @@
           ],
           "annotations": {
             "readOnlyHint": false,
-            "destructiveHint": true
+            "destructiveHint": true,
+            "openWorldHint": false
           }
         },
         "get_screen_tabs": {
@@ -1523,7 +1533,8 @@
           ],
           "annotations": {
             "readOnlyHint": true,
-            "destructiveHint": false
+            "destructiveHint": false,
+            "openWorldHint": false
           }
         },
         "create_screen_tab": {
@@ -1535,7 +1546,8 @@
           ],
           "annotations": {
             "readOnlyHint": false,
-            "destructiveHint": false
+            "destructiveHint": false,
+            "openWorldHint": false
           }
         },
         "update_screen_tab": {
@@ -1548,7 +1560,8 @@
           ],
           "annotations": {
             "readOnlyHint": false,
-            "destructiveHint": false
+            "destructiveHint": false,
+            "openWorldHint": false
           }
         },
         "delete_screen_tab": {
@@ -1560,7 +1573,8 @@
           ],
           "annotations": {
             "readOnlyHint": false,
-            "destructiveHint": true
+            "destructiveHint": true,
+            "openWorldHint": false
           }
         },
         "get_screen_tab_fields": {
@@ -1573,7 +1587,8 @@
           ],
           "annotations": {
             "readOnlyHint": true,
-            "destructiveHint": false
+            "destructiveHint": false,
+            "openWorldHint": false
           }
         },
         "remove_field_from_screen_tab": {
@@ -1586,7 +1601,8 @@
           ],
           "annotations": {
             "readOnlyHint": false,
-            "destructiveHint": true
+            "destructiveHint": true,
+            "openWorldHint": false
           }
         },
         "move_screen_tab_field": {
@@ -1601,7 +1617,8 @@
           ],
           "annotations": {
             "readOnlyHint": false,
-            "destructiveHint": false
+            "destructiveHint": false,
+            "openWorldHint": false
           }
         },
         "add_field_to_screen": {
@@ -1614,7 +1631,8 @@
           ],
           "annotations": {
             "readOnlyHint": false,
-            "destructiveHint": false
+            "destructiveHint": false,
+            "openWorldHint": false
           }
         },
         "add_field_to_default_screen": {
@@ -1625,7 +1643,8 @@
           ],
           "annotations": {
             "readOnlyHint": false,
-            "destructiveHint": false
+            "destructiveHint": false,
+            "openWorldHint": false
           }
         },
         "get_screen_available_fields": {
@@ -1636,7 +1655,8 @@
           ],
           "annotations": {
             "readOnlyHint": true,
-            "destructiveHint": false
+            "destructiveHint": false,
+            "openWorldHint": false
           }
         },
         "assign_issue_type_screen_scheme_to_project": {
@@ -1648,7 +1668,8 @@
           ],
           "annotations": {
             "readOnlyHint": false,
-            "destructiveHint": false
+            "destructiveHint": false,
+            "openWorldHint": false
           }
         },
         "get_workflow_schemes_detailed": {
@@ -1661,7 +1682,8 @@
           ],
           "annotations": {
             "readOnlyHint": true,
-            "destructiveHint": false
+            "destructiveHint": false,
+            "openWorldHint": false
           }
         },
         "create_workflow_scheme": {
@@ -1675,7 +1697,8 @@
           ],
           "annotations": {
             "readOnlyHint": false,
-            "destructiveHint": false
+            "destructiveHint": false,
+            "openWorldHint": false
           }
         },
         "update_workflow_scheme": {
@@ -1689,7 +1712,8 @@
           ],
           "annotations": {
             "readOnlyHint": false,
-            "destructiveHint": false
+            "destructiveHint": false,
+            "openWorldHint": false
           }
         },
         "assign_workflow_scheme_to_project": {
@@ -1701,7 +1725,8 @@
           ],
           "annotations": {
             "readOnlyHint": false,
-            "destructiveHint": false
+            "destructiveHint": false,
+            "openWorldHint": false
           }
         },
         "set_workflow_scheme_issue_type": {
@@ -1714,7 +1739,8 @@
           ],
           "annotations": {
             "readOnlyHint": false,
-            "destructiveHint": false
+            "destructiveHint": false,
+            "openWorldHint": false
           }
         },
         "delete_workflow_scheme_issue_type": {
@@ -1726,7 +1752,8 @@
           ],
           "annotations": {
             "readOnlyHint": false,
-            "destructiveHint": true
+            "destructiveHint": true,
+            "openWorldHint": false
           }
         },
         "setup_workflow_guided": {
@@ -1742,7 +1769,8 @@
           ],
           "annotations": {
             "readOnlyHint": false,
-            "destructiveHint": false
+            "destructiveHint": false,
+            "openWorldHint": false
           },
           "examples": [
             {
@@ -1783,21 +1811,16 @@
           ]
         },
         "get_automation_rules": {
-          "description": "🔍 DISCOVERY TOOL: Primary discovery method for automation rule operations. Use this first to find available rule IDs, n",
+          "description": "🔍 DISCOVERY TOOL: Lists automation rules (uuid, name, state, author). Each rule's `uuid` is the identifier for \"get_aut",
           "type": "read",
           "parameters": [
-            "name",
-            "enabled",
-            "authorAccountId",
-            "projects",
-            "expand",
-            "includeDetails",
-            "startAt",
-            "maxResults"
+            "limit",
+            "cursor"
           ],
           "annotations": {
             "readOnlyHint": true,
-            "destructiveHint": false
+            "destructiveHint": false,
+            "openWorldHint": false
           }
         },
         "get_automation_rule_details": {
@@ -1809,20 +1832,22 @@
           ],
           "annotations": {
             "readOnlyHint": true,
-            "destructiveHint": false
+            "destructiveHint": false,
+            "openWorldHint": false
           }
         },
         "get_automation_templates": {
           "description": "🔍 DISCOVERY TOOL: Retrieves available automation rule templates that can be used as starting points for creating new ru",
           "type": "read",
           "parameters": [
-            "category",
-            "startAt",
-            "maxResults"
+            "categories",
+            "maxResults",
+            "cursor"
           ],
           "annotations": {
             "readOnlyHint": true,
-            "destructiveHint": false
+            "destructiveHint": false,
+            "openWorldHint": false
           }
         },
         "get_automation_component_types": {
@@ -1833,7 +1858,8 @@
           ],
           "annotations": {
             "readOnlyHint": true,
-            "destructiveHint": false
+            "destructiveHint": false,
+            "openWorldHint": false
           }
         },
         "create_automation_rule": {
@@ -1859,7 +1885,8 @@
           ],
           "annotations": {
             "readOnlyHint": false,
-            "destructiveHint": false
+            "destructiveHint": false,
+            "openWorldHint": false
           },
           "examples": [
             {
@@ -1945,7 +1972,8 @@
           ],
           "annotations": {
             "readOnlyHint": false,
-            "destructiveHint": false
+            "destructiveHint": false,
+            "openWorldHint": false
           },
           "examples": [
             {
@@ -1976,7 +2004,8 @@
           ],
           "annotations": {
             "readOnlyHint": false,
-            "destructiveHint": false
+            "destructiveHint": false,
+            "openWorldHint": false
           }
         },
         "load_tool_schema": {
@@ -4235,7 +4264,31 @@
             "destructiveHint": false,
             "idempotentHint": false,
             "openWorldHint": false
-          }
+          },
+          "examples": [
+            {
+              "name": "Create an ADR template with Confluence macros and template variables",
+              "description": "Body must be unescaped XHTML storage format. Use <at:var at:name=\"varname\"/> for user-fillable placeholders. Use <ac:structured-macro> for Confluence macros like info panels.",
+              "input": {
+                "spaceKey": "ENG",
+                "name": "Architecture Decision Record",
+                "description": "Document architectural decisions with context and consequences",
+                "templateType": "page",
+                "body": "<h1>ADR-<at:var at:name=\"number\"/>: <at:var at:name=\"title\"/></h1><ac:structured-macro ac:name=\"info\"><ac:rich-text-body><p><strong>Status:</strong> <at:var at:name=\"status\" at:default=\"Proposed\"/></p><p><strong>Date:</strong> <at:var at:name=\"date\"/></p></ac:rich-text-body></ac:structured-macro><h2>Context</h2><p>Describe the issue motivating this decision.</p><h2>Decision</h2><p>State the decision using active voice.</p><h2>Consequences</h2><h3>Positive</h3><ul><li>Benefit 1</li></ul><h3>Negative</h3><ul><li>Tradeoff 1</li></ul>"
+              }
+            },
+            {
+              "name": "Create a runbook template with warning macro and code blocks",
+              "description": "Use ac:structured-macro with ac:name=\"warning\" for alerts, ac:name=\"code\" for code blocks with CDATA.",
+              "input": {
+                "spaceKey": "OPS",
+                "name": "Runbook",
+                "description": "Operational procedure documentation",
+                "templateType": "page",
+                "body": "<ac:structured-macro ac:name=\"warning\"><ac:rich-text-body><p><strong>Last verified:</strong> <at:var at:name=\"verified_date\"/></p><p><strong>Owner:</strong> <at:var at:name=\"owner\"/></p></ac:rich-text-body></ac:structured-macro><h1><at:var at:name=\"runbook_title\"/></h1><h2>Overview</h2><p>Brief description of what this runbook accomplishes.</p><h2>Prerequisites</h2><ul><li>Required access</li></ul><h2>Procedure</h2><h3>Step 1</h3><ac:structured-macro ac:name=\"code\"><ac:parameter ac:name=\"language\">bash</ac:parameter><ac:plain-text-body><![CDATA[# Command to execute]]></ac:plain-text-body></ac:structured-macro><h2>Verification</h2><p>How to confirm success.</p>"
+              }
+            }
+          ]
         },
         "delete_template": {
           "description": "🗑️ DELETE: Permanently delete a template.",

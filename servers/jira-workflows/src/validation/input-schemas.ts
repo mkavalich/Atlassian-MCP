@@ -1273,15 +1273,12 @@ export const diagnoseCustomerVisibilityInputSchema = z.object({
 export const getJiraInstanceInfoInputSchema = z.object({}).passthrough();
 
 // Automation Rule input schemas
+// This is the schema advertised to MCP clients. It must not advertise
+// parameters the tool rejects, so the unsupported filters are gone from the
+// surface entirely and only the two the Automation API honours remain.
 export const getAutomationRulesInputSchema = z.object({
-  name: z.string().max(255).optional().describe('Filter by rule name (partial match)'),
-  enabled: z.boolean().optional().describe('Filter by enabled status'),
-  authorAccountId: z.string().max(10000).optional().describe('Filter by author account ID'),
-  projects: z.array(z.string()).optional().describe('Filter by project IDs'),
-  expand: z.string().max(10000).optional().describe('Comma-separated list of fields to expand (e.g., trigger,conditions,actions)'),
-  includeDetails: z.boolean().optional().default(false).describe('Include detailed rule configurations (trigger, conditions, actions)'),
-  startAt: z.number().min(0).optional().default(0).describe('The starting index for results'),
-  maxResults: z.number().min(1).max(100).optional().default(50).describe('The maximum number of results to return'),
+  limit: z.number().min(1).max(100).optional().describe('Page size (default 50). The only size parameter the Jira Automation API honours.'),
+  cursor: z.string().max(10000).optional().describe('Opaque continuation token from `nextCursor` of a previous response. Cursor pagination only - there is no numeric offset.'),
 }).passthrough();
 
 export const getAutomationRuleDetailsInputSchema = z.object({
@@ -1289,10 +1286,15 @@ export const getAutomationRuleDetailsInputSchema = z.object({
   expand: z.string().max(10000).optional().describe('Comma-separated list of fields to expand (e.g., trigger,conditions,actions,executions)'),
 }).passthrough();
 
+// This is the schema advertised to MCP clients. It must not advertise
+// parameters the tool rejects, so `category` (which the API ignores) and
+// `startAt` (which cursor pagination cannot express) are gone from the surface.
+// They remain in getAutomationTemplatesSchema so that a client sending them
+// anyway is rejected by name with an actionable message.
 export const getAutomationTemplatesInputSchema = z.object({
-  category: z.string().max(10000).optional().describe('Filter by template category'),
-  startAt: z.number().min(0).optional().default(0).describe('The starting index for results'),
-  maxResults: z.number().min(1).max(100).optional().default(50).describe('The maximum number of results to return'),
+  categories: z.string().max(255).optional().describe('Filter by a single category KEY, e.g. "jira.rovo" - not a display name. One key per call; the API cannot be asked for several at once through this client.'),
+  maxResults: z.number().min(1).max(100).optional().describe('Page size (default 50), sent to the API as `limit`.'),
+  cursor: z.string().max(10000).optional().describe('Opaque continuation token from `nextCursor` of a previous response. Cursor pagination only - there is no numeric offset.'),
 }).passthrough();
 
 export const getRuleExecutionsInputSchema = z.object({

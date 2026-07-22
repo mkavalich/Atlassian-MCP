@@ -81,18 +81,61 @@ export interface JiraPermission {
   };
 }
 
-export interface JiraField {
+export interface JiraFieldSchema {
+  type: string;
+  custom?: string;
+  customId?: number;
+  system?: string;
+}
+
+/**
+ * A row from GET /rest/api/3/field. This endpoint DOES return a `custom`
+ * boolean, so it is the only shape on which reading `.custom` is meaningful.
+ */
+export interface JiraFieldListItem {
+  id: string;
+  key?: string;
+  name: string;
+  custom: boolean;
+  orderable?: boolean;
+  navigable?: boolean;
+  searchable?: boolean;
+  clauseNames?: string[];
+  schema?: JiraFieldSchema;
+}
+
+/**
+ * A row from GET /rest/api/3/field/search.
+ *
+ * Deliberately has NO `custom` property: that endpoint does not return one.
+ * Reading `f.custom` on this shape must fail to COMPILE rather than silently
+ * evaluate to `undefined` -- the previous `isCustom: boolean` declaration made
+ * every row look system-classified because `!undefined` is `true`.
+ */
+export interface JiraFieldSearchItem {
   id: string;
   name: string;
   description?: string;
-  type: string;
-  isCustom: boolean;
-  isArray?: boolean;
-  schema?: {
-    type: string;
-    custom?: string;
-    customId?: number;
-  };
+  typeDisplayName?: string;
+  areOptionsSupported?: boolean;
+  isOptionsCountOverLimit?: boolean;
+  schema?: JiraFieldSchema;
+}
+
+/**
+ * The ONLY custom-field discriminator present on BOTH field shapes.
+ *
+ * Returns `null` -- never `false` -- when `schema` is absent. Three rows on a
+ * real instance (thumbnail/Images, issuekey/Key, parent/Parent) carry no
+ * `schema` at all, and an absent discriminator is not a negative answer.
+ * Bucketing them as "system" would reintroduce exactly the defect this
+ * replaces: a confident, wrong, successful-looking classification.
+ */
+export function isCustomField(
+  f: { schema?: { customId?: number } } | null | undefined
+): boolean | null {
+  if (!f || !f.schema) return null;
+  return f.schema.customId !== undefined;
 }
 
 export interface CreateProjectInput {

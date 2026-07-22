@@ -1,6 +1,6 @@
 # Atlassian MCP Servers - Complete Tool Catalog
 
-> **Generated:** 2026-02-23T13:43:43.060Z
+> **Generated:** 2026-07-21T20:14:18.333Z
 > 
 > This file is auto-generated. Do not edit manually.
 > Run `npm run generate:tool-catalog` to regenerate.
@@ -173,7 +173,7 @@ Workflows, screens, schemes, automation
 | `delete_workflow` | delete | Deletes a Jira workflow by its entity ID. The workflow must not be in use by any active workflow schemes. Use get_workfl |
 | `get_automation_component_types` | read | 🔍 DISCOVERY TOOL: Returns all available automation component types (triggers, actions, conditions, branches) with their |
 | `get_automation_rule_details` | read | 🔍 DISCOVERY TOOL: ⚠️ PREREQUISITE: Use "get_automation_rules" first to find valid rule IDs. If get_automation_rules ret |
-| `get_automation_rules` | read | 🔍 DISCOVERY TOOL: Primary discovery method for automation rule operations. Use this first to find available rule IDs, n |
+| `get_automation_rules` | read | 🔍 DISCOVERY TOOL: Lists automation rules (uuid, name, state, author). Each rule's `uuid` is the identifier for "get_aut |
 | `get_automation_templates` | read | 🔍 DISCOVERY TOOL: Retrieves available automation rule templates that can be used as starting points for creating new ru |
 | `get_screen_schemes` | read | 🔍 DISCOVERY TOOL: Primary discovery method for screen scheme operations. Use this first to find available screen scheme |
 | `get_screen_tabs` | read | ⚠️ PREREQUISITE: Use "get_screens" first to find valid screen IDs. Gets all tabs for a specific screen. If you get "Scre |

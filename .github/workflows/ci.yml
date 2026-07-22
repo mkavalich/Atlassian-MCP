@@ -3,8 +3,11 @@ name: CI
 on:
   push:
     branches: [main]
+  # Run on every pull request regardless of base branch, so stacked PRs (whose
+  # base is another feature branch, not main) still get CI -- including the
+  # typecheck gate. Without this, an intermediate PR in a stack runs no checks
+  # until it is retargeted to main.
   pull_request:
-    branches: [main]
 
 jobs:
   security:
@@ -40,6 +43,26 @@ jobs:
       - run: npm run test:all
       - run: npm run validate:all
         if: matrix.node-version == 20
+
+  typecheck:
+    name: Typecheck Gate (no strict-error increase)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      # Fails if any workspace's STRICT (tsconfig.json) error count rises above
+      # the committed typecheck-baseline.json (or a net-zero code swap occurs).
+      # typecheck:check builds packages/* first (servers resolve their types from
+      # the packages' emitted dist/*.d.ts; without it every server import is a
+      # false TS2307). It does NOT set SKIP_DECLARATIONS: the gate typechecks with
+      # --noEmit and is the only type signal, since build.mjs runs no tsc under it.
+      # The 78 baseline was measured on Windows; tsc is version-pinned via the
+      # lockfile and the gated count is path-separator-independent, but if this
+      # runner disagrees, re-record with `npm run typecheck:baseline` here and commit.
+      - run: npm run typecheck:check
 
   mcp-validation:
     name: MCP Validation
