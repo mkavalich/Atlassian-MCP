@@ -19,6 +19,7 @@ export {
   registerPermissionTools,
   registerFieldTools,
   registerFieldContextTools,
+  registerFieldScreenTools,
   registerFieldConfigurationTools,
   registerNotificationScreenTools,
 } from './server.js';
@@ -71,6 +72,8 @@ export type {
   JiraFieldContextProjectMappingRow,
   JiraFieldProjectMapping,
   FieldProjectScope,
+  JiraFieldScreenRef,
+  JiraFieldScreensResult,
   // Field Configuration types
   JiraFieldConfiguration,
   JiraFieldConfigItem,

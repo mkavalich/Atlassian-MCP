@@ -287,6 +287,30 @@ export interface JiraCustomFieldOption {
   optionId?: string;
 }
 
+/** A screen a field appears on, from GET /rest/api/3/field/{fieldId}/screens. */
+export interface JiraFieldScreenRef {
+  id: string;
+  name?: string;
+  description?: string;
+}
+
+/**
+ * The result of resolving a field's screens.
+ *
+ * `screens: []` with `onNoScreens: true` is reachable ONLY from a real 200
+ * total:0 (a genuine "on no screens"). A known-custom field whose /screens
+ * endpoint 404s is `verifiable: false` with `screens: null` and code
+ * SCREENS_UNAVAILABLE — never an empty screens list.
+ */
+export interface JiraFieldScreensResult {
+  fieldId: string;
+  screens: JiraFieldScreenRef[] | null;
+  total: number | null;
+  onNoScreens: boolean;
+  verifiable: boolean;
+  code?: string;
+}
+
 // Field Configuration types
 export interface JiraFieldConfiguration {
   id: number;

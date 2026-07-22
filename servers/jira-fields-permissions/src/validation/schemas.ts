@@ -336,6 +336,13 @@ export const getFieldProjectMappingSchema = z.object({
     .describe('When true, expand a global context to the concrete list of project IDs on the site.'),
 }).strict();
 
+export const getFieldScreensSchema = z.object({
+  fieldId: z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id').describe('The ID of the field to resolve screens for'),
+  maxResults: z.number().int().min(1).max(100).optional().default(100)
+    .describe('Page size for the /screens walk (honored up to 100); the walk paginates to completion regardless'),
+  startAt: z.number().int().min(0).optional().default(0).describe('The starting index for the /screens walk'),
+}).strict();
+
 export const createCustomFieldContextSchema = z.object({
   fieldId: z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id').describe('The ID of the custom field'),
   name: z.string().min(1).max(255).describe('The name of the context'),
