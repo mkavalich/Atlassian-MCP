@@ -2,6 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { JiraApiClient } from '../api/client.js';
 import {
   getCustomFieldContextsSchema,
+  getFieldProjectMappingSchema,
   createCustomFieldContextSchema,
   updateCustomFieldContextSchema,
   deleteCustomFieldContextSchema,
@@ -10,6 +11,7 @@ import {
 } from '../validation/schemas.js';
 import {
   getCustomFieldContextsInputSchema,
+  getFieldProjectMappingInputSchema,
   createCustomFieldContextInputSchema,
   updateCustomFieldContextInputSchema,
   deleteCustomFieldContextInputSchema,
@@ -19,10 +21,49 @@ import {
 } from '../validation/input-schemas.js';
 import {
   JiraCustomFieldContext,
-  JiraCustomFieldOption
+  JiraCustomFieldOption,
+  JiraFieldContextProjectMappingRow,
+  JiraFieldProjectMapping,
 } from '../types/index.js';
+import {
+  enumerateCustomFields,
+  classifyFieldId,
+  type CustomFieldRecord,
+} from '../api/field-enumeration.js';
 import { logger } from '../utils/logger.js';
 import { sanitizeErrorMessage } from '../utils/errors.js';
+
+/** `/field/{id}/context/projectmapping` page size (paginated on total/isLast). */
+const MAPPING_PAGE_SIZE = 50;
+/** Hard stop for the per-field mapping walk. Hitting it throws to the per-field catch. */
+const MAPPING_MAX_PAGES = 100;
+/** `/project/search` page size for resolveGlobalToProjects. */
+const PROJECT_PAGE_SIZE = 50;
+/** Hard stop for the /project/search walk. Hitting it yields projects:null (never a truncated list). */
+const PROJECT_MAX_PAGES = 200;
+
+/** A caught error's `code`, when it is a JiraApiError-shaped throw. */
+function errorCode(error: unknown): string | undefined {
+  return typeof error === 'object' && error !== null && typeof (error as { code?: unknown }).code === 'string'
+    ? (error as { code: string }).code
+    : undefined;
+}
+
+/** Message for a gate verdict that yields a per-field error rather than a mapping row. */
+function verdictMessage(verdict: 'SYSTEM_FIELD' | 'FIELD_NOT_FOUND' | 'UNVERIFIABLE', fieldId: string): string {
+  switch (verdict) {
+    case 'SYSTEM_FIELD':
+      return `'${fieldId}' is a Jira system field, not a custom field. The project-mapping endpoint exists only for custom fields; a system field and a nonexistent field return a byte-identical 404, so this is rejected via the field enumeration rather than reported as a field with no projects.`;
+    case 'FIELD_NOT_FOUND':
+      return `'${fieldId}' does not exist as a custom field or a system field on this instance, verified against a COMPLETE field enumeration.`;
+    case 'UNVERIFIABLE':
+      return `The custom-field enumeration is incomplete, so whether '${fieldId}' is a custom field cannot be verified. No negative verdict is issued on a partial enumeration.`;
+  }
+}
+
+const UNVERIFIABLE_MAPPING_REASON =
+  '/field/{id}/context/projectmapping returns 404 for this field even though it exists in /field; ' +
+  'association is not verifiable via the context endpoints.';
 
 export async function registerFieldContextTools(server: McpServer, apiClient: JiraApiClient) {
   // Tool: getCustomFieldContexts
@@ -137,6 +178,268 @@ export async function registerFieldContextTools(server: McpServer, apiClient: Ji
                 message: sanitizeErrorMessage(error.message),
                 details: error.details,
                 suggestion: error.suggestion || 'Ensure the custom field exists and you have permission to view its contexts',
+              },
+            }, null, 2),
+          }],
+          isError: true,
+        };
+      }
+    }
+  );
+
+  // Tool: getFieldProjectMapping (Discovery Tool - 🔍)
+  server.registerTool(
+    'get_field_project_mapping',
+    {
+      title: 'Get Field Project Mapping',
+      description: '🔍 DISCOVERY TOOL: Maps custom fields to the projects they apply to via field context project mappings. Custom fields are enumerated from a UNION of /field and /field/search (both paginated to completion) so no negative verdict is ever issued from a truncated list. A field on a GLOBAL context applies to EVERY project and is reported as allProjects:true - never as an empty project list. A project-scoped field whose mapping endpoint returns a 200 reports its REAL project ids. A field that exists but returns a byte-identical 404 from the mapping endpoint is reported as verifiable:false (UNVERIFIABLE), labeled project-scoped-jpd for Jira Product Discovery fields - never as "not a custom field" and never as 0 projects. System fields and nonexistent ids are rejected via the enumeration with distinct codes.',
+      inputSchema: getFieldProjectMappingInputSchema,
+      annotations: {
+        readOnlyHint: true,
+        destructiveHint: false,
+      },
+    },
+    async (params) => {
+      try {
+        const validatedParams = getFieldProjectMappingSchema.parse(params);
+
+        // The structural cure: enumerate custom fields from the UNION of both
+        // field endpoints, each paginated to a real isLast/total. classifyFieldId
+        // forbids any negative verdict unless the enumeration is complete.
+        const enumeration = await enumerateCustomFields(apiClient);
+
+        const mappings: JiraFieldProjectMapping[] = [];
+        const errors: { fieldId: string; code: string; message: string }[] = [];
+        let partialFailure = false;
+
+        // Walk /project/search on isLast/total, striding by rows received, only
+        // if asked to expand a global context. A page-cap hit yields null (never
+        // a truncated list) -- fixes the parked unpaginated single-call defect.
+        const resolveAllProjectIds = async (): Promise<string[] | null> => {
+          const ids: string[] = [];
+          let startAt = 0;
+          let total: number | null = null;
+          for (let page = 0; page < PROJECT_MAX_PAGES; page++) {
+            let body: { values?: { id?: string | number }[]; total?: number; isLast?: boolean } | undefined;
+            try {
+              const res = await apiClient.makeRequest<{ values?: { id?: string | number }[]; total?: number; isLast?: boolean }>({
+                method: 'GET',
+                path: '/project/search',
+                params: { startAt, maxResults: PROJECT_PAGE_SIZE },
+              });
+              body = res.data;
+            } catch {
+              return null; // first-or-later page failure: unknown, never an empty/truncated list
+            }
+            const values = Array.isArray(body?.values) ? body.values : null;
+            if (values === null) return null;
+            for (const p of values) {
+              if (p && p.id !== undefined && p.id !== null) ids.push(String(p.id));
+            }
+            if (typeof body?.total === 'number') total = body.total;
+            if (body?.isLast === true) return ids;
+            if (total !== null && ids.length >= total) return ids;
+            if (values.length === 0) return ids;
+            startAt += values.length;
+          }
+          return null; // page cap hit before a terminal signal -> truncated -> null
+        };
+
+        // Paginate /field/{id}/context/projectmapping on total/isLast, striding by
+        // rows received. makeRequest THROWS on non-2xx, so a 404 propagates to the
+        // per-field catch below; a 200 whose `values` is a non-array is a loud,
+        // distinct unrecognized-shape failure (never treated as an empty result).
+        const fetchProjectMappingRows = async (fieldId: string): Promise<JiraFieldContextProjectMappingRow[]> => {
+          const rows: JiraFieldContextProjectMappingRow[] = [];
+          let startAt = 0;
+          let total: number | null = null;
+          for (let page = 0; page < MAPPING_MAX_PAGES; page++) {
+            const res = await apiClient.makeRequest<{ values?: JiraFieldContextProjectMappingRow[]; total?: number; isLast?: boolean }>({
+              method: 'GET',
+              path: `/field/${fieldId}/context/projectmapping`,
+              // Plain object, never URLSearchParams: the shared cache key is built
+              // from Object.keys(params) and fails CLOSED to one entry otherwise,
+              // serving one field's mapping page for another field's query.
+              params: { startAt, maxResults: MAPPING_PAGE_SIZE },
+            });
+            const body = res.data;
+            const values = Array.isArray(body?.values) ? body.values : null;
+            if (values === null) {
+              const receivedKeys = body !== null && typeof body === 'object' ? Object.keys(body as object) : [];
+              // Loud, distinct code -- NOT a 404, NOT an empty projects list.
+              throw new Error(
+                `GET_FIELD_PROJECT_MAPPING_UNRECOGNIZED_SHAPE: /field/${fieldId}/context/projectmapping returned a 200 whose "values" is not an array. The mapping is UNKNOWN and is NOT empty. Top-level keys received: ${receivedKeys.length > 0 ? receivedKeys.join(', ') : '(none)'}.`
+              );
+            }
+            rows.push(...values);
+            if (typeof body?.total === 'number') total = body.total;
+            if (body?.isLast === true) break;
+            if (total !== null && rows.length >= total) break;
+            if (values.length === 0) break;
+            startAt += values.length;
+          }
+          return rows;
+        };
+
+        // Resolve the site's project list only if asked to expand a global context.
+        let allProjectIds: string[] | null = null;
+        if (validatedParams.resolveGlobalToProjects) {
+          const resolved = await resolveAllProjectIds();
+          if (resolved === null) {
+            partialFailure = true;
+            errors.push({
+              fieldId: '*',
+              code: 'PROJECT_LIST_UNAVAILABLE',
+              message: 'Could not enumerate projects to expand global contexts; projects reported as null, never as an empty or truncated list.',
+            });
+          } else {
+            allProjectIds = resolved;
+          }
+        }
+
+        const scopeHint = (record: CustomFieldRecord): { id: string }[] =>
+          record.scopeProjectId ? [{ id: record.scopeProjectId }] : [];
+
+        for (const fieldId of validatedParams.fieldIds) {
+          const fc = classifyFieldId(enumeration, fieldId);
+
+          if (!fc.custom) {
+            // SYSTEM_FIELD / FIELD_NOT_FOUND / UNVERIFIABLE via the gate. No mappings row.
+            partialFailure = true;
+            errors.push({ fieldId, code: fc.verdict, message: verdictMessage(fc.verdict, fieldId) });
+            continue;
+          }
+
+          const record = fc.record;
+
+          // MC3 attempt-then-catch: ALWAYS call the mapping endpoint for a
+          // known-custom field and classify ON THE RESULT. Never route on
+          // scopeType==='PROJECT' and skip the endpoint. The per-field try/catch
+          // guarantees one field's 404 never aborts the batch.
+          try {
+            const rows = await fetchProjectMappingRows(fieldId);
+
+            const isGlobal = rows.some((r) => r.isGlobalContext === true);
+            const scopedIds = rows
+              .filter((r) => r.isGlobalContext !== true && typeof r.projectId === 'string')
+              .map((r) => r.projectId as string);
+            const unresolvedRows = rows.filter(
+              (r) => r.isGlobalContext !== true && typeof r.projectId !== 'string'
+            ).length;
+
+            if (unresolvedRows > 0) partialFailure = true;
+
+            if (isGlobal) {
+              // A global context means EVERY project, never zero.
+              mappings.push({
+                fieldId,
+                scope: 'global',
+                allProjects: true,
+                verifiable: true,
+                projects: allProjectIds,
+                projectCount: allProjectIds ? allProjectIds.length : null,
+                projectsFromScope: scopeHint(record),
+                unresolvedRows,
+                contextCount: rows.length,
+              });
+            } else if (scopedIds.length > 0) {
+              const unique = [...new Set(scopedIds)];
+              mappings.push({
+                fieldId,
+                scope: 'project-scoped',
+                allProjects: false,
+                verifiable: true,
+                projects: unique,
+                projectCount: unresolvedRows > 0 ? null : unique.length,
+                projectsFromScope: scopeHint(record),
+                unresolvedRows,
+                contextCount: rows.length,
+              });
+            } else {
+              // 200 but neither global nor a usable projectId: unknown, not empty.
+              mappings.push({
+                fieldId,
+                scope: 'unknown',
+                allProjects: false,
+                verifiable: false,
+                projects: null,
+                projectCount: null,
+                projectsFromScope: scopeHint(record),
+                unresolvedRows: unresolvedRows || rows.length,
+                contextCount: rows.length,
+              });
+            }
+          } catch (error: unknown) {
+            const code = errorCode(error);
+            if (code === 'NOT_FOUND') {
+              // Byte-identical 404 for a field that DOES exist in /field:
+              // UNVERIFIABLE, labeled by schema.custom. Never NOT_A_CUSTOM_FIELD,
+              // never 0, never "does not exist".
+              const isJpd = record.schemaCustom?.startsWith('jira.polaris:') === true;
+              mappings.push({
+                fieldId,
+                scope: isJpd ? 'project-scoped-jpd' : 'project-scoped-unverifiable',
+                allProjects: false,
+                verifiable: false,
+                projects: null,
+                projectCount: null,
+                projectsFromScope: scopeHint(record),
+                unresolvedRows: 0,
+                contextCount: 0,
+                unverifiableReason: UNVERIFIABLE_MAPPING_REASON,
+              });
+            } else {
+              // Any other error (5xx, network, unrecognized 200 shape): no
+              // mappings row -- a fake-zero row is indistinguishable from a real
+              // empty. Report loudly. An unrecognized 200 shape keeps its own
+              // distinct code; every other failure normalizes to MAPPING_UNAVAILABLE.
+              const isUnrecognizedShape =
+                error instanceof Error && error.message.startsWith('GET_FIELD_PROJECT_MAPPING_UNRECOGNIZED_SHAPE');
+              partialFailure = true;
+              errors.push({
+                fieldId,
+                code: isUnrecognizedShape ? 'GET_FIELD_PROJECT_MAPPING_UNRECOGNIZED_SHAPE' : 'MAPPING_UNAVAILABLE',
+                message: sanitizeErrorMessage(
+                  error instanceof Error ? error.message : `Could not retrieve project mapping for '${fieldId}'.`
+                ),
+              });
+            }
+          }
+        }
+
+        return {
+          content: [{
+            type: 'text',
+            text: JSON.stringify({
+              success: true,
+              mappings,
+              count: mappings.length,
+              errors,
+              partialFailure,
+              enumeration: {
+                customFieldCount: enumeration.count,
+                complete: enumeration.complete,
+                warnings: enumeration.warnings,
+              },
+              usage_guidance:
+                'scope:"global" with allProjects:true means the field applies to every project (projectCount is null unless resolveGlobalToProjects:true, never 0). ' +
+                'scope:"project-scoped" carries the real project ids. verifiable:false (scope project-scoped-jpd / project-scoped-unverifiable) means the mapping endpoint returned a 404 for a field that DOES exist; consult projectsFromScope for the /field scope hint. ' +
+                'A field is never reported as "not a custom field" from a truncated enumeration: enumeration.complete gates every negative verdict.',
+            }, null, 2),
+          }],
+        };
+      } catch (error: any) {
+        logger.error('Failed to get field project mapping', { error: error.message });
+        return {
+          content: [{
+            type: 'text',
+            text: JSON.stringify({
+              success: false,
+              error: {
+                code: error.code || 'GET_FIELD_PROJECT_MAPPING_ERROR',
+                message: sanitizeErrorMessage(error.message),
+                details: error.details,
+                suggestion: error.suggestion || 'Use "get_fields_paginated" with type:["custom"] to find valid custom field IDs',
               },
             }, null, 2),
           }],

@@ -215,6 +215,71 @@ export interface JiraCustomFieldContext {
   issueTypeIds?: string[];
 }
 
+/**
+ * A row from GET /rest/api/3/field/{fieldId}/context/projectmapping.
+ *
+ * A GLOBAL context row carries `isGlobalContext: true` and NO `projectId` --
+ * that means the field applies to every project, emphatically NOT to zero
+ * projects. Reading `row.projectId` and counting the misses would report
+ * "0 projects" for every global field under success:true.
+ *
+ * A genuinely project-scoped context row carries a usable `projectId`. Any row
+ * that is neither global nor carries a usable projectId is counted as
+ * unresolved rather than assumed empty.
+ */
+export interface JiraFieldContextProjectMappingRow {
+  contextId: string;
+  projectId?: string;
+  isGlobalContext?: boolean;
+}
+
+/**
+ * The classified scope of a custom field's project association.
+ *
+ *   - `global`                       — a global context: applies to EVERY project.
+ *   - `project-scoped`               — real project ids returned by a 200.
+ *   - `unknown`                      — a 200 whose rows could not be classified.
+ *   - `project-scoped-jpd`           — a JPD field (`schema.custom` starts
+ *                                      `jira.polaris:`) whose mapping endpoint
+ *                                      returns a byte-identical 404; UNVERIFIABLE.
+ *   - `project-scoped-unverifiable`  — a non-JPD field whose mapping endpoint
+ *                                      returns a byte-identical 404; UNVERIFIABLE.
+ */
+export type FieldProjectScope =
+  | 'global'
+  | 'project-scoped'
+  | 'unknown'
+  | 'project-scoped-jpd'
+  | 'project-scoped-unverifiable';
+
+export interface JiraFieldProjectMapping {
+  fieldId: string;
+  scope: FieldProjectScope;
+  /** True when the field applies to every project via a global context. */
+  allProjects: boolean;
+  /**
+   * True only when the endpoint yielded a definitive answer about the field's
+   * projects (a resolvable 200). A byte-identical 404, or a 200 whose rows
+   * cannot be classified, is `false` — never a confident negative.
+   */
+  verifiable: boolean;
+  /** Explicit project ids when project-scoped; null when global or unresolved. */
+  projects: string[] | null;
+  /** null when the count cannot be determined. NEVER 0 for a global context. */
+  projectCount: number | null;
+  /**
+   * The advisory project id(s) from `/field` `scope.project.id`. Present even
+   * when the mapping endpoint is unverifiable, so an UNVERIFIABLE JPD field
+   * still surfaces its scope hint rather than an empty/zero answer.
+   */
+  projectsFromScope: { id: string }[];
+  /** Rows whose shape could not be classified. */
+  unresolvedRows: number;
+  contextCount: number;
+  /** Populated only for the two unverifiable (404) scopes. */
+  unverifiableReason?: string;
+}
+
 export interface JiraCustomFieldOption {
   id: string;
   value: string;

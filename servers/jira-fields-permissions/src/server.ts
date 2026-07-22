@@ -68,6 +68,7 @@ export const toolCatalog = [
   { name: 'delete_custom_field', category: 'fields', type: 'delete', description: 'Delete custom field' },
   // Field Contexts
   { name: 'get_custom_field_contexts', category: 'field-contexts', type: 'discovery', description: 'Get field contexts' },
+  { name: 'get_field_project_mapping', category: 'field-contexts', type: 'read', description: 'Map custom fields to the projects they apply to (union-enumerated; global=all-projects; 404=unverifiable, never a false zero)' },
   { name: 'create_custom_field_context', category: 'field-contexts', type: 'create', description: 'Create field context' },
   { name: 'update_custom_field_context', category: 'field-contexts', type: 'update', description: 'Update field context' },
   { name: 'delete_custom_field_context', category: 'field-contexts', type: 'delete', description: 'Delete field context' },

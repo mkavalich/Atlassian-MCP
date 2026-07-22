@@ -68,6 +68,9 @@ export type {
   JiraFieldSearchItem,
   JiraCustomFieldContext,
   JiraCustomFieldOption,
+  JiraFieldContextProjectMappingRow,
+  JiraFieldProjectMapping,
+  FieldProjectScope,
   // Field Configuration types
   JiraFieldConfiguration,
   JiraFieldConfigItem,
