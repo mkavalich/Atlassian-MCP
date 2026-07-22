@@ -17,9 +17,14 @@
  * -----
  * Baseline half only. It does NOT make build.mjs fail on tsc error, and it does
  * NOT require any pre-existing error to be fixed. It fails on an INCREASE in a
- * workspace's error count, and also on a NET-ZERO SWAP (same count, a different
- * error code introduced) so a strictNullChecks error cannot ride in behind a
- * removed benign one.
+ * workspace's error count, on a NET-ZERO SWAP (same count, a different error
+ * code introduced) so a strictNullChecks error cannot ride in behind a removed
+ * benign one, and on a DECREASE below baseline -- a decrease fails until the
+ * author re-runs `npm run typecheck:baseline` and commits the tightened
+ * baseline. That last rule keeps the ratchet from loosening: if a fixed error
+ * left the baseline untouched the freed headroom would stay re-spendable, and a
+ * later change could re-introduce an error back up to the old count and still
+ * pass. The ratchet only tightens when the baseline is lowered deliberately.
  *
  * CONFIG (was: KNOWN BLIND SPOT)
  * -----------------------------
@@ -38,7 +43,7 @@
  *
  * USAGE
  *   node scripts/typecheck-baseline.mjs --write   # record baseline
- *   node scripts/typecheck-baseline.mjs --check   # fail on increase
+ *   node scripts/typecheck-baseline.mjs --check   # fail on increase / decrease / net-zero swap
  */
 
 import { spawnSync } from 'node:child_process';
@@ -394,11 +399,20 @@ function checkBaseline() {
   console.log(`  ${'TOTAL'.padEnd(32)} ${String(base.total ?? '?').padStart(3)} -> ${String(total).padStart(3)}`);
 
   if (decreases.length) {
-    console.log('\n==============================================');
-    console.log('BASELINE STALE (decrease) -- not a failure, but re-record it:');
-    for (const d of decreases) console.log(`  ${d}`);
-    console.log('  run: npm run typecheck:baseline');
-    console.log('==============================================');
+    // A DECREASE is a hard failure until re-baselined. Leaving the baseline
+    // above the real count keeps the fixed-error headroom re-spendable: a later
+    // change could re-introduce an error back up to the old count and still
+    // pass, so the ratchet would loosen instead of tighten. This mirrors the
+    // "unknown is not zero -- re-baseline deliberately" handling above: the
+    // baseline moves only by a deliberate re-record. Per-workspace detail is
+    // preserved so the author sees exactly which counts dropped.
+    problems.push(
+      `DECREASE below baseline -- ${decreases.length} workspace(s) now report FEWER strict ` +
+        `errors than typecheck-baseline.json records. This is a hard failure: the baseline must ` +
+        `be tightened in the SAME PR so the freed headroom cannot be re-spent by a later change. ` +
+        `Run "npm run typecheck:baseline" and commit the updated typecheck-baseline.json.` +
+        decreases.map((d) => `\n      ${d}`).join('')
+    );
   }
 
   if (problems.length) {
@@ -408,7 +422,7 @@ function checkBaseline() {
     process.exit(1);
   }
 
-  console.log('\nTypecheck gate PASSED (no workspace increased).');
+  console.log('\nTypecheck gate PASSED (no increase, decrease, or net-zero swap).');
 }
 
 // ---------------------------------------------------------------------------
