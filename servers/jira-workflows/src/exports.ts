@@ -18,6 +18,7 @@ export {
 export {
   registerWorkflowTools,
   registerScreenTools,
+  registerIssueTypeScreenSchemeTools,
   registerWorkflowSchemeTools,
   registerGuidedWorkflowTools,
   registerAutomationTools,
@@ -74,6 +75,9 @@ export type {
   JiraIssueTypeScheme,
   JiraIssueTypeScreenScheme,
   JiraIssueTypeMapping,
+  JiraIssueTypeScreenSchemeListItem,
+  JiraProjectItssResolution,
+  JiraIssueTypeScreenSchemeMappingRow,
   // Screen types
   JiraScreen,
   JiraScreenScheme,

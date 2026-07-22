@@ -574,6 +574,32 @@ export const createIssueTypeScreenSchemeInputSchema = z.object({
   })).describe('Mappings between issue types and screen schemes'),
 }).passthrough();
 
+// Issue Type Screen Scheme READ input schemas (Pass B / Tool 3: 3a/3b/3c).
+// Lenient .passthrough() twins of the strict schemas in schemas.ts.
+export const getIssueTypeScreenSchemesListInputSchema = z.object({
+  ids: z.array(z.string().max(255)).max(100).optional()
+    .describe('Optional list of issue type screen scheme IDs to filter by'),
+  startAt: z.number().int().min(0).optional().default(0).describe('The starting index for results'),
+  maxResults: z.number().int().min(1).max(100).optional().default(50)
+    .describe('The maximum number of results per page (max 100)'),
+}).passthrough();
+
+export const getProjectIssueTypeScreenSchemeInputSchema = z.object({
+  projectId: z.string().max(255)
+    .describe('The project ID to resolve the assigned issue type screen scheme for (REQUIRED)'),
+  startAt: z.number().int().min(0).optional().default(0).describe('The starting index for results'),
+  maxResults: z.number().int().min(1).max(100).optional().default(50)
+    .describe('The maximum number of results per page (max 100)'),
+}).passthrough();
+
+export const getIssueTypeScreenSchemeMappingsInputSchema = z.object({
+  issueTypeScreenSchemeId: z.array(z.string().max(255)).max(100).optional()
+    .describe('Optional list of issue type screen scheme IDs to filter mappings by'),
+  startAt: z.number().int().min(0).optional().default(0).describe('The starting index for results'),
+  maxResults: z.number().int().min(1).max(100).optional().default(50)
+    .describe('The maximum number of results per page (max 100)'),
+}).passthrough();
+
 // Screen Scheme input schemas
 export const getScreenSchemesInputSchema = z.object({
   startAt: z.number().optional().default(0).describe('The starting index for results'),

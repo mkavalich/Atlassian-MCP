@@ -302,6 +302,45 @@ export const createIssueTypeScreenSchemeSchema = z.object({
   }).strict()).describe('Mappings between issue types and screen schemes'),
 }).strict();
 
+// ---------------------------------------------------------------------------
+// Issue Type Screen Scheme READ schemas (Pass B / Tool 3: 3a/3b/3c)
+//
+// Distinct names from the pre-existing (dead) getIssueTypeScreenSchemesSchema
+// and getIssueTypeScreenSchemeProjectsSchema so there is no duplicate-declaration
+// error. These are the strict, validation-time schemas for the three read tools.
+// ---------------------------------------------------------------------------
+
+// 3a: list all issue type screen schemes (GET /issuetypescreenscheme).
+export const getIssueTypeScreenSchemesListSchema = z.object({
+  ids: z.array(z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id')).max(100).optional()
+    .describe('Optional list of issue type screen scheme IDs to filter by'),
+  startAt: z.number().int().min(0).optional().default(0).describe('The starting index for results'),
+  maxResults: z.number().int().min(1).max(100).optional().default(50)
+    .describe('The maximum number of results per page (max 100)'),
+}).strict();
+
+// 3b: resolve a single project's assigned ITSS (GET /issuetypescreenscheme/project).
+// projectId is REQUIRED; a missing projectId is a validation error, never an
+// empty result (the endpoint itself returns 400 "At least one projectId has to
+// be provided." when unfiltered).
+export const getProjectIssueTypeScreenSchemeSchema = z.object({
+  projectId: z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id')
+    .describe('The project ID to resolve the assigned issue type screen scheme for (REQUIRED)'),
+  startAt: z.number().int().min(0).optional().default(0).describe('The starting index for results'),
+  maxResults: z.number().int().min(1).max(100).optional().default(50)
+    .describe('The maximum number of results per page (max 100)'),
+}).strict();
+
+// 3c: list issueType -> screenScheme mappings for one or more ITSS
+// (GET /issuetypescreenscheme/mapping).
+export const getIssueTypeScreenSchemeMappingsSchema = z.object({
+  issueTypeScreenSchemeId: z.array(z.string().max(255).regex(/^[\w.\-:]+$/, 'invalid id')).max(100).optional()
+    .describe('Optional list of issue type screen scheme IDs to filter mappings by'),
+  startAt: z.number().int().min(0).optional().default(0).describe('The starting index for results'),
+  maxResults: z.number().int().min(1).max(100).optional().default(50)
+    .describe('The maximum number of results per page (max 100)'),
+}).strict();
+
 // Screen Scheme schemas
 export const getScreenSchemesSchema = z.object({
   startAt: z.number().optional().default(0).describe('The starting index for results'),
