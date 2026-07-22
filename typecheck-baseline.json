@@ -1,10 +1,10 @@
 {
   "_comment": "Per-workspace TypeScript error-count baseline. Only errorCount gates pass/fail; byCode and byFile are informational diff context. Regenerate with: npm run typecheck:baseline",
-  "generatedAtCommit": "368a78c400b8dd0270cc2117a11285abcd556ee9",
+  "generatedAtCommit": "b6a34c545fb1268eb59f1c7dc137cf8057fb60ed",
   "invocation": "NODE_OPTIONS=--max-old-space-size=8192 node <repo>/node_modules/typescript/bin/tsc -p <config> --noEmit (full tsconfig.json) or --outDir <tmp> --declarationDir <tmp> (declarations fallback)",
   "countedAs": "lines matching /error TS\\d+:/ on stdout+stderr",
   "configPolicy": "Workspaces are measured with their STRICT tsconfig.json (strict family enabled), NOT the lenient tsconfig.declarations.json that build.mjs emits with. The gate therefore sees the null/undefined defect class (strictNullChecks) -- the fabricated-zero class this repo is being cured of. Confirm per workspace via strictFlags; any workspace still showing strict:false is a full-tsconfig that opts out and remains blind there. NOTE: the Docker image and CI both build with SKIP_DECLARATIONS=true and run NO tsc at all, so this gate is the only type signal in the pipeline until it is wired into CI.",
-  "total": 78,
+  "total": 68,
   "workspaces": {
     "packages/optimizations": {
       "config": "tsconfig.json",
@@ -29,7 +29,7 @@
     "servers/confluence": {
       "config": "tsconfig.json",
       "tscVersion": "5.9.3",
-      "errorCount": 48,
+      "errorCount": 38,
       "strictFlags": {
         "strict": true,
         "noImplicitAny": true,
@@ -40,7 +40,7 @@
         "TS2345": 1,
         "TS2353": 5,
         "TS2459": 1,
-        "TS6133": 38,
+        "TS6133": 28,
         "TS7006": 1
       },
       "byFile": {
@@ -50,7 +50,6 @@
         "src/tools/comments.ts": 3,
         "src/tools/content.ts": 9,
         "src/tools/pages.ts": 2,
-        "src/tools/permissions.ts": 10,
         "src/tools/spaces.ts": 6,
         "src/validation/tool-examples.ts": 2
       }
