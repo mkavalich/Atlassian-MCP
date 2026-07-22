@@ -22,6 +22,17 @@ export interface CachingHookConfig {
 }
 
 /**
+ * Per-client defaults for the API-surface discriminator fields, so a request
+ * that names the default explicitly keys the same as one that omits it.
+ * Values mirror the clients: Confluence `config.apiVersion || 'v2'`,
+ * jira-projects `config.apiBase || '/rest/api/3'`.
+ */
+const SCOPE_DEFAULTS = {
+  apiBase: '/rest/api/3',
+  apiVersion: 'v2',
+} as const;
+
+/**
  * Creates a caching wrapper for API client methods.
  *
  * @example
@@ -67,6 +78,36 @@ export function createCachingHook(config: CachingHookConfig = {}) {
   }
 
   /**
+   * Compose the API-surface discriminator for a request.
+   *
+   * Some clients route more than one API surface through a single makeRequest,
+   * discriminated by a config field the cache key never saw:
+   *   - Confluence: `apiVersion` ('v1' -> /wiki/rest/api, 'v2' -> /wiki/api/v2)
+   *   - jira-projects: `apiBase` ('/rest/api/3' vs '/rest/agile/1.0')
+   *
+   * A field equal to the client's own default is normalized away, so a bare
+   * request and one that names the default explicitly land on the same entry.
+   * When neither field is present (six of the eight servers) this returns
+   * `undefined` and the key stays byte-identical to the historical format.
+   *
+   * The encoding is JSON, which is injective: a naive `${apiBase}${apiVersion}`
+   * would let '/wiki/api/v' + '2' collide with '/wiki/api/v2' + ''.
+   */
+  function buildScope(requestConfig: any): string | undefined {
+    const apiBase = requestConfig.apiBase === SCOPE_DEFAULTS.apiBase
+      ? undefined
+      : requestConfig.apiBase;
+    const apiVersion = requestConfig.apiVersion === SCOPE_DEFAULTS.apiVersion
+      ? undefined
+      : requestConfig.apiVersion;
+
+    if (apiBase === undefined && apiVersion === undefined) {
+      return undefined;
+    }
+    return JSON.stringify([apiBase ?? null, apiVersion ?? null]);
+  }
+
+  /**
    * Hook to wrap API client with caching.
    * Patches the makeRequest method to check cache before API calls.
    */
@@ -78,9 +119,25 @@ export function createCachingHook(config: CachingHookConfig = {}) {
     client.makeRequest = async function<T>(requestConfig: any): Promise<T> {
       const { method, path, params } = requestConfig;
 
-      // Only cache GET requests
+      // Any mutation invalidates the read cache.
+      //
+      // Nothing in any of the eight servers ever called invalidateCache(), so a
+      // read issued within the TTL of a successful write returned pre-write
+      // state under `success: true` -- e.g. add_comment followed by
+      // get_comments. Eviction is unconditional rather than path-scoped because
+      // path scoping cannot reach cross-resource reads (a /sprint/{id}/issue
+      // write invalidates /board/{id}/backlog, which shares no prefix). Writes
+      // are far rarer than reads here, and the worst case is a cache miss.
+      //
+      // LIMIT: this cache is per-process. Each of the eight containers holds
+      // its own, so a write through one server does NOT invalidate another
+      // server's cached reads.
       if (method.toUpperCase() !== 'GET') {
-        return originalMakeRequest(requestConfig);
+        try {
+          return await originalMakeRequest(requestConfig);
+        } finally {
+          cache.clear();
+        }
       }
 
       // Check if path should be cached
@@ -93,8 +150,19 @@ export function createCachingHook(config: CachingHookConfig = {}) {
         method,
         path,
         params: params as Record<string, unknown>,
+        scope: buildScope(requestConfig),
       };
       const cacheKey = cache.buildKey(cacheConfig);
+
+      // Fail closed: no faithful key, no cache. Call straight through, and do
+      // not store the response either -- storing it under a lossy key is what
+      // served one query's rows in answer to a different query.
+      if (cacheKey === null) {
+        if (debug) {
+          console.log(`[Cache] UNCACHEABLE (params not enumerable): ${path}`);
+        }
+        return originalMakeRequest(requestConfig);
+      }
 
       // Check cache
       const cached = cache.get(cacheKey);

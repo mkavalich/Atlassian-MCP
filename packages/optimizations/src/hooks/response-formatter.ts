@@ -87,6 +87,24 @@ function autoDetectFields(
 
   // Sort by priority tiers
   const sorted: string[] = [];
+
+  // `uuid` is an entity's primary key ONLY when there is no id/key to prefer.
+  // The Jira Automation API identifies rules solely by `uuid`, and with no tier
+  // placement it fell into the alphabetical remainder behind actorAccountId and
+  // authorAccountId -- so under the default `concise` format (4 columns) the
+  // identifier needed to call get_automation_rule_details never reached the
+  // caller, severing the discovery chain.
+  //
+  // This is deliberately CONDITIONAL. Adding 'uuid' to tier 1 unconditionally
+  // would inject a 36-character opaque column into every project listing in the
+  // fleet -- JiraProject declares an optional `uuid` in six servers, and real
+  // rows carry id, key and uuid together -- displacing a useful column inside
+  // the layer whose whole purpose is reducing tokens.
+  if (consistentFields.has('uuid') && !consistentFields.has('id') && !consistentFields.has('key')) {
+    sorted.push('uuid');
+    consistentFields.delete('uuid');
+  }
+
   for (const tier of FIELD_PRIORITY) {
     for (const field of tier) {
       if (consistentFields.has(field)) {
@@ -159,21 +177,163 @@ function extractDataArray(result: unknown): ExtractedData | null {
 // Metadata Extraction
 // ============================================================================
 
+/** Key under which the formatter reports what it elided. Namespaced to avoid
+ *  colliding with tool-authored fields. */
+const OMITTED_KEY = '_formatterOmitted';
+
 /**
- * Extract metadata fields from the parsed response to preserve in output.
+ * Byte budget for the preserved metadata block. Over budget, the largest
+ * non-scalar fields are DISCLOSED by name and size rather than inlined --
+ * never truncated, and never traded for dumping the raw payload (which
+ * measured 5.8x worse than the table on the largest real response).
  */
-function extractMetadata(parsed: unknown): Record<string, unknown> {
+const METADATA_BUDGET_BYTES = 2048;
+
+function jsonSize(value: unknown): number {
+  try {
+    return JSON.stringify(value)?.length ?? 0;
+  } catch {
+    return Number.POSITIVE_INFINITY;
+  }
+}
+
+function isObjectArray(value: unknown): boolean {
+  return (
+    Array.isArray(value) &&
+    value.length > 0 &&
+    typeof value[0] === 'object' &&
+    value[0] !== null
+  );
+}
+
+/** An object whose own values include an array of objects (e.g. `groupedByCategory`). */
+function holdsObjectArray(value: unknown): boolean {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  return Object.values(value as Record<string, unknown>).some(isObjectArray);
+}
+
+/**
+ * Every renderable field name present anywhere in the data, so columns the
+ * table dropped can be named rather than silently disappearing.
+ */
+function collectFieldNames(items: Record<string, unknown>[]): string[] {
+  const names = new Set<string>();
+  for (const item of items) {
+    if (!item || typeof item !== 'object') continue;
+    for (const [key, value] of Object.entries(item)) {
+      if (value === null || value === undefined) continue;
+      const type = typeof value;
+      if (type === 'string' || type === 'number' || type === 'boolean') {
+        names.add(key);
+      } else if (Array.isArray(value)) {
+        // An array value can never be selected as a scalar table column, so it
+        // is never in `fields` and, before this branch existed, matched neither
+        // the scalar nor the nested-object case below -- it was registered
+        // NOWHERE. It then vanished from the table AND from
+        // _formatterOmitted.columns, so a row with >=4 scalars produced an
+        // omitted-columns list of ONLY the scalars: the response affirmatively
+        // asserted nothing else was dropped while dropping an array column.
+        // Real cases: nonScalarScreenOperations (string[]) on a screen-scheme
+        // row, categories[].key, and expand:permissions.
+        //
+        // Additive and symmetric with the non-renderable-object branch below:
+        // this only adds a name to the dropped-columns disclosure. It never
+        // makes the array a rendered column and removes nothing from output.
+        names.add(key);
+      } else if (type === 'object') {
+        const nested = value as Record<string, unknown>;
+        const renderable =
+          typeof nested.name === 'string' || typeof nested.key === 'string';
+        if (typeof nested.name === 'string') names.add(`${key}.name`);
+        if (typeof nested.key === 'string') names.add(`${key}.key`);
+        // A nested object with no renderable .name/.key was registered nowhere,
+        // so it vanished from the table AND from _formatterOmitted.columns --
+        // the response asserted that nothing else was present. `schema` on a
+        // Jira field row is exactly this shape ({type, custom, customId}) and it
+        // carries the ONLY custom-field discriminator available on
+        // /field/search, so the formatter was deleting the evidence a caller
+        // would need to audit a custom/system classification while reporting no
+        // omission. Register the bare key so it is at least disclosed.
+        //
+        // Additive: this adds a name to an omitted-columns list. It does not
+        // make the object a rendered column and removes nothing from output.
+        if (!renderable) names.add(key);
+      }
+    }
+  }
+  return [...names];
+}
+
+/**
+ * Build the metadata block appended after the data table.
+ *
+ * This used to be a six-name allowlist that silently discarded every other
+ * top-level field. That dropped the very fields tools add to admit incomplete
+ * data (`partialFailure`, `dataSources`, `summary`) on exactly the path where
+ * they matter -- an allowlist that silently discards unknown fields is itself
+ * an instance of the bug it was hiding.
+ *
+ * It is now a denylist of one key -- the array rendered as the table -- plus
+ * explicit DISCLOSURE of anything else not inlined:
+ *   - sibling object arrays and containers of them are named with their size
+ *     (inlining them would re-inflate exactly what the table exists to shrink)
+ *   - data columns the table dropped are named
+ * Nothing leaves without being either preserved or named.
+ */
+function buildMetadata(
+  parsed: unknown,
+  renderedKey: string | null,
+  droppedColumns: string[],
+  debugLog?: (msg: string) => void
+): Record<string, unknown> {
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
     return {};
   }
 
   const obj = parsed as Record<string, unknown>;
   const metadata: Record<string, unknown> = {};
+  const omittedValues: Record<string, string> = {};
 
-  for (const key of ['success', 'pagination', 'total', 'count', 'message', 'usage_guidance']) {
-    if (key in obj) {
-      metadata[key] = obj[key];
+  for (const [key, value] of Object.entries(obj)) {
+    if (key === renderedKey) continue;
+
+    if (isObjectArray(value)) {
+      omittedValues[key] = `${(value as unknown[]).length} items`;
+      continue;
     }
+    if (holdsObjectArray(value)) {
+      omittedValues[key] = `object, ${jsonSize(value)} bytes`;
+      continue;
+    }
+    metadata[key] = value;
+  }
+
+  // Budget pass: shed the largest non-scalar fields, disclosing each, until the
+  // block fits. Scalars are never shed and nothing is ever truncated.
+  if (jsonSize(metadata) > METADATA_BUDGET_BYTES) {
+    const sheddable = Object.keys(metadata)
+      .filter(k => typeof metadata[k] === 'object' && metadata[k] !== null)
+      .sort((a, b) => jsonSize(metadata[b]) - jsonSize(metadata[a]));
+
+    for (const key of sheddable) {
+      if (jsonSize(metadata) <= METADATA_BUDGET_BYTES) break;
+      omittedValues[key] = `${Array.isArray(metadata[key]) ? 'array' : 'object'}, ` +
+        `${jsonSize(metadata[key])} bytes`;
+      delete metadata[key];
+    }
+  }
+
+  const hasOmissions = Object.keys(omittedValues).length > 0 || droppedColumns.length > 0;
+  if (hasOmissions) {
+    const disclosure: Record<string, unknown> = {};
+    if (Object.keys(omittedValues).length > 0) disclosure.values = omittedValues;
+    if (droppedColumns.length > 0) disclosure.columns = droppedColumns.sort();
+    // Never silently overwrite a tool-authored field of the same name.
+    if (OMITTED_KEY in metadata) {
+      disclosure.toolReported = metadata[OMITTED_KEY];
+    }
+    metadata[OMITTED_KEY] = disclosure;
+    debugLog?.(`omitted ${JSON.stringify(disclosure)}`);
   }
 
   return metadata;
@@ -266,8 +426,14 @@ export function createResponseFormatterHook(config: ResponseFormatterConfig = {}
         );
       }
 
-      // Append metadata
-      const metadata = extractMetadata(parsedResult);
+      // Append metadata, disclosing anything not preserved verbatim
+      const droppedColumns = collectFieldNames(items).filter(f => !fields.includes(f));
+      const metadata = buildMetadata(
+        parsedResult,
+        label,
+        droppedColumns,
+        debug ? msg => console.log(`[ResponseFormatter] ${toolName}: ${msg}`) : undefined
+      );
       const formattedText = text +
         (Object.keys(metadata).length > 0 ? `\n\n---\n${JSON.stringify(metadata)}` : '');
 
