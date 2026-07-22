@@ -1,12 +1,12 @@
 # Atlassian MCP Servers - Complete Tool Catalog
 
-> **Generated:** 2026-07-22T15:07:50.527Z
+> **Generated:** 2026-07-22T16:59:47.686Z
 > 
 > This file is auto-generated. Do not edit manually.
 > Run `npm run generate:tool-catalog` to regenerate.
 
 **Total Servers:** 8
-**Total Tools:** 277
+**Total Tools:** 280
 
 ---
 
@@ -15,14 +15,14 @@
 | Server | Tools | Description |
 |--------|-------|-------------|
 | jira-projects | 60 | Projects, issues, dashboards, reporting |
-| jira-workflows | 39 | Workflows, screens, schemes, automation |
+| jira-workflows | 42 | Workflows, screens, schemes, automation |
 | jira-fields-permissions | 33 | Custom fields, permissions, notifications |
 | jira-service-desk | 12 | JSM request types, customer organizations |
 | jira-organization | 31 | Atlassian Admin, identity, directories |
 | jira-system-admin | 21 | System config, licensing, users, groups |
 | jira-product-discovery | 12 | JPD ideas, insights, scoring |
 | confluence | 69 | Spaces, pages, comments, attachments |
-| **Total** | **277** | |
+| **Total** | **280** | |
 
 ---
 
@@ -117,7 +117,7 @@ Projects, issues, dashboards, reporting
 
 ---
 
-## 2. jira-workflows (39 tools)
+## 2. jira-workflows (42 tools)
 
 Workflows, screens, schemes, automation
 
@@ -135,11 +135,12 @@ Workflows, screens, schemes, automation
 | `get_screen_tab_fields` | read | ⚠️ PREREQUISITE: Use "get_screens" first to find valid screen IDs. Gets all fields for a specific screen tab. If you get |
 | `move_screen_tab_field` | update | ⚠️ PREREQUISITE: Use "get_screens" first to find valid screen IDs. Moves a field within a screen tab to a different posi |
 
-### Issues (2 tools)
+### Issues (3 tools)
 
 | Tool | Type | Description |
 |------|------|-------------|
 | `delete_workflow_scheme_issue_type` | delete | ⚠️ PREREQUISITE: Use "get_workflow_schemes_detailed" first to discover valid scheme IDs and current issue type mappings. |
+| `get_project_issue_type_screen_scheme` | read | Resolves a single project's assigned issue type screen scheme (ITSS) via GET /issuetypescreenscheme/project?projectId=.  |
 | `set_workflow_scheme_issue_type` | update | ⚠️ MULTIPLE PREREQUISITES AND LIMITATIONS: Use "get_workflow_schemes_detailed" first to find scheme IDs. CRITICAL: Activ |
 
 ### Projects (2 tools)
@@ -149,12 +150,14 @@ Workflows, screens, schemes, automation
 | `assign_issue_type_screen_scheme_to_project` | update | ⚠️ IMPORTANT: The schemeId parameter requires an Issue Type Screen Scheme ID — NOT a plain Screen Scheme ID. These are d |
 | `assign_workflow_scheme_to_project` | update | ⚠️ GREENFIELD PROJECTS ONLY: Assigns a workflow scheme to a classic Jira project. CRITICAL PREREQUISITE: The target proj |
 
-### Screens (3 tools)
+### Screens (5 tools)
 
 | Tool | Type | Description |
 |------|------|-------------|
 | `add_field_to_default_screen` | create | ⚠️ PREREQUISITES: Use "get_screen_available_fields" first to check if the field can be added. Adding a field that is alr |
 | `add_field_to_screen` | create | ⚠️ PREREQUISITE: Use "get_screens" first to find valid screen IDs. Adds a field to a specific screen tab using POST meth |
+| `get_issue_type_screen_scheme_mappings` | read | 🔍 DISCOVERY TOOL: Lists issueType -> screenScheme mappings for one or more issue type screen schemes via GET /issuetype |
+| `get_issue_type_screen_schemes` | read | 🔍 DISCOVERY TOOL: Lists issue type screen schemes (ITSS) via GET /issuetypescreenscheme, paginated to completion (isLas |
 | `remove_field_from_screen_tab` | delete | ⚠️ PREREQUISITE: Use "get_screens" first to find valid screen IDs. Removes a field from a screen tab. If you get "Screen |
 
 ### Other (28 tools)
