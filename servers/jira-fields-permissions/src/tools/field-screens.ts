@@ -42,10 +42,11 @@ export async function registerFieldScreenTools(server: McpServer, apiClient: Jir
     fieldId: string,
     startAtInit: number,
     pageSize: number
-  ): Promise<{ screens: JiraFieldScreenRef[]; total: number | null }> => {
+  ): Promise<{ screens: JiraFieldScreenRef[]; total: number | null; complete: boolean }> => {
     const screens: JiraFieldScreenRef[] = [];
     let startAt = startAtInit;
     let total: number | null = null;
+    let complete = false;
     for (let page = 0; page < SCREENS_MAX_PAGES; page++) {
       const res = await apiClient.makeRequest<{ values?: unknown[]; total?: number; isLast?: boolean }>({
         method: 'GET',
@@ -76,12 +77,15 @@ export async function registerFieldScreenTools(server: McpServer, apiClient: Jir
         }
       }
       if (typeof body?.total === 'number') total = body.total;
-      if (body?.isLast === true) break;
-      if (total !== null && screens.length >= total) break;
-      if (values.length === 0) break;
+      if (body?.isLast === true) { complete = true; break; }
+      if (total !== null && screens.length >= total) { complete = true; break; }
+      if (values.length === 0) { complete = true; break; }
       startAt += values.length;
     }
-    return { screens, total };
+    // Cap exhausted without a natural stop -> `screens` is a truncated prefix.
+    // Signal it so the handler reports verifiable:false rather than a definite
+    // count, consistent with the enumeration primitive's fail-closed walks.
+    return { screens, total, complete };
   };
 
   // Tool: getFieldScreens (Discovery Tool - 🔍)
@@ -103,24 +107,30 @@ export async function registerFieldScreenTools(server: McpServer, apiClient: Jir
         fieldId = validatedParams.fieldId;
 
         try {
-          const { screens, total } = await fetchAllScreens(fieldId, validatedParams.startAt, validatedParams.maxResults);
-          const onNoScreens = screens.length === 0;
+          const { screens, total, complete } = await fetchAllScreens(fieldId, validatedParams.startAt, validatedParams.maxResults);
+          const onNoScreens = complete && screens.length === 0;
           return {
             content: [{
               type: 'text',
               text: JSON.stringify({
-                success: true,
+                success: complete,
                 fieldId,
                 screens,
                 total: total ?? screens.length,
                 count: screens.length,
+                // onNoScreens is a GENUINE zero ONLY when the walk completed; a
+                // truncated prefix that happens to be empty is not a real zero.
                 onNoScreens,
-                verifiable: true,
-                usage_guidance: onNoScreens
+                verifiable: complete,
+                ...(complete ? {} : { truncated: true }),
+                usage_guidance: !complete
+                  ? 'The screens walk hit the page cap (SCREENS_MAX_PAGES) without reaching isLast; the screen list may be truncated. Reported as verifiable:false rather than a definite count.'
+                  : onNoScreens
                   ? 'This field is on no screens. onNoScreens:true with verifiable:true is a GENUINE zero from a 200 total:0 - not conflated with a 404.'
                   : `This field appears on ${screens.length} screen(s).`,
               }, null, 2),
             }],
+            ...(complete ? {} : { isError: true }),
           };
         } catch (error: unknown) {
           const code = errorCode(error);

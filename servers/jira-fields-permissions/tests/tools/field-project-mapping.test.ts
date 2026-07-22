@@ -170,6 +170,38 @@ describe('get_field_project_mapping (Tool 1)', () => {
     expect(m.projectCount).toBe(2);
   });
 
+  // A mapping walk that never reaches isLast (every page full, no total) exhausts
+  // the page cap and returns a truncated prefix. It must fail closed --
+  // verifiable:false, projectCount:null -- never a confident, possibly-short
+  // count. Mirrors the primitive's own /field/search + resolveAllProjectIds walks.
+  it('PROOF (fail-closed): a projectmapping walk that exhausts the page cap is verifiable:false, never a definite count', async () => {
+    const api = {
+      makeRequest: jest.fn(async (req: any) => {
+        const path = req.path as string;
+        const startAt = (req.params?.startAt as number | undefined) ?? 0;
+        if (path === '/field')
+          return { success: true, data: [{ id: 'customfield_20001', custom: true, schema: { customId: 20001 } }] };
+        if (path === '/field/search')
+          return { success: true, data: { values: [{ id: 'customfield_20001', schema: { customId: 20001 } }], total: 1, isLast: true } };
+        if (/\/context\/projectmapping$/.test(path))
+          // Non-terminal: full page, no isLast, no total -> the walk never stops naturally.
+          return { success: true, data: { values: [{ contextId: 'c', projectId: String(startAt + 1) }] } };
+        if (path === '/project/search') return { success: true, data: { values: [], total: 0, isLast: true } };
+        throw new Error(`unexpected path in mock: ${path}`);
+      }),
+    } as any;
+    register(api);
+    const tool = registeredTools.get('get_field_project_mapping');
+    const payload = parse(await tool.handler({ fieldIds: ['customfield_20001'] }));
+
+    const m = payload.mappings.find((x: any) => x.fieldId === 'customfield_20001');
+    expect(m.verifiable).toBe(false);
+    expect(m.projectCount).toBeNull();
+    expect(m.scope).toBe('unknown');
+    expect(m.unverifiableReason).toContain('page cap');
+    expect(payload.partialFailure).toBe(true);
+  });
+
   it('PROOF (global): a global context is allProjects:true, never projects:[]/projectCount:0', async () => {
     const api = routeMock({
       field: [{ id: 'customfield_10026', name: 'Team', custom: true, schema: { customId: 10026 } }],

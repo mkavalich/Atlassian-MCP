@@ -171,6 +171,31 @@ describe('get_field_screens (Tool 2)', () => {
     expect(payload.screens[0].id).toBe('100');
   });
 
+  // A screens walk that never reaches isLast exhausts the page cap and returns a
+  // truncated prefix. It must fail closed -- verifiable:false, truncated:true --
+  // never a confident, possibly-short screen list, and an empty-looking truncated
+  // prefix is NOT a genuine onNoScreens zero.
+  it('PROOF (fail-closed): a screens walk that exhausts the page cap is verifiable:false, not a definite count', async () => {
+    const api = {
+      makeRequest: jest.fn(async (req: any) => {
+        const path = req.path as string;
+        const startAt = (req.params?.startAt as number | undefined) ?? 0;
+        if (/^\/field\/[^/]+\/screens$/.test(path))
+          // Non-terminal: full page, no isLast, no total -> the walk never stops naturally.
+          return { success: true, data: { values: [{ id: startAt + 1, name: 'S' }] } };
+        throw new Error(`unexpected path in mock: ${path}`);
+      }),
+    } as any;
+    register(api);
+    const tool = registeredTools.get('get_field_screens');
+    const payload = parse(await tool.handler({ fieldId: 'customfield_10104' }));
+
+    expect(payload.verifiable).toBe(false);
+    expect(payload.success).toBe(false);
+    expect(payload.truncated).toBe(true);
+    expect(payload.onNoScreens).toBe(false);
+  });
+
   it('GUARD: /screens paginates to isLast, striding by rows received', async () => {
     const api = routeMock({
       screens: {

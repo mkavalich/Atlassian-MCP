@@ -249,10 +249,13 @@ export async function registerFieldContextTools(server: McpServer, apiClient: Ji
         // rows received. makeRequest THROWS on non-2xx, so a 404 propagates to the
         // per-field catch below; a 200 whose `values` is a non-array is a loud,
         // distinct unrecognized-shape failure (never treated as an empty result).
-        const fetchProjectMappingRows = async (fieldId: string): Promise<JiraFieldContextProjectMappingRow[]> => {
+        const fetchProjectMappingRows = async (
+          fieldId: string
+        ): Promise<{ rows: JiraFieldContextProjectMappingRow[]; complete: boolean }> => {
           const rows: JiraFieldContextProjectMappingRow[] = [];
           let startAt = 0;
           let total: number | null = null;
+          let complete = false;
           for (let page = 0; page < MAPPING_MAX_PAGES; page++) {
             const res = await apiClient.makeRequest<{ values?: JiraFieldContextProjectMappingRow[]; total?: number; isLast?: boolean }>({
               method: 'GET',
@@ -273,12 +276,17 @@ export async function registerFieldContextTools(server: McpServer, apiClient: Ji
             }
             rows.push(...values);
             if (typeof body?.total === 'number') total = body.total;
-            if (body?.isLast === true) break;
-            if (total !== null && rows.length >= total) break;
-            if (values.length === 0) break;
+            if (body?.isLast === true) { complete = true; break; }
+            if (total !== null && rows.length >= total) { complete = true; break; }
+            if (values.length === 0) { complete = true; break; }
             startAt += values.length;
           }
-          return rows;
+          // If the loop exhausts MAPPING_MAX_PAGES without a natural stop, `rows`
+          // is a truncated prefix. Signal it -- mirroring the primitive's
+          // /field/search walk and resolveAllProjectIds, which both fail closed on
+          // the same condition -- so the caller never presents a truncated list as
+          // a definite, verifiable count.
+          return { rows, complete };
         };
 
         // Resolve the site's project list only if asked to expand a global context.
@@ -317,7 +325,30 @@ export async function registerFieldContextTools(server: McpServer, apiClient: Ji
           // scopeType==='PROJECT' and skip the endpoint. The per-field try/catch
           // guarantees one field's 404 never aborts the batch.
           try {
-            const rows = await fetchProjectMappingRows(fieldId);
+            const { rows, complete } = await fetchProjectMappingRows(fieldId);
+
+            if (!complete) {
+              // The context walk hit the page cap without reaching isLast, so the
+              // project list may be truncated. Fail closed: report unverifiable
+              // rather than a definite count -- never a confident, possibly-short
+              // answer. Unreachable on a Jira-contract-conforming response, but the
+              // defect class must be impossible, not merely improbable.
+              partialFailure = true;
+              mappings.push({
+                fieldId,
+                scope: 'unknown',
+                allProjects: false,
+                verifiable: false,
+                projects: null,
+                projectCount: null,
+                projectsFromScope: scopeHint(record),
+                unresolvedRows: rows.length,
+                contextCount: rows.length,
+                unverifiableReason:
+                  'Context mapping walk hit the page cap (MAPPING_MAX_PAGES) without reaching isLast; the project list may be truncated and is reported as unverifiable rather than as a definite count.',
+              });
+              continue;
+            }
 
             const isGlobal = rows.some((r) => r.isGlobalContext === true);
             const scopedIds = rows
