@@ -3,8 +3,11 @@ name: CI
 on:
   push:
     branches: [main]
+  # Run on every pull request regardless of base branch, so stacked PRs (whose
+  # base is another feature branch, not main) still get CI -- including the
+  # typecheck gate. Without this, an intermediate PR in a stack runs no checks
+  # until it is retargeted to main.
   pull_request:
-    branches: [main]
 
 jobs:
   security:
