@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/mkavalich/Atlassian-MCP/actions/workflows/ci.yml/badge.svg)](https://github.com/mkavalich/Atlassian-MCP/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
-[![MCP SDK](https://img.shields.io/badge/MCP%20SDK-1.25.1-8A2BE2?style=flat-square)](https://modelcontextprotocol.io/)
+[![MCP SDK](https://img.shields.io/badge/MCP%20SDK-1.26.0-8A2BE2?style=flat-square)](https://modelcontextprotocol.io/)
 [![Servers](https://img.shields.io/badge/servers-8-teal?style=flat-square)](#overview)
 [![Tools](https://img.shields.io/badge/tools-280-orange?style=flat-square)](#overview)
 
