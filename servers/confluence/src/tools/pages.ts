@@ -1,5 +1,6 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { ConfluenceApiClient } from '../api/client.js';
+import { computeRestrictionUpdate } from './restriction-merge.js';
 import {
   searchPagesSchema,
   getPageSchema,
@@ -1218,12 +1219,14 @@ export async function registerPageTools(server: McpServer, apiClient: Confluence
     'set_page_restrictions',
     {
       title: 'Set Page Restrictions',
-      description: '🔒 UPDATE: Set restrictions on a page to control who can read or edit it.',
+      description: '🔒 UPDATE: Change who can read or edit a page. Requires an explicit mode (add / remove / replace). Restrictions on the operation you are not targeting are always preserved.',
       inputSchema: setPageRestrictionsInputSchema,
       annotations: {
         title: 'Set Page Restrictions',
         readOnlyHint: false,
-        destructiveHint: false,
+        // This writes the page's restriction set. Getting it wrong removes
+        // someone's access, so it is destructive regardless of mode.
+        destructiveHint: true,
         idempotentHint: true,
         openWorldHint: false,
       },
@@ -1231,32 +1234,46 @@ export async function registerPageTools(server: McpServer, apiClient: Confluence
     async (params: any) => {
       try {
         const validatedParams = setPageRestrictionsSchema.parse(params);
+        const { pageId, operation, mode } = validatedParams;
+        const targetUsers = validatedParams.users ?? [];
+        const targetGroups = validatedParams.groups ?? [];
 
-        const restrictions: any[] = [];
-        if (validatedParams.users) {
-          validatedParams.users.forEach((userId: string) => {
-            restrictions.push({
-              operation: validatedParams.operation,
-              restrictions: {
-                user: [{ accountId: userId }],
-              },
-            });
-          });
+        if (targetUsers.length === 0 && targetGroups.length === 0 && mode !== 'replace') {
+          throw new Error(
+            `mode "${mode}" requires at least one user or group. ` +
+            'To clear all restrictions for this operation, use mode "replace" with no principals.'
+          );
         }
-        if (validatedParams.groups) {
-          validatedParams.groups.forEach((groupName: string) => {
-            restrictions.push({
-              operation: validatedParams.operation,
-              restrictions: {
-                group: [{ name: groupName }],
-              },
-            });
-          });
+
+        // Confluence's PUT /content/{id}/restriction REPLACES the entire
+        // restriction set for the page -- every operation, every principal.
+        // So read the current state first and rebuild it, or a request that
+        // targets one operation silently drops the other one.
+        const current = await apiClient.makeV1Request<any>({
+          method: 'GET',
+          path: `/content/${pageId}/restriction`,
+          params: { expand: 'restrictions.user,restrictions.group' },
+        });
+
+        if (!current.success) {
+          throw new Error(
+            'Could not read the current restrictions, so the update was not attempted. ' +
+            'Applying it blind would have removed any restriction not named in this call.'
+          );
         }
+
+        const { payload: restrictions, resultingUsers, resultingGroups, preservedOperations } =
+          computeRestrictionUpdate(
+            current.data?.results ?? [],
+            operation,
+            mode,
+            targetUsers,
+            targetGroups
+          );
 
         const response = await apiClient.makeV1Request<any>({
           method: 'PUT',
-          path: `/content/${validatedParams.pageId}/restriction`,
+          path: `/content/${pageId}/restriction`,
           data: restrictions,
         });
 
@@ -1268,9 +1285,12 @@ export async function registerPageTools(server: McpServer, apiClient: Confluence
               type: 'text' as const,
               text: JSON.stringify({
                 success: true,
-                pageId: validatedParams.pageId,
-                operation: validatedParams.operation,
-                message: 'Page restrictions updated successfully',
+                pageId,
+                operation,
+                mode,
+                resulting: { users: resultingUsers, groups: resultingGroups },
+                preservedOperations,
+                message: `Page restrictions updated (${mode}).`,
               }, null, 2),
             }],
           };

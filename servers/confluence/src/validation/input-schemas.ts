@@ -159,11 +159,13 @@ export const setPageRestrictionsInputSchema = z.object({
   pageId: z.string().min(1).max(255)
     .describe('The page ID to set restrictions for'),
   operation: z.enum(['read', 'update'])
-    .describe('The operation to restrict'),
+    .describe('Which operation to restrict: read or update. The other operation is always preserved.'),
+  mode: z.enum(['add', 'remove', 'replace'])
+    .describe('REQUIRED. add = grant to the listed principals, keeping existing grants. remove = revoke only the listed principals. replace = make the listed principals the complete set for this operation, dropping any others. Restrictions on the OTHER operation are preserved in all three modes.'),
   users: z.array(z.string().max(255)).optional()
-    .describe('User account IDs to grant access'),
+    .describe('User account IDs'),
   groups: z.array(z.string().max(255)).optional()
-    .describe('Group names to grant access'),
+    .describe('Group names'),
 }).passthrough();
 
 export const getPageLikesInputSchema = z.object({

@@ -93,6 +93,11 @@ export const getPageRestrictionsSchema = z.object({
 export const setPageRestrictionsSchema = z.object({
   pageId: z.string().min(1).max(255).regex(/^[\w.\-:]+$/, 'invalid id'),
   operation: z.enum(['read', 'update']),
+  // Required, deliberately. This tool previously always replaced the page's
+  // entire restriction set, so a caller intending to ADD one group silently
+  // removed every other grant. Requiring an explicit mode makes pre-existing
+  // callers fail closed with a validation error instead of losing data.
+  mode: z.enum(['add', 'remove', 'replace']),
   users: z.array(z.string().max(255)).optional(),
   groups: z.array(z.string().max(255)).optional(),
 }).strict();
