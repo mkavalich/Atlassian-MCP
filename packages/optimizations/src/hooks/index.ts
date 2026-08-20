@@ -17,6 +17,14 @@ import {
 } from './caching.js';
 
 import {
+  applyDeferredToolListing,
+  minimiseToolListing,
+  ANCHOR_TOOLS,
+  type DeferredListingConfig,
+  type DeferredListingMetrics,
+} from './deferred-listing.js';
+
+import {
   createSchemaRegistryHook,
   type SchemaRegistryHookConfig,
 } from './schema-registry.js';
@@ -52,6 +60,15 @@ export {
 export {
   createSchemaRegistryHook,
   type SchemaRegistryHookConfig,
+};
+
+// Re-export deferred tool listing
+export {
+  applyDeferredToolListing,
+  minimiseToolListing,
+  ANCHOR_TOOLS,
+  type DeferredListingConfig,
+  type DeferredListingMetrics,
 };
 
 // Re-export response formatting
@@ -100,6 +117,16 @@ export interface OptimizationHooksConfig {
   enableCaching?: boolean;
   /** Enable deferred schema loading */
   enableSchemaRegistry?: boolean;
+  /**
+   * Minimise `tools/list` by replacing tool input schemas with an empty object
+   * schema, leaving clients to fetch the real one via `load_tool_schema`.
+   *
+   * OPT-IN (default false, or `MCP_DEFER_TOOL_SCHEMAS=true`). It is off by
+   * default because a client that does not know to call `load_tool_schema`
+   * will see tools with no parameters and be unable to call them correctly.
+   * Argument validation is unaffected either way -- only the listing changes.
+   */
+  enableDeferredListing?: boolean;
   /** Enable response formatting (TOON/TSV) */
   enableResponseFormatting?: boolean;
   /** Default response format */
@@ -159,7 +186,14 @@ export function createOptimizationHooks(config: OptimizationHooksConfig) {
     telemetryLogLevel = 'info',
     enableAuditLogging = false,
     auditConfig,
+    enableDeferredListing,
   } = config;
+
+  // Opt-in: explicit config wins, otherwise the env flag, otherwise off.
+  const deferListing =
+    enableDeferredListing ?? process.env.MCP_DEFER_TOOL_SCHEMAS === 'true';
+
+  let deferredListing: { getMetrics: () => DeferredListingMetrics | null } | null = null;
 
   // Initialize caching hook
   const caching = enableCaching
@@ -262,6 +296,16 @@ export function createOptimizationHooks(config: OptimizationHooksConfig) {
     if (schemaRegistry) {
       schemaRegistry.registerSchemaLoader(server);
     }
+
+    // Must run after every tool (including load_tool_schema above) is
+    // registered, since it wraps the fully-populated tools/list handler.
+    if (deferListing) {
+      deferredListing = applyDeferredToolListing(server, {
+        registry: schemaRegistry?.getRegistry(),
+        serverName,
+        debug,
+      });
+    }
   }
 
   /**
@@ -276,6 +320,9 @@ export function createOptimizationHooks(config: OptimizationHooksConfig) {
             tools: schemaRegistry.getToolMetadata(),
           }
         : null,
+      deferredListing: deferListing
+        ? { enabled: true, ...(deferredListing?.getMetrics() ?? { measured: false }) }
+        : { enabled: false },
       responseFormatting: responseFormatter ? { enabled: true } : null,
       telemetry: enableTelemetry ? { enabled: true, logLevel: telemetryLogLevel } : null,
       auditLogging: enableAuditLogging ? { enabled: true, backend: auditConfig?.backend } : null,

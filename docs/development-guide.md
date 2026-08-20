@@ -893,7 +893,7 @@ When you call `startServer()` from `@atlassian-mcp/optimizations`, four capabili
 - Registers a `load_tool_schema` meta-tool on every server
 - On initial connection, clients receive lightweight tool stubs (name + description only)
 - Full Zod schemas are sent on-demand when the client calls `load_tool_schema`
-- Reduces initial payload by 60–75%
+- Reduces the `tools/list` payload by a measured 47.3% across the 8 servers (opt-in: `MCP_DEFER_TOOL_SCHEMAS=true`)
 
 ### Response Formatting
 

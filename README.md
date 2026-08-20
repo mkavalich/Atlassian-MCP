@@ -148,9 +148,27 @@ In-memory LRU cache (500 entries) applied to all GET requests, reducing Atlassia
 
 Write operations (POST/PUT/DELETE) bypass the cache and trigger path-based invalidation.
 
-### Deferred Schema Loading
+### Deferred Schema Loading — opt-in
 
-Reduces `tools/list` response size by 60-75% by stripping `inputSchema` from tool listings. Clients fetch full schemas on-demand via the `load_tool_schema` tool (automatically registered on every server).
+Replaces each tool's `inputSchema` in `tools/list` with an empty object schema, so clients fetch the real one on demand via `load_tool_schema` (registered automatically on every server). Enable with:
+
+```bash
+MCP_DEFER_TOOL_SCHEMAS=true
+```
+
+**Measured across all 8 servers** (`tools/list` payload, stdio, both settings on the same build):
+
+| | Off (default) | On | Reduction |
+|---|---|---|---|
+| Total payload | 269 KB | 142 KB | **47.3%** |
+| Approx. tokens | ~68,800 | ~36,200 | — |
+| Tools carrying a full schema | 266 / 280 | 16 / 280 | — |
+
+Per server the reduction ranges 38–50%; the remainder is tool *descriptions*, which are not touched. Reproduce with `scripts/measure-listing.mjs`.
+
+**Why it is opt-in.** A client that does not know to call `load_tool_schema` sees tools with no parameters and cannot call them correctly. `search_tools` and `load_tool_schema` are never minimised, so a client can always recover what it is missing.
+
+**Argument validation is unaffected.** The minimisation happens on the `tools/list` response, not at registration — the SDK still holds every full schema and still validates every `tools/call`. Stripping at registration would have silently disabled validation server-wide.
 
 ### Tool Use Examples
 

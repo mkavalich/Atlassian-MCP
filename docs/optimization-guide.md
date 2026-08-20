@@ -8,7 +8,7 @@ This guide covers two Anthropic API features that reduce token usage and improve
 
 | Feature | Problem | Solution | Impact |
 |---------|---------|----------|--------|
-| **Deferred Loading** | 280 tools = ~50K tokens on initial handshake | Load tool schemas on-demand | ~60-75% token reduction |
+| **Deferred Loading** (opt-in) | 280 tools = ~68.8K tokens across 8 listings (measured) | Load tool schemas on-demand via `load_tool_schema` | 47.3% measured (269 KB -> 142 KB) |
 | **Tool Use Examples** | Complex tools (custom fields, JQL, nested objects) have ~72% accuracy | Structured `input_examples` on tool definitions | ~90% accuracy |
 
 > **Important:** `defer_loading` and `input_examples` are mutually exclusive in the Anthropic API. See [Compatibility](#compatibility) for the recommended hybrid strategy.

@@ -4,10 +4,14 @@
  * Provides a tool that returns the full input schema for a specific tool.
  * This enables smaller `listTools` responses by deferring schema loading.
  *
- * Token Efficiency Impact:
- * - Without deferred loading: ~50K tokens in listTools
- * - With deferred loading: ~15K tokens in listTools + on-demand schemas
- * - Estimated savings: 60-75% on initial handshake
+ * Token Efficiency Impact (MEASURED, all 8 servers, stdio, same build):
+ * - Deferral off (default): 269 KB / ~68,800 tokens across the 8 listings
+ * - Deferral on:            142 KB / ~36,200 tokens
+ * - Reduction:              47.3% (38-50% per server)
+ *
+ * Deferral is opt-in via MCP_DEFER_TOOL_SCHEMAS=true; see
+ * ../hooks/deferred-listing.ts. Reproduce with scripts/measure-listing.mjs.
+ * The remaining payload is tool descriptions, which are not minimised.
  */
 
 import { z } from 'zod';

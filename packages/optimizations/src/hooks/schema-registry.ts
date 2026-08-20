@@ -2,7 +2,9 @@
  * Schema Registry Hook
  *
  * Enables deferred tool schema loading via the load_tool_schema tool.
- * Provides 60-75% reduction in listTools response size.
+ * Captures schemas so `load_tool_schema` can serve them. NOTE: this hook alone
+ * does NOT shrink `tools/list` - it passes the tool config through unmodified.
+ * The listing minimisation lives in ./deferred-listing.ts and is opt-in.
  */
 
 import {
