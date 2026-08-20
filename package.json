@@ -18,7 +18,8 @@
     "typecheck:check": "npm run build:packages && node scripts/typecheck-baseline.mjs --check",
     "generate:tool-catalog": "node scripts/generate-tool-catalog.js",
     "validate:skills": "node scripts/validate-skills.js",
-    "validate:all": "npm run generate:tool-catalog && npm run validate:skills",
+    "validate:counts": "node scripts/check-doc-counts.mjs",
+    "validate:all": "npm run generate:tool-catalog && npm run validate:counts && npm run validate:skills",
     "package:skills": "node scripts/package-skills.js"
   },
   "engines": {

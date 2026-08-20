@@ -77,4 +77,10 @@ jobs:
       - run: npm run build:all
         env:
           SKIP_DECLARATIONS: 'true'
+      # validate:all = generate:tool-catalog -> validate:counts -> validate:skills.
+      # validate:counts is the doc gate: it regenerates the catalog by introspecting
+      # the servers, then fails if the README tools badge, the per-server overview
+      # rows, the Total row, llms.txt, or the MCP SDK badge disagree with it.
+      # Added because the tools badge sat five months stale at 275 while the real
+      # count was 280, and nothing in CI could notice.
       - run: npm run validate:all
