@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 [![MCP SDK](https://img.shields.io/badge/MCP%20SDK-1.25.1-8A2BE2?style=flat-square)](https://modelcontextprotocol.io/)
 [![Servers](https://img.shields.io/badge/servers-8-teal?style=flat-square)](#overview)
-[![Tools](https://img.shields.io/badge/tools-275-orange?style=flat-square)](#overview)
+[![Tools](https://img.shields.io/badge/tools-280-orange?style=flat-square)](#overview)
 
 Built with ❤️ for the Atlassian community by an overly caffeinated engineer and Claude that doesn't mind navigating Atlassian's GraphQL explorer to work out undocumented JPD mutations at 3am. If you've ever been the one person standing between stakeholder requests and Jira's configuration labyrinth, these tools were made for you.
 
@@ -15,14 +15,14 @@ Open-source [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) ser
 | Server | Tools | Description |
 |--------|-------|-------------|
 | **jira-projects** | 60 | Issues, projects, sprints, boards, comments, dashboards, attachments, reporting |
-| **jira-workflows** | 39 | Workflows, screens, schemes, automation rules |
-| **jira-fields-permissions** | 31 | Custom fields, field configs, permission schemes |
+| **jira-workflows** | 42 | Workflows, screens, schemes, automation rules |
+| **jira-fields-permissions** | 33 | Custom fields, field configs, permission schemes |
 | **jira-service-desk** | 12 | JSM service desks, request types, customer orgs |
 | **jira-organization** | 31 | Org management, users, groups, identity providers |
 | **jira-system-admin** | 21 | System config, audit logs, webhooks, reporting |
 | **jira-product-discovery** | 12 | JPD ideas, insights, scoring |
 | **confluence** | 69 | Pages, spaces, comments, attachments, templates, permissions |
-| **Total** | **275** | |
+| **Total** | **280** | |
 
 > Counts include `search_tools` and `load_tool_schema` utility tools on each server.
 

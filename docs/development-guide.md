@@ -27,7 +27,7 @@ atlassian-mcp/
 │   ├── jira-projects/    # 60 tools — issues, projects, sprints, boards
 │   ├── jira-workflows/   # 39 tools — workflows, screens, automation
 │   ├── confluence/       # 69 tools — spaces, pages, content
-│   └── ...               # 5 more servers (275 tools total)
+│   └── ...               # 5 more servers (280 tools total)
 ├── docker/               # Multi-stage Dockerfile
 └── docker-compose.yml    # All 8 servers on ports 4001–4008
 ```

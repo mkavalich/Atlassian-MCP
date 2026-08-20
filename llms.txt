@@ -1,6 +1,6 @@
 # Atlassian MCP Servers
 
-> 275 MCP tools for Jira, Confluence, JSM, and JPD integration with AI assistants.
+> 280 MCP tools for Jira, Confluence, JSM, and JPD integration with AI assistants.
 
 ## For AI Agents Using These Tools
 
@@ -9,7 +9,7 @@
 ## Documentation
 
 - [Getting Started](docs/getting-started.md): Setup and configuration
-- [Tool Catalog](docs/tool-catalog.md): Complete tool reference (275 tools)
+- [Tool Catalog](docs/tool-catalog.md): Complete tool reference (280 tools)
 - [Optimization Guide](docs/optimization-guide.md): Deferred loading and tool use examples
 
 ## Servers
